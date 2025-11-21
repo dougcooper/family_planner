@@ -75,13 +75,13 @@
 
 **Goal**: Refine UX, Notifications, and PWA features.
 
-- [ ] T038 Implement Configurable Auto-Logout (Kiosk Mode) in `frontend/src/logic/auth.ts`
-- [ ] T039 Implement Notification Center UI in `frontend/src/components/notifications/NotificationCenter.tsx`
-- [ ] T040 Implement Email Digest Service (Daily/Weekly) in `backend/src/services/email.ts`
-- [ ] T041 Configure PWA Manifest (Icons, Display Mode) in `frontend/public/manifest.json`
-- [ ] T042 Implement Headless E2E Sync Tests in `frontend/tests/sync-integration/sync.test.ts`
-- [ ] T044 Audit and Fix Accessibility (WCAG AA) across all views
-- [ ] T045 Implement Unit Tests for Business Logic (Auth, Rewards, Tasks)
+- [X] T038 Implement Configurable Auto-Logout (Kiosk Mode) in `frontend/src/logic/auth.ts`
+- [X] T039 Implement Notification Center UI in `frontend/src/components/notifications/NotificationCenter.tsx`
+- [X] T040 Implement Email Digest Service (Daily/Weekly) in `backend/src/services/email.ts`
+- [X] T041 Configure PWA Manifest (Icons, Display Mode) in `frontend/public/manifest.json`
+- [X] T042 Implement Headless E2E Sync Tests in `frontend/tests/sync-integration/sync.test.ts`
+- [X] T044 Audit and Fix Accessibility (WCAG AA) across all views
+- [X] T045 Implement Unit Tests for Business Logic (Auth, Rewards, Tasks)
 
 ## Dependencies
 
