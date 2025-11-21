@@ -65,11 +65,11 @@
 **Goal**: Collaborative grocery lists and meal planning.
 **Story**: [US3] As a family member, I want to manage lists and meals.
 
-- [ ] T033 [US3] Define GroceryItem schema in `backend/src/db/schema.ts`
-- [ ] T034 [US3] Define GroceryItem model in `frontend/src/model/schema.ts`
-- [ ] T035 [US3] Implement Grocery List View (Add/Check/Delete) in `frontend/src/components/lists/GroceryList.tsx`
-- [ ] T036 [US3] Implement Meal Planner Calendar View in `frontend/src/components/meals/MealPlanner.tsx`
-- [ ] T037 [US3] Implement "Quick Add to List" logic in `frontend/src/logic/meals.ts`
+- [X] T033 [US3] Define GroceryItem schema in `backend/src/db/schema.ts`
+- [X] T034 [US3] Define GroceryItem model in `frontend/src/model/schema.ts`
+- [X] T035 [US3] Implement Grocery List View (Add/Check/Delete) in `frontend/src/components/lists/GroceryList.tsx`
+- [X] T036 [US3] Implement Meal Planner Calendar View in `frontend/src/components/meals/MealPlanner.tsx`
+- [X] T037 [US3] Implement "Quick Add to List" logic in `frontend/src/logic/meals.ts`
 
 ## Phase 6: Polish & Cross-Cutting
 
