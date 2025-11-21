@@ -3,11 +3,16 @@ import { db } from '../db/index.js';
 import { users, notifications, tasks, events, mealPlans, groceryItems, rewards } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 
+interface ChangeRecord {
+  id: string;
+  [key: string]: unknown;
+}
+
 interface SyncPushBody {
   changes: {
     [tableName: string]: {
-      created: any[];
-      updated: any[];
+      created: ChangeRecord[];
+      updated: ChangeRecord[];
       deleted: string[];
     };
   };
@@ -19,7 +24,7 @@ export async function pushChanges(
   reply: FastifyReply
 ) {
   try {
-    // @ts-ignore - userId set by auth middleware
+    // @ts-expect-error - userId set by auth middleware
     const { userId, familyId } = request.user;
     const { changes } = request.body;
 
@@ -30,37 +35,37 @@ export async function pushChanges(
         switch (tableName) {
           case 'notifications':
             await db.insert(notifications).values({
-              ...record,
+              ...(record as unknown as Record<string, never>),
               userId,
             });
             break;
           case 'tasks':
             await db.insert(tasks).values({
-              ...record,
+              ...(record as unknown as Record<string, never>),
               familyId,
             });
             break;
           case 'events':
             await db.insert(events).values({
-              ...record,
+              ...(record as unknown as Record<string, never>),
               familyId,
             });
             break;
           case 'meal_plans':
             await db.insert(mealPlans).values({
-              ...record,
+              ...(record as unknown as Record<string, never>),
               familyId,
             });
             break;
           case 'grocery_items':
             await db.insert(groceryItems).values({
-              ...record,
+              ...(record as unknown as Record<string, never>),
               familyId,
             });
             break;
           case 'rewards':
             await db.insert(rewards).values({
-              ...record,
+              ...(record as unknown as Record<string, never>),
               familyId,
             });
             break;
@@ -74,7 +79,7 @@ export async function pushChanges(
             await db
               .update(users)
               .set({
-                ...record,
+                ...(record as unknown as Record<string, never>),
                 updatedAt: new Date(),
               })
               .where(eq(users.id, record.id));
@@ -83,7 +88,7 @@ export async function pushChanges(
             await db
               .update(notifications)
               .set({
-                ...record,
+                ...(record as unknown as Record<string, never>),
                 updatedAt: new Date(),
               })
               .where(eq(notifications.id, record.id));
@@ -92,7 +97,7 @@ export async function pushChanges(
             await db
               .update(tasks)
               .set({
-                ...record,
+                ...(record as unknown as Record<string, never>),
                 updatedAt: new Date(),
               })
               .where(eq(tasks.id, record.id));
@@ -101,7 +106,7 @@ export async function pushChanges(
             await db
               .update(events)
               .set({
-                ...record,
+                ...(record as unknown as Record<string, never>),
                 updatedAt: new Date(),
               })
               .where(eq(events.id, record.id));
@@ -110,7 +115,7 @@ export async function pushChanges(
             await db
               .update(mealPlans)
               .set({
-                ...record,
+                ...(record as unknown as Record<string, never>),
                 updatedAt: new Date(),
               })
               .where(eq(mealPlans.id, record.id));
@@ -119,7 +124,7 @@ export async function pushChanges(
             await db
               .update(groceryItems)
               .set({
-                ...record,
+                ...(record as unknown as Record<string, never>),
                 updatedAt: new Date(),
               })
               .where(eq(groceryItems.id, record.id));
@@ -128,7 +133,7 @@ export async function pushChanges(
             await db
               .update(rewards)
               .set({
-                ...record,
+                ...(record as unknown as Record<string, never>),
                 updatedAt: new Date(),
               })
               .where(eq(rewards.id, record.id));

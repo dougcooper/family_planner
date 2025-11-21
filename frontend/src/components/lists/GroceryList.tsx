@@ -15,6 +15,7 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
 
   useEffect(() => {
     loadItems();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadItems = async () => {

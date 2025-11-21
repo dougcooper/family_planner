@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { authProvider } from '../../src/logic/auth';
-import { redeemReward, getUserPointsBalance } from '../../src/logic/rewards';
-import { markTaskPendingReview, approveTask, rejectTask } from '../../src/logic/task';
 
 /**
  * Unit Tests for Business Logic
@@ -46,9 +44,8 @@ describe('Auth Logic', () => {
 
   describe('State Subscriptions', () => {
     it('should notify subscribers on state change', () => {
-      let notificationCount = 0;
-      const unsubscribe = authProvider.subscribe((state) => {
-        notificationCount++;
+      const unsubscribe = authProvider.subscribe(() => {
+        // Subscription callback
       });
 
       // The subscription should exist

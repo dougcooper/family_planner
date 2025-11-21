@@ -10,7 +10,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Family Dashboard</Text>
-        <Text style={styles.subtitle}>Today's Overview</Text>
+        <Text style={styles.subtitle}>Today&apos;s Overview</Text>
       </View>
       
       <ScrollView style={styles.content}>

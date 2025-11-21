@@ -15,18 +15,31 @@
     "test": "npm run test --workspaces",
     "test:e2e": "jest --config jest.config.js",
     "test:e2e:with-backend": "npm run docker:backend:up && sleep 5 && npm run test:e2e; npm run docker:down",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:fix": "npm run lint:fix --workspaces --if-present",
     "docker:up": "docker compose up --build",
     "docker:backend:up": "docker compose up -d postgres backend",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "lint-staged": "^16.2.7",
     "ts-jest": "^29.4.5",
     "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=20.0.0",
     "npm": ">=10.0.0"
+  },
+  "lint-staged": {
+    "backend/**/*.ts": [
+      "npm run lint:fix --workspace=backend"
+    ],
+    "frontend/**/*.{ts,tsx}": [
+      "npm run lint:fix --workspace=frontend"
+    ]
   }
 }

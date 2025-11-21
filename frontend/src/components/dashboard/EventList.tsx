@@ -32,7 +32,7 @@ export function EventList({ events }: EventListProps) {
   if (events.length === 0) {
     return (
       <View style={styles.container}>
-        <Text style={styles.sectionTitle}>Today's Events</Text>
+        <Text style={styles.sectionTitle}>Today&apos;s Events</Text>
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No events scheduled for today</Text>
         </View>
@@ -42,7 +42,7 @@ export function EventList({ events }: EventListProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Today's Events</Text>
+      <Text style={styles.sectionTitle}>Today&apos;s Events</Text>
       <FlatList
         data={events}
         renderItem={renderEvent}

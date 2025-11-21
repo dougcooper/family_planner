@@ -26,7 +26,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
       familyId: decoded.familyId,
       role: decoded.role,
     };
-  } catch (error) {
+  } catch {
     return reply.status(401).send({ error: 'Invalid or expired token' });
   }
 }

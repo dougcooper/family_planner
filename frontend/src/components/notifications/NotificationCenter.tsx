@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
 import { Notification } from '../../model/models';
 
@@ -15,6 +15,7 @@ export function NotificationCenter({ database, userId }: NotificationCenterProps
 
   useEffect(() => {
     loadNotifications();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const loadNotifications = async () => {
@@ -96,16 +97,6 @@ export function NotificationCenter({ database, userId }: NotificationCenterProps
       case 'WARNING': return '⚠️';
       case 'ERROR': return '❌';
       default: return '📬';
-    }
-  };
-
-  const getNotificationColor = (type: string) => {
-    switch (type) {
-      case 'INFO': return '#3B82F6';
-      case 'SUCCESS': return '#10B981';
-      case 'WARNING': return '#F59E0B';
-      case 'ERROR': return '#EF4444';
-      default: return '#64748B';
     }
   };
 

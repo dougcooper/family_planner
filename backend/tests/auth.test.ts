@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { db } from '../src/db/index.js';
 import { families, users } from '../src/db/schema.js';
 import { eq } from 'drizzle-orm';
@@ -113,7 +113,7 @@ describe('Authentication Logic', () => {
       const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '90d' });
       expect(token).toBeDefined();
 
-      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; familyId: string; role: string };
       expect(decoded.userId).toBe(testUserId);
       expect(decoded.familyId).toBe(testFamilyId);
       expect(decoded.role).toBe('PARENT');

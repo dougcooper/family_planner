@@ -13,7 +13,7 @@ export async function pullChanges(
   reply: FastifyReply
 ) {
   try {
-    // @ts-ignore - userId set by auth middleware
+    // @ts-expect-error - userId set by auth middleware
     const { familyId } = request.user;
     const lastPulledAt = request.query.last_pulled_at 
       ? parseInt(request.query.last_pulled_at, 10) 

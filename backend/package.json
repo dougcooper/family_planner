@@ -10,7 +10,9 @@
     "start": "node dist/app.js",
     "migrate": "drizzle-kit migrate",
     "generate": "drizzle-kit generate:pg",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "eslint src tests --ext .ts",
+    "lint:fix": "eslint src tests --ext .ts --fix"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",
@@ -26,7 +28,10 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.10.6",
     "@types/web-push": "^3.6.4",
+    "@typescript-eslint/eslint-plugin": "^8.47.0",
+    "@typescript-eslint/parser": "^8.47.0",
     "drizzle-kit": "^0.20.9",
+    "eslint": "^9.39.1",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3",
     "vitest": "^1.1.0"

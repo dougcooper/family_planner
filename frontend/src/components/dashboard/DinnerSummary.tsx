@@ -9,7 +9,7 @@ interface DinnerSummaryProps {
 export function DinnerSummary({ mealPlan }: DinnerSummaryProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Tonight's Dinner</Text>
+      <Text style={styles.sectionTitle}>Tonight&apos;s Dinner</Text>
       
       {mealPlan ? (
         <View style={styles.mealCard}>

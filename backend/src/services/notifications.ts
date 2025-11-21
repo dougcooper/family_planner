@@ -27,7 +27,7 @@ interface NotificationPayload {
   body: string;
   icon?: string;
   badge?: string;
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 export async function sendPushNotification(

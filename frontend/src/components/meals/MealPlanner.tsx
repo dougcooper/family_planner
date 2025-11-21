@@ -25,6 +25,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
 
   useEffect(() => {
     loadWeekMeals();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getStartOfWeek = () => {

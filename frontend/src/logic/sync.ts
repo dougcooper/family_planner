@@ -13,7 +13,7 @@ export async function syncDatabase(): Promise<void> {
 
   await synchronize({
     database,
-    pullChanges: async ({ lastPulledAt, schemaVersion, migration }) => {
+    pullChanges: async ({ lastPulledAt, schemaVersion }) => {
       const response = await fetch(
         `${API_URL}/sync/pull?last_pulled_at=${lastPulledAt || 0}&schema_version=${schemaVersion}`,
         {
