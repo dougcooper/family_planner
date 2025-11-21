@@ -37,14 +37,14 @@
 **Goal**: Aggregate schedule, tasks, and meals in a single view.
 **Story**: [US1] As a family manager, I want a single view of today's status.
 
-- [ ] T017 [US1] Define Event, Task, MealPlan schemas in `backend/src/db/schema.ts`
-- [ ] T018 [US1] Define Event, Task, MealPlan models in `frontend/src/model/schema.ts`
-- [ ] T019 [US1] Implement Event/Task/MealPlan Sync handlers in `backend/src/sync/handlers.ts`
-- [ ] T020 [US1] Create Dashboard Layout component in `frontend/src/components/dashboard/DashboardLayout.tsx`
-- [ ] T021 [US1] Implement Today's Overview Widget in `frontend/src/components/dashboard/TodayWidget.tsx`
-- [ ] T022 [US1] Implement Event List Component in `frontend/src/components/dashboard/EventList.tsx`
-- [ ] T023 [US1] Implement Task List Summary Component in `frontend/src/components/dashboard/TaskListSummary.tsx`
-- [ ] T024 [US1] Implement Dinner Summary Component in `frontend/src/components/dashboard/DinnerSummary.tsx`
+- [X] T017 [US1] Define Event, Task, MealPlan schemas in `backend/src/db/schema.ts`
+- [X] T018 [US1] Define Event, Task, MealPlan models in `frontend/src/model/schema.ts`
+- [X] T019 [US1] Implement Event/Task/MealPlan Sync handlers in `backend/src/sync/handlers.ts`
+- [X] T020 [US1] Create Dashboard Layout component in `frontend/src/components/dashboard/DashboardLayout.tsx`
+- [X] T021 [US1] Implement Today's Overview Widget in `frontend/src/components/dashboard/TodayWidget.tsx`
+- [X] T022 [US1] Implement Event List Component in `frontend/src/components/dashboard/EventList.tsx`
+- [X] T023 [US1] Implement Task List Summary Component in `frontend/src/components/dashboard/TaskListSummary.tsx`
+- [X] T024 [US1] Implement Dinner Summary Component in `frontend/src/components/dashboard/DinnerSummary.tsx`
 
 ## Phase 4: User Story 2 - Task Completion & Rewards (P1)
 

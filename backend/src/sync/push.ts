@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../db/index.js';
-import { users, notifications } from '../db/schema.js';
+import { users, notifications, tasks, events, mealPlans, groceryItems, rewards } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 
 interface SyncPushBody {
@@ -34,7 +34,36 @@ export async function pushChanges(
               userId,
             });
             break;
-          // Add more tables as needed
+          case 'tasks':
+            await db.insert(tasks).values({
+              ...record,
+              familyId,
+            });
+            break;
+          case 'events':
+            await db.insert(events).values({
+              ...record,
+              familyId,
+            });
+            break;
+          case 'meal_plans':
+            await db.insert(mealPlans).values({
+              ...record,
+              familyId,
+            });
+            break;
+          case 'grocery_items':
+            await db.insert(groceryItems).values({
+              ...record,
+              familyId,
+            });
+            break;
+          case 'rewards':
+            await db.insert(rewards).values({
+              ...record,
+              familyId,
+            });
+            break;
         }
       }
 
@@ -58,6 +87,51 @@ export async function pushChanges(
                 updatedAt: new Date(),
               })
               .where(eq(notifications.id, record.id));
+            break;
+          case 'tasks':
+            await db
+              .update(tasks)
+              .set({
+                ...record,
+                updatedAt: new Date(),
+              })
+              .where(eq(tasks.id, record.id));
+            break;
+          case 'events':
+            await db
+              .update(events)
+              .set({
+                ...record,
+                updatedAt: new Date(),
+              })
+              .where(eq(events.id, record.id));
+            break;
+          case 'meal_plans':
+            await db
+              .update(mealPlans)
+              .set({
+                ...record,
+                updatedAt: new Date(),
+              })
+              .where(eq(mealPlans.id, record.id));
+            break;
+          case 'grocery_items':
+            await db
+              .update(groceryItems)
+              .set({
+                ...record,
+                updatedAt: new Date(),
+              })
+              .where(eq(groceryItems.id, record.id));
+            break;
+          case 'rewards':
+            await db
+              .update(rewards)
+              .set({
+                ...record,
+                updatedAt: new Date(),
+              })
+              .where(eq(rewards.id, record.id));
             break;
         }
       }

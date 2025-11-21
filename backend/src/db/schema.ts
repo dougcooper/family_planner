@@ -1,9 +1,11 @@
-import { pgTable, uuid, varchar, timestamp, integer, boolean, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, integer, boolean, pgEnum, date, text } from 'drizzle-orm/pg-core';
 
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['PARENT', 'CHILD']);
 export const emailFrequencyEnum = pgEnum('email_frequency', ['IMMEDIATE', 'DAILY', 'WEEKLY', 'OFF']);
 export const notificationTypeEnum = pgEnum('notification_type', ['INFO', 'SUCCESS', 'WARNING', 'ERROR']);
+export const taskStatusEnum = pgEnum('task_status', ['TODO', 'PENDING_REVIEW', 'COMPLETED']);
+export const mealTypeEnum = pgEnum('meal_type', ['BREAKFAST', 'LUNCH', 'DINNER']);
 
 // Family table
 export const families = pgTable('families', {
@@ -49,6 +51,72 @@ export const notifications = pgTable('notifications', {
   message: varchar('message', { length: 1000 }).notNull(),
   type: notificationTypeEnum('type').notNull(),
   isRead: boolean('is_read').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Tasks table
+export const tasks = pgTable('tasks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  points: integer('points').notNull().default(0),
+  status: taskStatusEnum('status').notNull().default('TODO'),
+  dueDate: timestamp('due_date'),
+  recurrenceRule: varchar('recurrence_rule', { length: 500 }),
+  assigneeId: uuid('assignee_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  creatorId: uuid('creator_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Events table
+export const events = pgTable('events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull(),
+  startTime: timestamp('start_time').notNull(),
+  endTime: timestamp('end_time').notNull(),
+  recurrenceRule: varchar('recurrence_rule', { length: 500 }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Event Attendees join table
+export const eventAttendees = pgTable('event_attendees', {
+  eventId: uuid('event_id').notNull().references(() => events.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+});
+
+// Meal Plans table
+export const mealPlans = pgTable('meal_plans', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
+  date: date('date').notNull(),
+  mealType: mealTypeEnum('meal_type').notNull(),
+  description: varchar('description', { length: 500 }).notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Grocery Items table
+export const groceryItems = pgTable('grocery_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  isChecked: boolean('is_checked').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Rewards table
+export const rewards = pgTable('rewards', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull(),
+  cost: integer('cost').notNull(),
+  imageUrl: varchar('image_url', { length: 500 }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

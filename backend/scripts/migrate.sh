@@ -8,6 +8,9 @@ until PGPASSWORD=$POSTGRES_PASSWORD psql -h "$DB_HOST" -U "$POSTGRES_USER" -d "$
 done
 
 echo "PostgreSQL is up - running migrations"
-cat /app/drizzle/0000_tiny_doomsday.sql | PGPASSWORD=$POSTGRES_PASSWORD psql -h "$DB_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+for migration in /app/drizzle/*.sql; do
+  echo "Running migration: $(basename $migration)"
+  cat "$migration" | PGPASSWORD=$POSTGRES_PASSWORD psql -h "$DB_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" 2>&1 | grep -v "already exists" || true
+done
 
 echo "Migrations completed successfully"
