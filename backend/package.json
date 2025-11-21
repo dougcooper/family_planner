@@ -1,0 +1,33 @@
+{
+  "name": "family-planner-backend",
+  "version": "1.0.0",
+  "description": "Family Dashboard Backend API",
+  "main": "dist/app.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "migrate": "drizzle-kit migrate",
+    "generate": "drizzle-kit generate",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "fastify": "^4.25.1",
+    "@fastify/cors": "^8.5.0",
+    "drizzle-orm": "^0.29.1",
+    "postgres": "^3.4.3",
+    "web-push": "^3.6.6",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.5",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "drizzle-kit": "^0.20.9",
+    "vitest": "^1.1.0"
+  }
+}

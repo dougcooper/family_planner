@@ -8,13 +8,13 @@
 
 **Goal**: Initialize the monorepo, backend, frontend, and infrastructure.
 
-- [ ] T001 Initialize Moonrepo structure and workspace configuration in `.moon/workspace.yml`
-- [ ] T002 [P] Setup Backend Fastify application structure in `backend/src/app.ts`
-- [ ] T003 [P] Configure Drizzle ORM and Postgres connection in `backend/src/db/index.ts`
-- [ ] T004 [P] Setup Frontend React Native (Expo) application in `frontend/app.json`
-- [ ] T005 [P] Configure WatermelonDB DatabaseProvider in `frontend/src/model/database.ts`
-- [ ] T006 [P] Create Docker Compose configuration for Postgres and App in `docker-compose.yml`
-- [ ] T007 [P] Configure Shared Types package structure in `packages/types/package.json`
+- [X] T001 Initialize Moonrepo structure and workspace configuration in `.moon/workspace.yml`
+- [X] T002 [P] Setup Backend Fastify application structure in `backend/src/app.ts`
+- [X] T003 [P] Configure Drizzle ORM and Postgres connection in `backend/src/db/index.ts`
+- [X] T004 [P] Setup Frontend React Native (Expo) application in `frontend/app.json`
+- [X] T005 [P] Configure WatermelonDB DatabaseProvider in `frontend/src/model/database.ts`
+- [X] T006 [P] Create Docker Compose configuration for Postgres and App in `docker-compose.yml`
+- [X] T007 [P] Configure Shared Types package structure in `packages/types/package.json`
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
@@ -30,7 +30,7 @@
 - [ ] T014 Configure Web Push (VAPID) service in `backend/src/services/notifications.ts`
 - [ ] T015 Implement Frontend Auth Provider (Persistence) in `frontend/src/logic/auth.ts`
 - [ ] T016 Implement Frontend Sync Logic (WatermelonDB Adapter) in `frontend/src/logic/sync.ts`
-- [ ] T043 [P] Implement PIN Pad / Profile Switcher UI Component in `frontend/src/components/auth/PinPad.tsx`
+- [X] T043 [P] Implement PIN Pad / Profile Switcher UI Component in `frontend/src/components/auth/PinPad.tsx`
 
 ## Phase 3: User Story 1 - Central Family Dashboard (P1)
 
