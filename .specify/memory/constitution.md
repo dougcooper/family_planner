@@ -4,11 +4,11 @@ Version: 1.0.0 -> 1.1.0
 Modified Principles:
 - Updated: II. Comprehensive Testing Strategy - Added Feature Completion Requirement for test execution
 Templates requiring updates:
-- .specify/templates/plan-template.md (⚠ pending) - Add test execution step to feature completion checklist
-- .specify/templates/tasks-template.md (⚠ pending) - Include test verification as final task in each phase
+- .specify/templates/plan-template.md (✅ completed) - Added Feature Completion Checklist section with test execution verification
+- .specify/templates/tasks-template.md (✅ completed) - Added test verification tasks in each user story phase and final completion phase
 Follow-up TODOs:
-- Update implementation workflow to include test execution verification
-- Consider adding test reporting template
+- ✅ Update implementation workflow to include test execution verification - Templates updated with test verification steps
+- ✅ Consider adding test reporting template - Created .specify/templates/test-report-template.md
 -->
 # Family Planner Constitution
 

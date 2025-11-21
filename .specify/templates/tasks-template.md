@@ -95,7 +95,11 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T016 [US1] Add validation and error handling
 - [ ] T017 [US1] Add logging for user story 1 operations
 
-**Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
+### Verification for User Story 1
+
+- [ ] T017a [US1] Execute all tests for User Story 1 and verify they pass
+
+**Checkpoint**: At this point, User Story 1 should be fully functional, testable independently, and all tests should pass
 
 ---
 
@@ -117,7 +121,11 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
 - [ ] T023 [US2] Integrate with User Story 1 components (if needed)
 
-**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
+### Verification for User Story 2
+
+- [ ] T023a [US2] Execute all tests for User Story 2 and verify they pass
+
+**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently, and all tests should pass
 
 ---
 
@@ -138,7 +146,11 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T027 [US3] Implement [Service] in src/services/[service].py
 - [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
 
-**Checkpoint**: All user stories should now be independently functional
+### Verification for User Story 3
+
+- [ ] T028a [US3] Execute all tests for User Story 3 and verify they pass
+
+**Checkpoint**: All user stories should now be independently functional, and all tests should pass
 
 ---
 
@@ -156,6 +168,22 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
 - [ ] TXXX Security hardening
 - [ ] TXXX Run quickstart.md validation
+
+---
+
+## Final Phase: Test Verification & Feature Completion
+
+**Purpose**: Execute all tests and verify feature completion per Constitution Principle II
+
+**⚠️ MANDATORY**: Feature is NOT complete until all items below are verified
+
+- [ ] TXXX Execute full test suite for all affected modules
+- [ ] TXXX Verify all new tests pass (100% pass rate required)
+- [ ] TXXX Verify no existing tests were broken by changes
+- [ ] TXXX Document test execution results (command, pass/fail counts, coverage)
+- [ ] TXXX Update plan.md with test results in Feature Completion Checklist section
+
+**Test Execution Command**: [Document the command to run all tests, e.g., `npm test`, `pytest`, etc.]
 
 ---
 
@@ -215,17 +243,20 @@ Task: "Create [Entity2] model in src/models/[entity2].py"
 
 1. Complete Phase 1: Setup
 2. Complete Phase 2: Foundational (CRITICAL - blocks all stories)
-3. Complete Phase 3: User Story 1
-4. **STOP and VALIDATE**: Test User Story 1 independently
-5. Deploy/demo if ready
+3. Complete Phase 3: User Story 1 (including implementation)
+4. **Execute Tests**: Run all tests for User Story 1 and verify 100% pass rate
+5. **STOP and VALIDATE**: Test User Story 1 independently
+6. Complete Final Phase: Test Verification & Feature Completion
+7. Deploy/demo if ready
 
 ### Incremental Delivery
 
 1. Complete Setup + Foundational → Foundation ready
-2. Add User Story 1 → Test independently → Deploy/Demo (MVP!)
-3. Add User Story 2 → Test independently → Deploy/Demo
-4. Add User Story 3 → Test independently → Deploy/Demo
-5. Each story adds value without breaking previous stories
+2. Add User Story 1 → Execute and verify tests → Test independently → Deploy/Demo (MVP!)
+3. Add User Story 2 → Execute and verify tests → Test independently → Deploy/Demo
+4. Add User Story 3 → Execute and verify tests → Test independently → Deploy/Demo
+5. Complete Final Phase: Test Verification & Feature Completion
+6. Each story adds value without breaking previous stories
 
 ### Parallel Team Strategy
 
@@ -246,6 +277,8 @@ With multiple developers:
 - [Story] label maps task to specific user story for traceability
 - Each user story should be independently completable and testable
 - Verify tests fail before implementing
+- **Execute all tests for each user story before moving to the next (per Constitution Principle II)**
+- **Execute full test suite in Final Phase before feature is considered complete**
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
