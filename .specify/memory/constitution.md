@@ -1,50 +1,42 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+SYNC IMPACT REPORT
+Version: 0.0.0 -> 1.0.0
+Modified Principles:
+- Added: I. Code Quality & Maintainability
+- Added: II. Comprehensive Testing Strategy
+- Added: III. Consistent User Experience
+- Added: IV. Performance & Efficiency
+Templates requiring updates:
+- .specify/templates/tasks-template.md (✅ updated)
+-->
+# Family Planner Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Code Quality & Maintainability
+Code must be clean, readable, and self-documenting. Adhere to language-specific style guides (e.g., PEP 8 for Python, ESLint for JS/TS). Functions should be small and focused (Single Responsibility Principle). Comments should explain "why", not "what". Dead code must be removed.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Comprehensive Testing Strategy
+Test-Driven Development (TDD) is encouraged. Unit tests are mandatory for all business logic and utility functions. Integration tests are required for critical paths and API endpoints. A 100% pass rate is required for CI/CD pipelines. Mock external dependencies to ensure test isolation and speed.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Consistent User Experience
+UI/UX must be intuitive and consistent across the application. Follow established design patterns and component libraries to ensure a unified look and feel. Accessibility (a11y) is a priority; all interfaces must be navigable via keyboard and screen readers. Error messages must be user-friendly and actionable.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
-
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
-
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
-
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
-
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### IV. Performance & Efficiency
+The application must be responsive and performant. Optimize for fast load times (< 2s for main content) and minimal resource usage. Database queries must be efficient and indexed where appropriate. Avoid blocking the main thread in UI applications.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+### Amendment Process
+This constitution supersedes all other practices. Amendments require a Pull Request with documentation, team approval, and a migration plan for existing code.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+### Versioning
+This constitution follows Semantic Versioning (MAJOR.MINOR.PATCH).
+- MAJOR: Backward incompatible governance or principle removals/redefinitions.
+- MINOR: New principle/section added or materially expanded guidance.
+- PATCH: Clarifications, wording, typo fixes.
+
+### Compliance
+All PRs and code reviews must verify compliance with these principles. Non-compliant code will be rejected. Complexity must be justified.
+
+**Version**: 1.0.0 | **Ratified**: 2025-11-19 | **Last Amended**: 2025-11-19

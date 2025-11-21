@@ -1,0 +1,149 @@
+openapi: 3.0.0
+info:
+  title: Family Dashboard API
+  version: 1.0.0
+  description: API for Family Dashboard synchronization and authentication.
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new Family and Admin User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                family_name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Family created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /auth/login:
+    post:
+      summary: Initial device login (Kiosk setup)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Session established
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /sync/pull:
+    get:
+      summary: Pull changes from server
+      parameters:
+        - in: query
+          name: last_pulled_at
+          schema:
+            type: integer
+          description: Timestamp of last sync
+        - in: query
+          name: schema_version
+          schema:
+            type: integer
+        - in: query
+          name: migration
+          schema:
+            type: object # Complex JSON object for migration info
+      responses:
+        '200':
+          description: Changes to apply locally
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  changes:
+                    type: object
+                    description: Keyed by table name, containing created/updated/deleted arrays
+                  timestamp:
+                    type: integer
+
+  /sync/push:
+    post:
+      summary: Push local changes to server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                changes:
+                  type: object
+                  description: Keyed by table name, containing created/updated/deleted arrays
+                last_pulled_at:
+                  type: integer
+      responses:
+        '200':
+          description: Sync successful
+        '409':
+          description: Conflict, pull required
+
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  version:
+                    type: string
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        role:
+          type: string
+          enum: [PARENT, CHILD]
