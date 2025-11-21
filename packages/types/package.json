@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "test": "echo 'No tests for types package'"
   },
   "devDependencies": {
     "typescript": "^5.3.3"

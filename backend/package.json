@@ -10,7 +10,7 @@
     "start": "node dist/app.js",
     "migrate": "drizzle-kit migrate",
     "generate": "drizzle-kit generate:pg",
-    "test": "vitest"
+    "test": "vitest run"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",

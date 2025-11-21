@@ -13,11 +13,18 @@
     "dev:frontend": "npm run web --workspace=frontend",
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
-    "docker:up": "docker-compose up --build",
-    "docker:down": "docker-compose down"
+    "test:e2e": "jest --config jest.config.js",
+    "test:e2e:with-backend": "npm run docker:backend:up && sleep 5 && npm run test:e2e; npm run docker:down",
+    "docker:up": "docker compose up --build",
+    "docker:backend:up": "docker compose up -d postgres backend",
+    "docker:down": "docker compose down"
   },
   "devDependencies": {
-    "@moonrepo/cli": "^1.20.0"
+    "@moonrepo/cli": "^1.20.0",
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.5",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=20.0.0",
