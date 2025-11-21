@@ -7,6 +7,7 @@ interface UserData {
   id: string;
   name: string;
   role: string;
+  familyId: string;
 }
 
 interface AuthState {
@@ -19,6 +20,9 @@ class AuthProvider {
   private token: string | null = null;
   private user: UserData | null = null;
   private listeners: Set<(state: AuthState) => void> = new Set();
+  private kioskTimeoutId: NodeJS.Timeout | null = null;
+  private kioskTimeoutSeconds: number = 120; // Default 2 minutes
+  private lastActivityTime: number = Date.now();
 
   async initialize(): Promise<void> {
     try {
@@ -31,10 +35,81 @@ class AuthProvider {
         this.token = token;
         this.user = JSON.parse(userData);
         this.notifyListeners();
+        
+        // Load family settings and start kiosk timer
+        await this.loadFamilySettings();
+        this.startKioskTimer();
       }
     } catch (error) {
       console.error('Auth initialization failed:', error);
     }
+  }
+
+  private async loadFamilySettings(): Promise<void> {
+    if (!this.user?.familyId) return;
+
+    try {
+      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_URL}/families/${this.user.familyId}`, {
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+        },
+      });
+
+      if (response.ok) {
+        const family = await response.json();
+        this.kioskTimeoutSeconds = family.kiosk_timeout_seconds || 120;
+      }
+    } catch (error) {
+      console.error('Failed to load family settings:', error);
+    }
+  }
+
+  private startKioskTimer(): void {
+    this.stopKioskTimer();
+    this.lastActivityTime = Date.now();
+    this.scheduleKioskTimeout();
+  }
+
+  private stopKioskTimer(): void {
+    if (this.kioskTimeoutId) {
+      clearTimeout(this.kioskTimeoutId);
+      this.kioskTimeoutId = null;
+    }
+  }
+
+  private scheduleKioskTimeout(): void {
+    this.stopKioskTimer();
+    
+    this.kioskTimeoutId = setTimeout(() => {
+      const inactiveTime = (Date.now() - this.lastActivityTime) / 1000;
+      
+      if (inactiveTime >= this.kioskTimeoutSeconds) {
+        console.log('Kiosk timeout - logging out due to inactivity');
+        this.logout();
+      } else {
+        // Re-schedule if activity was detected
+        this.scheduleKioskTimeout();
+      }
+    }, this.kioskTimeoutSeconds * 1000);
+  }
+
+  resetKioskTimer(): void {
+    this.lastActivityTime = Date.now();
+    if (this.token) {
+      this.scheduleKioskTimeout();
+    }
+  }
+
+  setKioskTimeout(seconds: number): void {
+    this.kioskTimeoutSeconds = seconds;
+    if (this.token) {
+      this.startKioskTimer();
+    }
+  }
+
+  getKioskTimeout(): number {
+    return this.kioskTimeoutSeconds;
   }
 
   async login(email: string, password: string): Promise<void> {
@@ -52,6 +127,8 @@ class AuthProvider {
 
     const data = await response.json();
     await this.setAuthData(data.token, data.user);
+    await this.loadFamilySettings();
+    this.startKioskTimer();
   }
 
   async register(familyName: string, email: string, password: string, name: string): Promise<void> {
@@ -69,9 +146,12 @@ class AuthProvider {
 
     const data = await response.json();
     await this.setAuthData(data.token, data.user);
+    await this.loadFamilySettings();
+    this.startKioskTimer();
   }
 
   async logout(): Promise<void> {
+    this.stopKioskTimer();
     this.token = null;
     this.user = null;
     await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, USER_DATA_KEY]);
