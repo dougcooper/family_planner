@@ -33,6 +33,15 @@
 
 [Gates determined based on constitution file]
 
+### Feature Completion Requirements
+
+Per Constitution Principle II, before any feature is considered complete:
+
+- [ ] All implemented tests MUST be executed
+- [ ] All new tests MUST pass
+- [ ] No existing tests broken by changes
+- [ ] Test results documented in feature completion report
+
 ## Project Structure
 
 ### Documentation (this feature)
