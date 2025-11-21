@@ -51,14 +51,14 @@
 **Goal**: Gamified task system with points and rewards.
 **Story**: [US2] As a family member, I want to earn points for tasks.
 
-- [ ] T025 [US2] Define Reward schema in `backend/src/db/schema.ts`
-- [ ] T026 [US2] Define Reward model in `frontend/src/model/schema.ts`
-- [ ] T027 [US2] Update Task schema for status/points in `backend/src/db/schema.ts`
-- [ ] T028 [US2] Implement Task Completion Logic (Status Transition) in `frontend/src/logic/task.ts`
-- [ ] T029 [US2] Implement Point Awarding Logic (Parent Approval) in `backend/src/services/points.ts`
-- [ ] T030 [US2] Create Task Detail/Edit View in `frontend/src/components/tasks/TaskDetail.tsx`
-- [ ] T031 [US2] Create Reward Catalog View in `frontend/src/components/rewards/RewardCatalog.tsx`
-- [ ] T032 [US2] Implement Reward Redemption Logic in `frontend/src/logic/rewards.ts`
+- [X] T025 [US2] Define Reward schema in `backend/src/db/schema.ts`
+- [X] T026 [US2] Define Reward model in `frontend/src/model/schema.ts`
+- [X] T027 [US2] Update Task schema for status/points in `backend/src/db/schema.ts`
+- [X] T028 [US2] Implement Task Completion Logic (Status Transition) in `frontend/src/logic/task.ts`
+- [X] T029 [US2] Implement Point Awarding Logic (Parent Approval) in `backend/src/services/points.ts`
+- [X] T030 [US2] Create Task Detail/Edit View in `frontend/src/components/tasks/TaskDetail.tsx`
+- [X] T031 [US2] Create Reward Catalog View in `frontend/src/components/rewards/RewardCatalog.tsx`
+- [X] T032 [US2] Implement Reward Redemption Logic in `frontend/src/logic/rewards.ts`
 
 ## Phase 5: User Story 3 - Shared Lists & Meal Planning (P2)
 
