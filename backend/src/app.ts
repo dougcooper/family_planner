@@ -1,5 +1,10 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import { register } from './api/auth/register.js';
+import { login } from './api/auth/login.js';
+import { pullChanges } from './sync/pull.js';
+import { pushChanges } from './sync/push.js';
+import { authenticate } from './middleware/auth.js';
 
 const app = Fastify({
   logger: {
@@ -17,6 +22,14 @@ await app.register(cors, {
 app.get('/health', async () => {
   return { status: 'ok', version: '1.0.0' };
 });
+
+// Auth routes
+app.post('/auth/register', register);
+app.post('/auth/login', login);
+
+// Sync routes (protected)
+app.get('/sync/pull', { preHandler: authenticate }, pullChanges);
+app.post('/sync/push', { preHandler: authenticate }, pushChanges);
 
 // Server startup
 const start = async () => {

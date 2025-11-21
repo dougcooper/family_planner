@@ -21,15 +21,15 @@
 **Goal**: Establish Authentication, Sync Protocol, and User Management.
 **Blocking**: Must be completed before User Stories.
 
-- [ ] T008 Define Family, User, Invitation, Notification schemas in `backend/src/db/schema.ts`
-- [ ] T009 Define Family, User, Notification models in `frontend/src/model/schema.ts`
-- [ ] T010 Implement Registration endpoint (Family + Admin) in `backend/src/api/auth/register.ts`
-- [ ] T011 Implement Login endpoint (Email/Pass -> Token) in `backend/src/api/auth/login.ts`
-- [ ] T012 Implement Sync Pull endpoint logic in `backend/src/sync/pull.ts`
-- [ ] T013 Implement Sync Push endpoint logic in `backend/src/sync/push.ts`
-- [ ] T014 Configure Web Push (VAPID) service in `backend/src/services/notifications.ts`
-- [ ] T015 Implement Frontend Auth Provider (Persistence) in `frontend/src/logic/auth.ts`
-- [ ] T016 Implement Frontend Sync Logic (WatermelonDB Adapter) in `frontend/src/logic/sync.ts`
+- [X] T008 Define Family, User, Invitation, Notification schemas in `backend/src/db/schema.ts`
+- [X] T009 Define Family, User, Notification models in `frontend/src/model/schema.ts`
+- [X] T010 Implement Registration endpoint (Family + Admin) in `backend/src/api/auth/register.ts`
+- [X] T011 Implement Login endpoint (Email/Pass -> Token) in `backend/src/api/auth/login.ts`
+- [X] T012 Implement Sync Pull endpoint logic in `backend/src/sync/pull.ts`
+- [X] T013 Implement Sync Push endpoint logic in `backend/src/sync/push.ts`
+- [X] T014 Configure Web Push (VAPID) service in `backend/src/services/notifications.ts`
+- [X] T015 Implement Frontend Auth Provider (Persistence) in `frontend/src/logic/auth.ts`
+- [X] T016 Implement Frontend Sync Logic (WatermelonDB Adapter) in `frontend/src/logic/sync.ts`
 - [X] T043 [P] Implement PIN Pad / Profile Switcher UI Component in `frontend/src/components/auth/PinPad.tsx`
 
 ## Phase 3: User Story 1 - Central Family Dashboard (P1)
