@@ -3,7 +3,7 @@ import { db } from '../db/index.js';
 import { users, families, notifications, tasks, events, mealPlans, groceryItems, rewards } from '../db/schema.js';
 import { eq, gt, and } from 'drizzle-orm';
 
-interface SyncPullQuery {
+export interface SyncPullQuery {
   last_pulled_at?: string;
   schema_version?: string;
 }

@@ -2,8 +2,8 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { register } from './api/auth/register.js';
 import { login } from './api/auth/login.js';
-import { pullChanges } from './sync/pull.js';
-import { pushChanges } from './sync/push.js';
+import { pullChanges, SyncPullQuery } from './sync/pull.js';
+import { pushChanges, SyncPushBody } from './sync/push.js';
 import { authenticate } from './middleware/auth.js';
 
 const app = Fastify({
@@ -28,8 +28,8 @@ app.post('/auth/register', register);
 app.post('/auth/login', login);
 
 // Sync routes (protected)
-app.get('/sync/pull', { preHandler: authenticate }, pullChanges);
-app.post('/sync/push', { preHandler: authenticate }, pushChanges);
+app.get<{ Querystring: SyncPullQuery }>('/sync/pull', { preHandler: authenticate }, pullChanges);
+app.post<{ Body: SyncPushBody }>('/sync/push', { preHandler: authenticate }, pushChanges);
 
 // Server startup
 const start = async () => {

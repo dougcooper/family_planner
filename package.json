@@ -1,23 +1,26 @@
 {
   "name": "family-planner",
   "version": "1.0.0",
+  "packageManager": "npm@11.6.2",
   "private": true,
   "description": "Family Dashboard - Monorepo",
   "workspaces": [
     "backend",
     "frontend",
-    "packages/*"
+    "packages/*",
+    "tests/e2e"
   ],
   "scripts": {
+    "dev": "turbo run dev",
     "dev:backend": "npm run dev --workspace=family-planner-backend",
     "dev:frontend": "npm run start --workspace=family-planner-frontend",
     "dev:frontend:web": "npm run web --workspace=family-planner-frontend",
-    "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces",
-    "test:e2e": "jest --config jest.config.js",
-    "test:e2e:with-backend": "npm run docker:backend:up && sleep 5 && npm run test:e2e; npm run docker:down",
-    "lint": "npm run lint --workspaces --if-present",
-    "lint:fix": "npm run lint:fix --workspaces --if-present",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "test:e2e:with-backend": "npm run docker:backend:up && sleep 5 && turbo run test:e2e; npm run docker:down",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
     "docker:up": "docker compose up --build",
     "docker:backend:up": "docker compose up -d postgres backend",
     "docker:down": "docker compose down",
@@ -30,6 +33,7 @@
     "lint-staged": "^16.2.7",
     "metro-minify-terser": "^0.83.3",
     "ts-jest": "^29.4.5",
+    "turbo": "^2.6.1",
     "typescript": "^5.9.3"
   },
   "engines": {

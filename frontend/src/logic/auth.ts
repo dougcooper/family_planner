@@ -20,7 +20,7 @@ class AuthProvider {
   private token: string | null = null;
   private user: UserData | null = null;
   private listeners: Set<(state: AuthState) => void> = new Set();
-  private kioskTimeoutId: NodeJS.Timeout | null = null;
+  private kioskTimeoutId: any = null;
   private kioskTimeoutSeconds: number = 120; // Default 2 minutes
   private lastActivityTime: number = Date.now();
 

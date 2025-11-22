@@ -8,7 +8,7 @@ interface ChangeRecord {
   [key: string]: unknown;
 }
 
-interface SyncPushBody {
+export interface SyncPushBody {
   changes: {
     [tableName: string]: {
       created: ChangeRecord[];
@@ -35,37 +35,43 @@ export async function pushChanges(
         switch (tableName) {
           case 'notifications':
             await db.insert(notifications).values({
-              ...(record as unknown as Record<string, never>),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(record as any),
               userId,
             });
             break;
           case 'tasks':
             await db.insert(tasks).values({
-              ...(record as unknown as Record<string, never>),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(record as any),
               familyId,
             });
             break;
           case 'events':
             await db.insert(events).values({
-              ...(record as unknown as Record<string, never>),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(record as any),
               familyId,
             });
             break;
           case 'meal_plans':
             await db.insert(mealPlans).values({
-              ...(record as unknown as Record<string, never>),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(record as any),
               familyId,
             });
             break;
           case 'grocery_items':
             await db.insert(groceryItems).values({
-              ...(record as unknown as Record<string, never>),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(record as any),
               familyId,
             });
             break;
           case 'rewards':
             await db.insert(rewards).values({
-              ...(record as unknown as Record<string, never>),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(record as any),
               familyId,
             });
             break;
