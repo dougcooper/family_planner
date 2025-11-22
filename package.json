@@ -10,8 +10,8 @@
   ],
   "scripts": {
     "dev:backend": "npm run dev --workspace=backend",
-    "dev:frontend": "frontend/node_modules/.bin/expo start frontend",
-    "dev:frontend:web": "frontend/node_modules/.bin/expo start frontend --web",
+    "dev:frontend": "npm run start --workspace=frontend",
+    "dev:frontend:web": "npm run web --workspace=frontend",
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "test:e2e": "jest --config jest.config.js",
@@ -28,6 +28,7 @@
     "husky": "^9.1.7",
     "jest": "^29.7.0",
     "lint-staged": "^16.2.7",
+    "metro-minify-terser": "^0.83.3",
     "ts-jest": "^29.4.5",
     "typescript": "^5.9.3"
   },

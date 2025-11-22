@@ -2,21 +2,19 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
 
+const projectRoot = __dirname;
+const workspaceRoot = path.resolve(projectRoot, '..');
+
 /** @type {import('expo/metro-config').MetroConfig} */
-const config = getDefaultConfig(__dirname);
+const config = getDefaultConfig(projectRoot);
 
-// Ensure project root is the frontend directory
-config.projectRoot = __dirname;
-config.watchFolders = [__dirname];
+// 1. Watch all files within the monorepo
+config.watchFolders = [workspaceRoot];
 
-// Prevent Metro from looking in parent node_modules
-config.resolver = {
-  ...config.resolver,
-  nodeModulesPaths: [path.resolve(__dirname, 'node_modules')],
-  blockList: [
-    // Block only the parent's node_modules, not nested ones within our frontend/node_modules
-    new RegExp(path.resolve(__dirname, '..', 'node_modules').replace(/\\/g, '/') + '/(?!family-planner-frontend)'),
-  ],
-};
+// 2. Let Metro know where to resolve packages and in what order
+config.resolver.nodeModulesPaths = [
+  path.resolve(projectRoot, 'node_modules'),
+  path.resolve(workspaceRoot, 'node_modules'),
+];
 
 module.exports = config;
