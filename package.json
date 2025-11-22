@@ -10,7 +10,8 @@
   ],
   "scripts": {
     "dev:backend": "npm run dev --workspace=backend",
-    "dev:frontend": "npm run web --workspace=frontend",
+    "dev:frontend": "frontend/node_modules/.bin/expo start frontend",
+    "dev:frontend:web": "frontend/node_modules/.bin/expo start frontend --web",
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "test:e2e": "jest --config jest.config.js",
