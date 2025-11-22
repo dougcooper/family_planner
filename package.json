@@ -9,9 +9,9 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:backend": "npm run dev --workspace=backend",
-    "dev:frontend": "npm run start --workspace=frontend",
-    "dev:frontend:web": "npm run web --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=family-planner-backend",
+    "dev:frontend": "npm run start --workspace=family-planner-frontend",
+    "dev:frontend:web": "npm run web --workspace=family-planner-frontend",
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "test:e2e": "jest --config jest.config.js",
@@ -38,10 +38,10 @@
   },
   "lint-staged": {
     "backend/**/*.ts": [
-      "npm run lint:fix --workspace=backend"
+      "npm run lint:staged --workspace=family-planner-backend --"
     ],
     "frontend/**/*.{ts,tsx}": [
-      "npm run lint:fix --workspace=frontend"
+      "npm run lint:staged --workspace=family-planner-frontend --"
     ]
   }
 }

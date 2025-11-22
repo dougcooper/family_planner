@@ -11,8 +11,9 @@
     "migrate": "drizzle-kit migrate",
     "generate": "drizzle-kit generate:pg",
     "test": "vitest run",
-    "lint": "eslint src tests --ext .ts",
-    "lint:fix": "eslint src tests --ext .ts --fix"
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix",
+    "lint:staged": "eslint --fix"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",
