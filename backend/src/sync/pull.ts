@@ -8,6 +8,40 @@ export interface SyncPullQuery {
   schema_version?: string;
 }
 
+// Helper to map Drizzle camelCase to WatermelonDB snake_case
+const toWatermelon = (record: Record<string, unknown>) => {
+  const newRecord: Record<string, unknown> = {};
+  
+  for (const [key, value] of Object.entries(record)) {
+    // Handle timestamps
+    if (key === 'createdAt') {
+      newRecord.created_at = new Date(value as string | number | Date).getTime();
+      continue;
+    }
+    if (key === 'updatedAt') {
+      newRecord.updated_at = new Date(value as string | number | Date).getTime();
+      continue;
+    }
+    if (key === 'dueDate' && value) {
+      newRecord.due_date = new Date(value as string | number | Date).getTime();
+      continue;
+    }
+    if (key === 'startTime') {
+      newRecord.start_time = new Date(value as string | number | Date).getTime();
+      continue;
+    }
+    if (key === 'endTime') {
+      newRecord.end_time = new Date(value as string | number | Date).getTime();
+      continue;
+    }
+
+    // Handle camelCase to snake_case mapping
+    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    newRecord[snakeKey] = value;
+  }
+  return newRecord;
+};
+
 export async function pullChanges(
   request: FastifyRequest<{ Querystring: SyncPullQuery }>,
   reply: FastifyReply
@@ -19,7 +53,7 @@ export async function pullChanges(
       ? parseInt(request.query.last_pulled_at, 10) 
       : 0;
 
-    const lastPulledDate = new Date(lastPulledAt);
+    const lastPulledDate = isNaN(lastPulledAt) ? new Date(0) : new Date(lastPulledAt);
 
     // Fetch all changes since last sync
     const [
@@ -104,43 +138,43 @@ export async function pullChanges(
     // Format response for WatermelonDB
     const changes = {
       families: {
-        created: familyChanges.filter(f => f.createdAt > lastPulledDate),
-        updated: familyChanges.filter(f => f.createdAt <= lastPulledDate),
+        created: familyChanges.filter(f => f.createdAt > lastPulledDate).map(toWatermelon),
+        updated: familyChanges.filter(f => f.createdAt <= lastPulledDate).map(toWatermelon),
         deleted: [],
       },
       users: {
-        created: userChanges.filter(u => u.createdAt > lastPulledDate),
-        updated: userChanges.filter(u => u.createdAt <= lastPulledDate),
+        created: userChanges.filter(u => u.createdAt > lastPulledDate).map(toWatermelon),
+        updated: userChanges.filter(u => u.createdAt <= lastPulledDate).map(toWatermelon),
         deleted: [],
       },
       notifications: {
-        created: notificationChanges.filter(n => n.createdAt > lastPulledDate),
-        updated: notificationChanges.filter(n => n.createdAt <= lastPulledDate),
+        created: notificationChanges.filter(n => n.createdAt > lastPulledDate).map(toWatermelon),
+        updated: notificationChanges.filter(n => n.createdAt <= lastPulledDate).map(toWatermelon),
         deleted: [],
       },
       tasks: {
-        created: taskChanges.filter(t => t.createdAt > lastPulledDate),
-        updated: taskChanges.filter(t => t.createdAt <= lastPulledDate),
+        created: taskChanges.filter(t => t.createdAt > lastPulledDate).map(toWatermelon),
+        updated: taskChanges.filter(t => t.createdAt <= lastPulledDate).map(toWatermelon),
         deleted: [],
       },
       events: {
-        created: eventChanges.filter(e => e.createdAt > lastPulledDate),
-        updated: eventChanges.filter(e => e.createdAt <= lastPulledDate),
+        created: eventChanges.filter(e => e.createdAt > lastPulledDate).map(toWatermelon),
+        updated: eventChanges.filter(e => e.createdAt <= lastPulledDate).map(toWatermelon),
         deleted: [],
       },
       meal_plans: {
-        created: mealPlanChanges.filter(m => m.createdAt > lastPulledDate),
-        updated: mealPlanChanges.filter(m => m.createdAt <= lastPulledDate),
+        created: mealPlanChanges.filter(m => m.createdAt > lastPulledDate).map(toWatermelon),
+        updated: mealPlanChanges.filter(m => m.createdAt <= lastPulledDate).map(toWatermelon),
         deleted: [],
       },
       grocery_items: {
-        created: groceryItemChanges.filter(g => g.createdAt > lastPulledDate),
-        updated: groceryItemChanges.filter(g => g.createdAt <= lastPulledDate),
+        created: groceryItemChanges.filter(g => g.createdAt > lastPulledDate).map(toWatermelon),
+        updated: groceryItemChanges.filter(g => g.createdAt <= lastPulledDate).map(toWatermelon),
         deleted: [],
       },
       rewards: {
-        created: rewardChanges.filter(r => r.createdAt > lastPulledDate),
-        updated: rewardChanges.filter(r => r.createdAt <= lastPulledDate),
+        created: rewardChanges.filter(r => r.createdAt > lastPulledDate).map(toWatermelon),
+        updated: rewardChanges.filter(r => r.createdAt <= lastPulledDate).map(toWatermelon),
         deleted: [],
       },
     };

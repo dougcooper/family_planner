@@ -62,3 +62,39 @@ export async function resetTask(database: Database, taskId: string): Promise<Tas
 
   return task;
 }
+
+export async function createTask(
+  database: Database,
+  {
+    title,
+    description,
+    points,
+    assigneeId,
+    familyId,
+  }: {
+    title: string;
+    description?: string;
+    points: number;
+    assigneeId: string;
+    familyId: string;
+  }
+): Promise<Task> {
+  return await database.write(async () => {
+    return await database.get<Task>('tasks').create((t) => {
+      t.title = title;
+      t.description = description;
+      t.points = points;
+      t.assigneeId = assigneeId;
+      t.familyId = familyId;
+      t.status = 'TODO';
+    });
+  });
+}
+
+export async function deleteTask(database: Database, taskId: string): Promise<void> {
+  const task = await database.get<Task>('tasks').find(taskId);
+  
+  await database.write(async () => {
+    await task.markAsDeleted();
+  });
+}

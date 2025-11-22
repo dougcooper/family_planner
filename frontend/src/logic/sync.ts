@@ -24,7 +24,9 @@ export async function syncDatabase(): Promise<void> {
       );
 
       if (!response.ok) {
-        throw new Error('Pull sync failed');
+        const errorText = await response.text();
+        console.error('Pull sync failed:', response.status, errorText);
+        throw new Error(`Pull sync failed: ${response.status} ${errorText}`);
       }
 
       const { changes, timestamp } = await response.json();
@@ -35,6 +37,7 @@ export async function syncDatabase(): Promise<void> {
       };
     },
     pushChanges: async ({ changes, lastPulledAt }) => {
+      console.log('Pushing changes:', JSON.stringify(changes, null, 2));
       const response = await fetch(`${API_URL}/sync/push`, {
         method: 'POST',
         headers: {
@@ -48,10 +51,12 @@ export async function syncDatabase(): Promise<void> {
       });
 
       if (!response.ok) {
-        throw new Error('Push sync failed');
+        const errorText = await response.text();
+        console.error('Push sync failed:', response.status, errorText);
+        throw new Error(`Push sync failed: ${response.status} ${errorText}`);
       }
     },
-    migrationsEnabledAtVersion: 1,
+    // migrationsEnabledAtVersion: 1,
   });
 }
 

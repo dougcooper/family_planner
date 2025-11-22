@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-import { Task } from '../../model/models';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
+import { Task, User } from '../../model/models';
 import { Database } from '@nozbe/watermelondb';
-import { markTaskPendingReview, resetTask } from '../../logic/task';
+import { markTaskPendingReview, resetTask, approveTask, deleteTask } from '../../logic/task';
 
 interface TaskDetailProps {
   task: Task;
@@ -17,6 +17,26 @@ export function TaskDetail({ task, database, currentUserId, currentUserRole, onC
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
   const [points, setPoints] = useState(task.points.toString());
+  const [assigneeId, setAssigneeId] = useState(task.assigneeId);
+  const [assigneeName, setAssigneeName] = useState('Loading...');
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const user = await database.get<User>('users').find(task.assigneeId);
+        setAssigneeName(user.name);
+      } catch {
+        setAssigneeName('Unknown');
+      }
+
+      if (currentUserRole === 'PARENT') {
+        const allUsers = await database.get<User>('users').query().fetch();
+        setUsers(allUsers);
+      }
+    };
+    loadData();
+  }, [task.assigneeId, database, currentUserRole]);
 
   const isAssignedToCurrentUser = task.assigneeId === currentUserId;
   const canEdit = currentUserRole === 'PARENT' || (isAssignedToCurrentUser && task.status === 'TODO');
@@ -29,6 +49,7 @@ export function TaskDetail({ task, database, currentUserId, currentUserRole, onC
         t.description = description;
         if (currentUserRole === 'PARENT') {
           t.points = parseInt(points, 10);
+          t.assigneeId = assigneeId;
         }
       });
     });
@@ -51,6 +72,50 @@ export function TaskDetail({ task, database, currentUserId, currentUserRole, onC
     } catch (error) {
       console.error('Error resetting task:', error);
       alert(error instanceof Error ? error.message : 'Failed to reset task');
+    }
+  };
+
+  const handleApprove = async () => {
+    try {
+      await approveTask(database, task.id);
+      onClose();
+    } catch (error) {
+      console.error('Error approving task:', error);
+      alert(error instanceof Error ? error.message : 'Failed to approve task');
+    }
+  };
+
+  const handleDelete = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to delete this task?')) {
+        deleteTask(database, task.id)
+          .then(() => onClose())
+          .catch((error) => {
+            console.error('Error deleting task:', error);
+            alert('Failed to delete task');
+          });
+      }
+    } else {
+      Alert.alert(
+        'Delete Task',
+        'Are you sure you want to delete this task?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteTask(database, task.id);
+                onClose();
+              } catch (error) {
+                console.error('Error deleting task:', error);
+                alert('Failed to delete task');
+              }
+            },
+          },
+        ]
+      );
     }
   };
 
@@ -141,15 +206,42 @@ export function TaskDetail({ task, database, currentUserId, currentUserRole, onC
             )}
           </View>
 
-          {task.dueDate && (
-            <View style={[styles.section, styles.halfWidth]}>
-              <Text style={styles.label}>Due Date</Text>
-              <Text style={styles.value}>
-                {task.dueDate.toLocaleDateString()}
-              </Text>
-            </View>
-          )}
+          <View style={[styles.section, styles.halfWidth]}>
+            <Text style={styles.label}>Assigned To</Text>
+            {isEditing && currentUserRole === 'PARENT' ? (
+              <View style={styles.userList}>
+                {users.map(user => (
+                  <TouchableOpacity
+                    key={user.id}
+                    style={[
+                      styles.userChip,
+                      assigneeId === user.id && styles.userChipSelected
+                    ]}
+                    onPress={() => setAssigneeId(user.id)}
+                  >
+                    <Text style={[
+                      styles.userChipText,
+                      assigneeId === user.id && styles.userChipTextSelected
+                    ]}>
+                      {user.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.value}>{assigneeName}</Text>
+            )}
+          </View>
         </View>
+
+        {task.dueDate && (
+          <View style={styles.section}>
+            <Text style={styles.label}>Due Date</Text>
+            <Text style={styles.value}>
+              {task.dueDate.toLocaleDateString()}
+            </Text>
+          </View>
+        )}
 
         {task.recurrenceRule && (
           <View style={styles.section}>
@@ -196,12 +288,32 @@ export function TaskDetail({ task, database, currentUserId, currentUserRole, onC
                 </TouchableOpacity>
               )}
 
+              {currentUserRole === 'PARENT' && task.status === 'PENDING_REVIEW' && (
+                <TouchableOpacity 
+                  style={styles.buttonPrimary} 
+                  onPress={handleApprove}
+                >
+                  <Text style={styles.buttonPrimaryText}>Approve & Award Points</Text>
+                </TouchableOpacity>
+              )}
+
               {currentUserRole === 'PARENT' && task.status !== 'TODO' && (
                 <TouchableOpacity 
                   style={styles.buttonSecondary} 
                   onPress={handleReset}
                 >
-                  <Text style={styles.buttonSecondaryText}>Reset to To Do</Text>
+                  <Text style={styles.buttonSecondaryText}>
+                    {task.status === 'PENDING_REVIEW' ? 'Reject / Reset' : 'Reset to To Do'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {currentUserRole === 'PARENT' && (
+                <TouchableOpacity 
+                  style={styles.buttonDestructive} 
+                  onPress={handleDelete}
+                >
+                  <Text style={styles.buttonDestructiveText}>Delete Task</Text>
                 </TouchableOpacity>
               )}
             </>
@@ -321,5 +433,39 @@ const styles = StyleSheet.create({
     color: '#475569',
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonDestructive: {
+    backgroundColor: '#FEE2E2',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonDestructiveText: {
+    color: '#EF4444',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  userList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  userChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#E2E8F0',
+  },
+  userChipSelected: {
+    backgroundColor: '#3B82F6',
+  },
+  userChipText: {
+    fontSize: 14,
+    color: '#475569',
+  },
+  userChipTextSelected: {
+    color: 'white',
   },
 });

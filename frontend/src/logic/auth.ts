@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { database } from '../model/database';
+import { Family } from '../model/models';
 
 const AUTH_TOKEN_KEY = '@family_dashboard:auth_token';
 const USER_DATA_KEY = '@family_dashboard:user_data';
@@ -48,6 +50,17 @@ class AuthProvider {
   private async loadFamilySettings(): Promise<void> {
     if (!this.user?.familyId) return;
 
+    // Try loading from local database first (offline-first)
+    try {
+      const family = await database.get<Family>('families').find(this.user.familyId);
+      if (family) {
+        this.kioskTimeoutSeconds = family.kioskTimeoutSeconds || 120;
+        return;
+      }
+    } catch {
+      // Local lookup failed, fall back to API
+    }
+
     try {
       const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
       const response = await fetch(`${API_URL}/families/${this.user.familyId}`, {
@@ -67,6 +80,7 @@ class AuthProvider {
 
   private startKioskTimer(): void {
     this.stopKioskTimer();
+    if (this.kioskTimeoutSeconds <= 0) return;
     this.lastActivityTime = Date.now();
     this.scheduleKioskTimeout();
   }
@@ -81,6 +95,8 @@ class AuthProvider {
   private scheduleKioskTimeout(): void {
     this.stopKioskTimer();
     
+    if (this.kioskTimeoutSeconds <= 0) return;
+
     this.kioskTimeoutId = setTimeout(() => {
       const inactiveTime = (Date.now() - this.lastActivityTime) / 1000;
       

@@ -1,7 +1,7 @@
 import { Tabs, Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { Home, CheckSquare, Utensils, List, Gift } from 'lucide-react-native';
+import { Home, CheckSquare, Utensils, List, Gift, Settings } from 'lucide-react-native';
 import { authProvider } from '../src/logic/auth';
 import { syncDatabase } from '../src/logic/sync';
 
@@ -11,6 +11,7 @@ const CheckSquareIcon = CheckSquare as any;
 const UtensilsIcon = Utensils as any;
 const ListIcon = List as any;
 const GiftIcon = Gift as any;
+const SettingsIcon = Settings as any;
 
 export default function RootLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -97,6 +98,14 @@ export default function RootLayout() {
           title: 'Rewards',
           headerShown: false,
           tabBarIcon: ({ color }: { color: string }) => <GiftIcon size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          headerShown: false,
+          tabBarIcon: ({ color }: { color: string }) => <SettingsIcon size={24} color={color} />,
         }}
       />
     </Tabs>

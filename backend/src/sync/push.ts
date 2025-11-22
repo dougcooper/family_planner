@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../db/index.js';
-import { users, notifications, tasks, events, mealPlans, groceryItems, rewards } from '../db/schema.js';
+import { users, notifications, tasks, events, mealPlans, groceryItems, rewards, families } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 
 interface ChangeRecord {
@@ -31,13 +31,21 @@ export async function pushChanges(
     // Process each table's changes
     for (const [tableName, tableChanges] of Object.entries(changes)) {
       // Handle created records
-      for (const record of tableChanges.created) {
+      for (const record of tableChanges.created || []) {
         switch (tableName) {
           case 'notifications':
             await db.insert(notifications).values({
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               ...(record as any),
               userId,
+            });
+            break;
+          case 'families':
+            await db.insert(families).values({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(record as any),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              kioskTimeoutSeconds: (record as any).kiosk_timeout_seconds,
             });
             break;
           case 'tasks':
@@ -79,8 +87,20 @@ export async function pushChanges(
       }
 
       // Handle updated records
-      for (const record of tableChanges.updated) {
+      for (const record of tableChanges.updated || []) {
         switch (tableName) {
+          case 'families':
+            await db
+              .update(families)
+              .set({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                name: (record as any).name,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                kioskTimeoutSeconds: (record as any).kiosk_timeout_seconds,
+                updatedAt: new Date(),
+              })
+              .where(eq(families.id, record.id));
+            break;
           case 'users':
             await db
               .update(users)
@@ -154,6 +174,7 @@ export async function pushChanges(
     return reply.send({ success: true });
   } catch (error) {
     request.log.error(error);
-    return reply.status(500).send({ error: 'Sync push failed' });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return reply.status(500).send({ error: `Sync push failed: ${errorMessage}` });
   }
 }

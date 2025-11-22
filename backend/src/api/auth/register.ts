@@ -65,6 +65,7 @@ export async function register(
         id: user.id,
         name: user.name,
         role: user.role,
+        familyId: user.familyId,
       },
     });
   } catch (error) {

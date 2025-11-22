@@ -1,34 +1,84 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, Platform, TouchableOpacity, Modal } from 'react-native';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Q } from '@nozbe/watermelondb';
 import { database } from '../src/model/database';
 import { Task } from '../src/model/models';
 import { DashboardLayout } from '../src/components/dashboard/DashboardLayout';
+import { TaskDetail } from '../src/components/tasks/TaskDetail';
+import { CreateTaskModal } from '../src/components/tasks/CreateTaskModal';
+import { authProvider } from '../src/logic/auth';
 
 interface TasksScreenProps {
   tasks: Task[];
 }
 
 const TasksScreen = ({ tasks }: TasksScreenProps) => {
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
+  const [currentUser, setCurrentUser] = useState(authProvider.getState().user);
+
+  useEffect(() => {
+    const unsubscribe = authProvider.subscribe((state) => {
+      setCurrentUser(state.user);
+    });
+    return unsubscribe;
+  }, []);
+
   const renderItem = ({ item }: { item: Task }) => (
-    <View style={styles.taskItem}>
-      <Text style={styles.taskTitle}>{item.title}</Text>
-      <Text style={styles.taskStatus}>{item.status}</Text>
-      <Text style={styles.taskPoints}>{item.points} pts</Text>
-    </View>
+    <TouchableOpacity onPress={() => setSelectedTask(item)}>
+      <View style={styles.taskItem}>
+        <Text style={styles.taskTitle}>{item.title}</Text>
+        <Text style={styles.taskStatus}>{item.status}</Text>
+        <Text style={styles.taskPoints}>{item.points} pts</Text>
+      </View>
+    </TouchableOpacity>
   );
 
   return (
     <DashboardLayout>
       <View style={styles.container}>
-        <Text style={styles.header}>All Tasks</Text>
+        <View style={styles.headerContainer}>
+          <Text style={styles.header}>All Tasks</Text>
+          {currentUser?.role === 'PARENT' && (
+            <TouchableOpacity onPress={() => setIsCreateModalVisible(true)} style={styles.addButton}>
+              <Text style={styles.addButtonText}>+ New Task</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <FlatList
           data={tasks}
           renderItem={renderItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
         />
+
+        <Modal
+          visible={!!selectedTask}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setSelectedTask(null)}
+        >
+          {selectedTask && currentUser && (
+            <TaskDetail
+              task={selectedTask}
+              database={database}
+              currentUserId={currentUser.id}
+              currentUserRole={currentUser.role as 'PARENT' | 'CHILD'}
+              onClose={() => setSelectedTask(null)}
+            />
+          )}
+        </Modal>
+
+        {currentUser && (
+          <CreateTaskModal
+            visible={isCreateModalVisible}
+            onClose={() => setIsCreateModalVisible(false)}
+            database={database}
+            currentUserId={currentUser.id}
+            familyId={currentUser.familyId}
+          />
+        )}
       </View>
     </DashboardLayout>
   );
@@ -38,10 +88,25 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 16,
+  },
+  addButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  addButtonText: {
+    color: 'white',
+    fontWeight: '600',
   },
   listContent: {
     paddingBottom: 20,

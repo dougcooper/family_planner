@@ -54,6 +54,7 @@ export async function login(
         id: user.id,
         name: user.name,
         role: user.role,
+        familyId: user.familyId,
       },
     });
   } catch (error) {
