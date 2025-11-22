@@ -22,6 +22,7 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "docker:up": "docker compose up --build",
+    "docker:db:up": "docker compose up -d postgres",
     "docker:backend:up": "docker compose up -d postgres backend",
     "docker:down": "docker compose down",
     "prepare": "husky"
@@ -30,7 +31,6 @@
     "@types/jest": "^29.5.14",
     "husky": "^9.1.7",
     "jest": "^29.7.0",
-    "lint-staged": "^16.2.7",
     "metro-minify-terser": "^0.83.3",
     "ts-jest": "^29.4.5",
     "turbo": "^2.6.1",
@@ -39,14 +39,6 @@
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
-  },
-  "lint-staged": {
-    "backend/**/*.ts": [
-      "pnpm --filter family-planner-backend lint:staged --"
-    ],
-    "frontend/**/*.{ts,tsx}": [
-      "pnpm --filter family-planner-frontend lint:staged --"
-    ]
   },
   "dependencies": {
     "ajv": "^8.17.1"

@@ -36,7 +36,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = (segments[0] as string) === 'login';
+    const inAuthGroup = segments[0] === 'login' || segments[0] === 'register';
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/login' as any);

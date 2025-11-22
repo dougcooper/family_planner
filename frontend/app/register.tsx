@@ -1,48 +1,66 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { Link } from 'expo-router';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { Link, router } from 'expo-router';
 import { authProvider } from '../src/logic/auth';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
+  const [familyName, setFamilyName] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = async () => {
+  const handleRegister = async () => {
     setError('');
-    if (!email || !password) {
-      setError('Please enter both email and password');
+    if (!familyName || !name || !email || !password) {
+      setError('Please fill in all fields');
       return;
     }
 
     setLoading(true);
     try {
-      await authProvider.login(email, password);
+      await authProvider.register(familyName, email, password, name);
       // Navigation will be handled by the auth listener in _layout
     } catch (error: any) {
-      if (error.message === 'Login failed') {
-        setError('Invalid email or password');
-      } else {
-        setError('Unable to connect to server. Please check your connection.');
-      }
+      setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.form}>
-        <Text style={styles.title}>Family Planner</Text>
+        <Text style={styles.title}>Create Family</Text>
         
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Family Name</Text>
+          <TextInput
+            style={styles.input}
+            value={familyName}
+            onChangeText={(text) => { setFamilyName(text); setError(''); }}
+            placeholder="The Smiths"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Your Name (Admin)</Text>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={(text) => { setName(text); setError(''); }}
+            placeholder="John Smith"
+          />
+        </View>
+
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
           <TextInput
             style={styles.input}
             value={email}
             onChangeText={(text) => { setEmail(text); setError(''); }}
-            placeholder="Enter your email"
+            placeholder="admin@example.com"
             autoCapitalize="none"
             keyboardType="email-address"
           />
@@ -54,7 +72,7 @@ export default function LoginScreen() {
             style={styles.input}
             value={password}
             onChangeText={(text) => { setPassword(text); setError(''); }}
-            placeholder="Enter your password"
+            placeholder="Create a password"
             secureTextEntry
           />
         </View>
@@ -63,32 +81,32 @@ export default function LoginScreen() {
 
         <TouchableOpacity 
           style={[styles.button, loading && styles.buttonDisabled]} 
-          onPress={handleLogin}
+          onPress={handleRegister}
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Login</Text>
+            <Text style={styles.buttonText}>Create Account</Text>
           )}
         </TouchableOpacity>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
-          <Link href="/register" asChild>
+          <Text style={styles.footerText}>Already have an account? </Text>
+          <Link href="/login" asChild>
             <TouchableOpacity>
-              <Text style={styles.linkText}>Register</Text>
+              <Text style={styles.linkText}>Login</Text>
             </TouchableOpacity>
           </Link>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
     backgroundColor: '#f5f5f5',
@@ -133,14 +151,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#2563eb',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 8,
   },
   buttonDisabled: {
-    opacity: 0.7,
+    backgroundColor: '#93c5fd',
   },
   buttonText: {
     color: '#fff',
