@@ -43,5 +43,8 @@
     "frontend/**/*.{ts,tsx}": [
       "npm run lint:staged --workspace=family-planner-frontend --"
     ]
+  },
+  "dependencies": {
+    "ajv": "^8.17.1"
   }
 }
