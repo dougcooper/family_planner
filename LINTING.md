@@ -30,20 +30,20 @@ Automated code linting has been configured for all TypeScript code in the monore
 
 ### Root Level
 ```bash
-npm run lint         # Run linters across all workspaces
-npm run lint:fix     # Auto-fix linting issues across all workspaces
+pnpm run lint         # Run linters across all workspaces
+pnpm run lint:fix     # Auto-fix linting issues across all workspaces
 ```
 
 ### Backend
 ```bash
-npm run lint --workspace=backend        # Lint backend code
-npm run lint:fix --workspace=backend    # Auto-fix backend issues
+pnpm --filter backend lint        # Lint backend code
+pnpm --filter backend lint:fix    # Auto-fix backend issues
 ```
 
 ### Frontend
 ```bash
-npm run lint --workspace=frontend       # Lint frontend code
-npm run lint:fix --workspace=frontend   # Auto-fix frontend issues
+pnpm --filter frontend lint       # Lint frontend code
+pnpm --filter frontend lint:fix   # Auto-fix frontend issues
 ```
 
 ## Pre-Commit Hooks

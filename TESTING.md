@@ -12,7 +12,7 @@ The project has three levels of tests:
 
 ## Prerequisites
 
-- Node.js 20+ and npm 10+
+- Node.js 20+ and pnpm 9+
 - Docker and Docker Compose (for E2E tests and backend)
 
 ## Running Tests
@@ -27,10 +27,10 @@ docker-compose up -d postgres
 
 # Run backend tests
 cd backend
-npm test -- --run
+pnpm test -- --run
 
 # Or from project root
-npm test --workspace=backend
+pnpm --filter backend test
 ```
 
 **Test Coverage:**
@@ -44,10 +44,10 @@ Frontend unit tests use Jest and test business logic in isolation with mocked de
 
 ```bash
 cd frontend
-npm test
+pnpm test
 
 # Run only unit tests
-npm run test:unit
+pnpm run test:unit
 ```
 
 **Test Coverage:**

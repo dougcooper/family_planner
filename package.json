@@ -1,7 +1,7 @@
 {
   "name": "family-planner",
   "version": "1.0.0",
-  "packageManager": "npm@11.6.2",
+  "packageManager": "pnpm@9.1.0",
   "private": true,
   "description": "Family Dashboard - Monorepo",
   "workspaces": [
@@ -12,13 +12,13 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
-    "dev:backend": "npm run dev --workspace=family-planner-backend",
-    "dev:frontend": "npm run start --workspace=family-planner-frontend",
-    "dev:frontend:web": "npm run web --workspace=family-planner-frontend",
+    "dev:backend": "pnpm --filter family-planner-backend dev",
+    "dev:frontend": "pnpm --filter family-planner-frontend start",
+    "dev:frontend:web": "pnpm --filter family-planner-frontend web",
     "build": "turbo run build",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
-    "test:e2e:with-backend": "npm run docker:backend:up && sleep 5 && turbo run test:e2e; npm run docker:down",
+    "test:e2e:with-backend": "pnpm run docker:backend:up && sleep 5 && turbo run test:e2e; pnpm run docker:down",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "docker:up": "docker compose up --build",
@@ -38,14 +38,14 @@
   },
   "engines": {
     "node": ">=20.0.0",
-    "npm": ">=10.0.0"
+    "pnpm": ">=9.0.0"
   },
   "lint-staged": {
     "backend/**/*.ts": [
-      "npm run lint:staged --workspace=family-planner-backend --"
+      "pnpm --filter family-planner-backend lint:staged --"
     ],
     "frontend/**/*.{ts,tsx}": [
-      "npm run lint:staged --workspace=family-planner-frontend --"
+      "pnpm --filter family-planner-frontend lint:staged --"
     ]
   },
   "dependencies": {

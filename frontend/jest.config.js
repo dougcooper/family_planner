@@ -5,7 +5,7 @@ module.exports = {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|expo|@expo|@nozbe/watermelondb|@react-native-async-storage)/)',
+    'node_modules/(?!.pnpm|((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?|@nozbe/watermelondb|@react-native-async-storage|react-native-helmet-async|react-native-safe-area-context|react-native-svg|lucide-react-native)',
   ],
   testEnvironment: 'node',
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
