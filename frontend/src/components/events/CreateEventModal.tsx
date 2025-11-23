@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Modal, ScrollView, Platform } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Database } from '@nozbe/watermelondb';
-import { createEvent } from '../../logic/events';
+import { createEvent, buildRecurrenceRule, type RecurrenceOptions } from '../../logic/events';
 
 interface CreateEventModalProps {
   visible: boolean;
@@ -15,6 +15,9 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
   const [title, setTitle] = useState('');
   const [startTime, setStartTime] = useState(new Date());
   const [endTime, setEndTime] = useState(() => new Date(Date.now() + 3600000));
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<RecurrenceOptions['frequency']>('WEEKLY');
+  const [recurrenceCount, setRecurrenceCount] = useState('10');
   
   // Android specific state
   const [mode, setMode] = useState<'date' | 'time'>('date');
@@ -27,15 +30,27 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
       return;
     }
     try {
-      await createEvent(database, {
+      const params = {
         title,
         startTime,
         endTime,
         familyId,
-      });
+        recurrenceRule: isRecurring 
+          ? buildRecurrenceRule({ 
+              frequency: recurrenceFrequency, 
+              count: parseInt(recurrenceCount) || 10 
+            })
+          : undefined,
+      };
+      
+      await createEvent(database, params);
+      
       setTitle('');
       setStartTime(new Date());
       setEndTime(new Date(Date.now() + 3600000));
+      setIsRecurring(false);
+      setRecurrenceFrequency('WEEKLY');
+      setRecurrenceCount('10');
       onClose();
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -229,6 +244,54 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
             )}
           </View>
 
+          <View style={styles.formGroup}>
+            <View style={styles.checkboxRow}>
+              <TouchableOpacity 
+                style={styles.checkbox}
+                onPress={() => setIsRecurring(!isRecurring)}
+              >
+                <View style={[styles.checkboxInner, isRecurring && styles.checkboxChecked]}>
+                  {isRecurring && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.checkboxLabel}>Recurring Event</Text>
+              </TouchableOpacity>
+            </View>
+
+            {isRecurring && (
+              <View style={styles.recurrenceOptions}>
+                <Text style={styles.label}>Frequency</Text>
+                <View style={styles.frequencyButtons}>
+                  {(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'] as const).map((freq) => (
+                    <TouchableOpacity
+                      key={freq}
+                      style={[
+                        styles.frequencyButton,
+                        recurrenceFrequency === freq && styles.frequencyButtonActive
+                      ]}
+                      onPress={() => setRecurrenceFrequency(freq)}
+                    >
+                      <Text style={[
+                        styles.frequencyButtonText,
+                        recurrenceFrequency === freq && styles.frequencyButtonTextActive
+                      ]}>
+                        {freq.charAt(0) + freq.slice(1).toLowerCase()}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={[styles.label, styles.recurrenceCountLabel]}>Number of Occurrences</Text>
+                <TextInput
+                  style={styles.input}
+                  value={recurrenceCount}
+                  onChangeText={setRecurrenceCount}
+                  placeholder="10"
+                  keyboardType="numeric"
+                />
+              </View>
+            )}
+          </View>
+
           {Platform.OS === 'android' && show && (
             <DateTimePicker
               testID="dateTimePicker"
@@ -338,5 +401,69 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: '#000000',
     textAlign: 'center',
+  },
+  checkboxRow: {
+    marginBottom: 12,
+  },
+  checkbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkboxInner: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#4A90E2',
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#4A90E2',
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  checkboxLabel: {
+    fontSize: 17,
+    color: '#000000',
+  },
+  recurrenceOptions: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
+  },
+  frequencyButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  frequencyButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#F2F2F7',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  frequencyButtonActive: {
+    backgroundColor: '#4A90E2',
+    borderColor: '#4A90E2',
+  },
+  frequencyButtonText: {
+    fontSize: 15,
+    color: '#000000',
+    fontWeight: '500',
+  },
+  frequencyButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  recurrenceCountLabel: {
+    marginTop: 8,
   },
 });
