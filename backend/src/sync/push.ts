@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../db/index.js';
-import { users, notifications, tasks, events, mealPlans, groceryItems, rewards, families, lists, listItems } from '../db/schema.js';
+import { users, notifications, tasks, events, mealPlans, groceryItems, rewards, families, lists, listItems, recipes } from '../db/schema.js';
 import { eq, inArray } from 'drizzle-orm';
 
 interface ChangeRecord {
@@ -161,6 +161,13 @@ export async function pushChanges(
               isChecked: (record as any).is_checked,
             });
             break;
+          case 'recipes':
+            await db.insert(recipes).values({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(record as any),
+              familyId,
+            });
+            break;
         }
       }
 
@@ -295,6 +302,16 @@ export async function pushChanges(
             await db.update(listItems).set(update).where(eq(listItems.id, record.id));
             break;
           }
+          case 'recipes': {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const update: any = { updatedAt: new Date() };
+            if ('name' in record) update.name = record.name;
+            if ('description' in record) update.description = record.description;
+            if ('ingredients' in record) update.ingredients = record.ingredients;
+            if ('instructions' in record) update.instructions = record.instructions;
+            await db.update(recipes).set(update).where(eq(recipes.id, record.id));
+            break;
+          }
         }
       }
 
@@ -330,6 +347,9 @@ export async function pushChanges(
             break;
           case 'list_items':
             await db.delete(listItems).where(inArray(listItems.id, tableChanges.deleted));
+            break;
+          case 'recipes':
+            await db.delete(recipes).where(inArray(recipes.id, tableChanges.deleted));
             break;
         }
       }

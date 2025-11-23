@@ -309,6 +309,16 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
             <Text style={styles.modalTitle}>
               {editingMeal ? `${getMealIcon(editingMeal.mealType)} ${editingMeal.mealType}` : 'Edit Meal'}
             </Text>
+
+            <TouchableOpacity 
+              style={styles.selectRecipeButton}
+              onPress={() => {
+                setEditModalVisible(false);
+                openRecipeManager(true);
+              }}
+            >
+              <Text style={styles.selectRecipeButtonText}>Select from Recipes</Text>
+            </TouchableOpacity>
             
             <TextInput
               style={styles.modalInput}

@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../db/index.js';
-import { users, families, notifications, tasks, events, mealPlans, groceryItems, rewards, lists, listItems } from '../db/schema.js';
+import { users, families, notifications, tasks, events, mealPlans, groceryItems, rewards, lists, listItems, recipes } from '../db/schema.js';
 import { eq, gt, and } from 'drizzle-orm';
 
 export interface SyncPullQuery {
@@ -82,6 +82,7 @@ export async function pullChanges(
       rewardChanges,
       listChanges,
       listItemChanges,
+      recipeChanges,
     ] = await Promise.all([
       db
         .select()
@@ -176,6 +177,15 @@ export async function pullChanges(
             gt(listItems.updatedAt, lastPulledDate)
           )
         ),
+      db
+        .select()
+        .from(recipes)
+        .where(
+          and(
+            eq(recipes.familyId, familyId),
+            gt(recipes.updatedAt, lastPulledDate)
+          )
+        ),
     ]);
 
     // Format response for WatermelonDB
@@ -232,6 +242,11 @@ export async function pullChanges(
       list_items: {
         created: listItemChanges.filter(l => l.createdAt > lastPulledDate).map(toWatermelon),
         updated: listItemChanges.filter(l => l.createdAt <= lastPulledDate).map(toWatermelon),
+        deleted: [],
+      },
+      recipes: {
+        created: recipeChanges.filter(r => r.createdAt > lastPulledDate).map(toWatermelon),
+        updated: recipeChanges.filter(r => r.createdAt <= lastPulledDate).map(toWatermelon),
         deleted: [],
       },
     };
