@@ -13,6 +13,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
   const [items, setItems] = useState<ListItem[]>([]);
   const [newItemName, setNewItemName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(true);
 
   useEffect(() => {
     loadItems();
@@ -144,6 +145,9 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
 
   const uncheckedCount = items.filter((item) => !item.isChecked).length;
   const checkedCount = items.filter((item) => item.isChecked).length;
+  
+  // Filter items based on showCompleted state
+  const displayedItems = showCompleted ? items : items.filter((item) => !item.isChecked);
 
   if (loading) {
     return (
@@ -162,10 +166,23 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
           </TouchableOpacity>
         )}
         <Text style={styles.headerTitle}>{list.name}</Text>
-        <View style={styles.stats}>
-          <Text style={styles.statsText}>
-            {uncheckedCount} to do • {checkedCount} done
-          </Text>
+        <View style={styles.statsRow}>
+          <View style={styles.stats}>
+            <Text style={styles.statsText}>
+              {uncheckedCount} to do • {checkedCount} done
+              {!showCompleted && checkedCount > 0 && ` (${checkedCount} hidden)`}
+            </Text>
+          </View>
+          {checkedCount > 0 && (
+            <TouchableOpacity
+              style={styles.toggleButton}
+              onPress={() => setShowCompleted(!showCompleted)}
+            >
+              <Text style={styles.toggleButtonText}>
+                {showCompleted ? '👁️ Hide' : '👁️ Show'} Done
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -195,14 +212,24 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
         </View>
       ) : (
         <>
-          <FlatList
-            data={items}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.list}
-          />
+          {displayedItems.length === 0 && !showCompleted ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>✨</Text>
+              <Text style={styles.emptyText}>All items completed!</Text>
+              <Text style={styles.emptySubtext}>
+                {checkedCount} item{checkedCount !== 1 ? 's' : ''} hidden. Tap &quot;Show Done&quot; to view.
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={displayedItems}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.list}
+            />
+          )}
 
-          {checkedCount > 0 && (
+          {checkedCount > 0 && showCompleted && (
             <View style={styles.footer}>
               <TouchableOpacity
                 style={styles.clearButton}
@@ -248,9 +275,26 @@ const styles = StyleSheet.create({
   stats: {
     flexDirection: 'row',
   },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
   statsText: {
     fontSize: 14,
     color: '#64748B',
+  },
+  toggleButton: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  toggleButtonText: {
+    fontSize: 13,
+    color: '#475569',
+    fontWeight: '600',
   },
   loadingText: {
     textAlign: 'center',
