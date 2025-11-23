@@ -52,7 +52,11 @@ export const RewardHistoryModal = ({
 
   const handleUnclaim = async (claim: RewardClaim, reward: Reward) => {
     if (currentUser.role !== 'PARENT') {
-      alert('Only parents can approve reward unclaims');
+      if (Platform.OS === 'web') {
+        alert('Only parents can approve reward unclaims');
+      } else {
+        Alert.alert('Permission Denied', 'Only parents can approve reward unclaims');
+      }
       return;
     }
     
@@ -62,14 +66,26 @@ export const RewardHistoryModal = ({
         const result = await unclaimReward(database, claim.id, currentUser.id);
         
         if (result.success) {
-          alert(`Successfully unclaimed "${reward.title}"! ${claim.pointsCost} points have been refunded.`);
+          if (Platform.OS === 'web') {
+            alert(`Successfully unclaimed "${reward.title}"! ${claim.pointsCost} points have been refunded.`);
+          } else {
+            Alert.alert('Success', `Successfully unclaimed "${reward.title}"! ${claim.pointsCost} points have been refunded.`);
+          }
         } else {
-          alert(`Failed to unclaim reward: ${result.error}`);
+          if (Platform.OS === 'web') {
+            alert(`Failed to unclaim reward: ${result.error}`);
+          } else {
+            Alert.alert('Error', `Failed to unclaim reward: ${result.error}`);
+          }
         }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error unclaiming reward:', error);
-        alert('An error occurred while unclaiming the reward');
+        if (Platform.OS === 'web') {
+          alert('An error occurred while unclaiming the reward');
+        } else {
+          Alert.alert('Error', 'An error occurred while unclaiming the reward');
+        }
       } finally {
         setProcessing(null);
       }
