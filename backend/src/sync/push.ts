@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../db/index.js';
-import { users, notifications, tasks, events, mealPlans, groceryItems, rewards, families } from '../db/schema.js';
+import { users, notifications, tasks, events, mealPlans, groceryItems, rewards, families, lists, listItems } from '../db/schema.js';
 import { eq, inArray } from 'drizzle-orm';
 
 interface ChangeRecord {
@@ -79,6 +79,27 @@ export async function pushChanges(
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               recurrenceRule: (record as any).recurrence_rule,
             });
+
+            // Point Awarding Logic for Created Tasks
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if ((record as any).status === 'COMPLETED') {
+               // eslint-disable-next-line @typescript-eslint/no-explicit-any
+               const points = Number((record as any).points || 0);
+               // eslint-disable-next-line @typescript-eslint/no-explicit-any
+               const assigneeId = (record as any).assignee_id;
+
+               if (assigneeId && points > 0) {
+                  const [assignee] = await db.select().from(users).where(eq(users.id, assigneeId));
+                  if (assignee) {
+                    await db.update(users)
+                      .set({ 
+                        pointsBalance: assignee.pointsBalance + points,
+                        updatedAt: new Date()
+                      })
+                      .where(eq(users.id, assigneeId));
+                  }
+               }
+            }
             break;
           case 'events':
             await db.insert(events).values({
@@ -121,6 +142,23 @@ export async function pushChanges(
               familyId,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               imageUrl: (record as any).image_url,
+            });
+            break;
+          case 'lists':
+            await db.insert(lists).values({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(record as any),
+              familyId,
+            });
+            break;
+          case 'list_items':
+            await db.insert(listItems).values({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(record as any),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              listId: (record as any).list_id,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              isChecked: (record as any).is_checked,
             });
             break;
         }
@@ -240,6 +278,23 @@ export async function pushChanges(
             await db.update(rewards).set(update).where(eq(rewards.id, record.id));
             break;
           }
+          case 'lists': {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const update: any = { updatedAt: new Date() };
+            if ('name' in record) update.name = record.name;
+            if ('type' in record) update.type = record.type;
+            await db.update(lists).set(update).where(eq(lists.id, record.id));
+            break;
+          }
+          case 'list_items': {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const update: any = { updatedAt: new Date() };
+            if ('text' in record) update.text = record.text;
+            if ('is_checked' in record) update.isChecked = record.is_checked;
+            if ('list_id' in record) update.listId = record.list_id;
+            await db.update(listItems).set(update).where(eq(listItems.id, record.id));
+            break;
+          }
         }
       }
 
@@ -269,6 +324,12 @@ export async function pushChanges(
             break;
           case 'rewards':
             await db.delete(rewards).where(inArray(rewards.id, tableChanges.deleted));
+            break;
+          case 'lists':
+            await db.delete(lists).where(inArray(lists.id, tableChanges.deleted));
+            break;
+          case 'list_items':
+            await db.delete(listItems).where(inArray(listItems.id, tableChanges.deleted));
             break;
         }
       }

@@ -116,6 +116,16 @@ export class GroceryItem extends Model implements IGroceryItem {
   @readonly @date('updated_at') updatedAt!: Date;
 }
 
+export class ListItem extends Model implements IListItem {
+  static table = 'list_items';
+
+  @field('list_id') listId!: string;
+  @field('text') text!: string;
+  @field('is_checked') isChecked!: boolean;
+  @readonly @date('created_at') createdAt!: Date;
+  @readonly @date('updated_at') updatedAt!: Date;
+}
+
 export class List extends Model implements IList {
   static table = 'lists';
 
@@ -126,16 +136,6 @@ export class List extends Model implements IList {
   @readonly @date('updated_at') updatedAt!: Date;
 
   @children('list_items') items!: Query<ListItem>;
-}
-
-export class ListItem extends Model implements IListItem {
-  static table = 'list_items';
-
-  @field('list_id') listId!: string;
-  @field('text') text!: string;
-  @field('is_checked') isChecked!: boolean;
-  @readonly @date('created_at') createdAt!: Date;
-  @readonly @date('updated_at') updatedAt!: Date;
 }
 
 export class Reward extends Model implements IReward {

@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../db/index.js';
-import { users, families, notifications, tasks, events, mealPlans, groceryItems, rewards } from '../db/schema.js';
+import { users, families, notifications, tasks, events, mealPlans, groceryItems, rewards, lists, listItems } from '../db/schema.js';
 import { eq, gt, and } from 'drizzle-orm';
 
 export interface SyncPullQuery {
@@ -80,6 +80,8 @@ export async function pullChanges(
       mealPlanChanges,
       groceryItemChanges,
       rewardChanges,
+      listChanges,
+      listItemChanges,
     ] = await Promise.all([
       db
         .select()
@@ -148,6 +150,32 @@ export async function pullChanges(
             gt(rewards.updatedAt, lastPulledDate)
           )
         ),
+      db
+        .select()
+        .from(lists)
+        .where(
+          and(
+            eq(lists.familyId, familyId),
+            gt(lists.updatedAt, lastPulledDate)
+          )
+        ),
+      db
+        .select({
+          id: listItems.id,
+          listId: listItems.listId,
+          text: listItems.text,
+          isChecked: listItems.isChecked,
+          createdAt: listItems.createdAt,
+          updatedAt: listItems.updatedAt,
+        })
+        .from(listItems)
+        .innerJoin(lists, eq(listItems.listId, lists.id))
+        .where(
+          and(
+            eq(lists.familyId, familyId),
+            gt(listItems.updatedAt, lastPulledDate)
+          )
+        ),
     ]);
 
     // Format response for WatermelonDB
@@ -194,6 +222,16 @@ export async function pullChanges(
       rewards: {
         created: rewardChanges.filter(r => r.createdAt > lastPulledDate).map(toWatermelon),
         updated: rewardChanges.filter(r => r.createdAt <= lastPulledDate).map(toWatermelon),
+        deleted: [],
+      },
+      lists: {
+        created: listChanges.filter(l => l.createdAt > lastPulledDate).map(toWatermelon),
+        updated: listChanges.filter(l => l.createdAt <= lastPulledDate).map(toWatermelon),
+        deleted: [],
+      },
+      list_items: {
+        created: listItemChanges.filter(l => l.createdAt > lastPulledDate).map(toWatermelon),
+        updated: listItemChanges.filter(l => l.createdAt <= lastPulledDate).map(toWatermelon),
         deleted: [],
       },
     };
