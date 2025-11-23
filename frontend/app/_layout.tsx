@@ -1,7 +1,7 @@
 import { Tabs, Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { Home, CheckSquare, Utensils, List, Gift, Settings } from 'lucide-react-native';
+import { Home, CheckSquare, Utensils, List, Gift, Settings, Calendar } from 'lucide-react-native';
 import { authProvider } from '../src/logic/auth';
 import { syncDatabase, setupPeriodicSync } from '../src/logic/sync';
 
@@ -12,6 +12,7 @@ const UtensilsIcon = Utensils as any;
 const ListIcon = List as any;
 const GiftIcon = Gift as any;
 const SettingsIcon = Settings as any;
+const CalendarIcon = Calendar as any;
 
 export default function RootLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -93,6 +94,14 @@ export default function RootLayout() {
         }}
       />
       <Tabs.Screen
+        name="events"
+        options={{
+          title: 'Events',
+          headerShown: false,
+          tabBarIcon: ({ color }: { color: string }) => <CalendarIcon size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="meals"
         options={{
           title: 'Meals',
@@ -122,6 +131,18 @@ export default function RootLayout() {
           title: 'Settings',
           headerShown: false,
           tabBarIcon: ({ color }: { color: string }) => <SettingsIcon size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="login"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="register"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

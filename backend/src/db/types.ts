@@ -3,7 +3,8 @@ import { users, families, tasks, notifications, events, mealPlans, groceryItems,
 import { 
   User as IUser, 
   Family as IFamily, 
-  Task as ITask
+  Task as ITask,
+  Event as IEvent
 } from '@family-planner/types';
 
 // Infer Drizzle types
@@ -44,6 +45,14 @@ const _checkTask = (d: DrizzleTask): ITask => {
     status: d.status as ITask['status'],
     description: d.description || undefined,
     dueDate: d.dueDate || undefined,
+    recurrenceRule: d.recurrenceRule || undefined,
+  };
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _checkEvent = (d: DrizzleEvent): IEvent => {
+  return {
+    ...d,
     recurrenceRule: d.recurrenceRule || undefined,
   };
 };
