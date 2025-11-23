@@ -1,50 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
+import { withObservables } from '@nozbe/watermelondb/react';
 import { List, GroceryItem, ListItem } from '../../model/models';
+import ListCard from './ListCard';
 
 interface AllListsProps {
   database: Database;
   familyId: string;
+  lists: List[];
   onSelectList: (list: List) => void;
 }
 
-export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
-  const [lists, setLists] = useState<List[]>([]);
-  const [loading, setLoading] = useState(true);
+function AllListsComponent({ database, familyId, lists, onSelectList }: AllListsProps) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [newListName, setNewListName] = useState('');
 
   useEffect(() => {
-    loadLists();
+    checkAndCreateGroceryList();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [lists]);
 
-  const loadLists = async () => {
-    try {
-      const allLists = await database
-        .get<List>('lists')
-        .query(Q.where('family_id', familyId))
-        .fetch();
-      
-      // If no lists exist, create default Grocery List
-      if (allLists.length === 0) {
-        await createDefaultGroceryList();
-        return;
-      }
-
-      setLists(allLists);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error loading lists:', error);
-    } finally {
-      setLoading(false);
+  const checkAndCreateGroceryList = async () => {
+    const hasGroceryList = lists.some(l => l.type === 'GROCERY');
+    if (!hasGroceryList) {
+      await createDefaultGroceryList();
     }
   };
 
   const createDefaultGroceryList = async () => {
     try {
       await database.write(async () => {
+        // Double check inside write block to avoid race conditions
+        const existing = await database.get<List>('lists').query(
+          Q.where('family_id', familyId),
+          Q.where('type', 'GROCERY')
+        ).fetch();
+        
+        if (existing.length > 0) return;
+
         const newList = await database.get<List>('lists').create((list) => {
           list.familyId = familyId;
           list.name = 'Grocery List';
@@ -65,7 +59,6 @@ export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
           });
         }
       });
-      await loadLists();
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error creating default list:', error);
@@ -86,7 +79,6 @@ export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
 
       setNewListName('');
       setIsModalVisible(false);
-      await loadLists();
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error creating list:', error);
@@ -94,31 +86,17 @@ export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
     }
   };
 
-  const renderListCard = ({ item }: { item: List }) => (
-    <TouchableOpacity
-      style={styles.listCard}
-      onPress={() => onSelectList(item)}
-    >
-      <View style={styles.listIconContainer}>
-        <Text style={styles.listIcon}>
-          {item.type === 'GROCERY' ? '🛒' : '📝'}
-        </Text>
-      </View>
-      <View style={styles.listInfo}>
-        <Text style={styles.listName}>{item.name}</Text>
-        <Text style={styles.listType}>{item.type === 'GROCERY' ? 'Grocery List' : 'To-Do List'}</Text>
-      </View>
-      <Text style={styles.chevron}>›</Text>
-    </TouchableOpacity>
-  );
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading lists...</Text>
-      </View>
-    );
-  }
+  const handleDeleteList = async (list: List) => {
+    try {
+      await database.write(async () => {
+        await list.markAsDeleted();
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error deleting list:', error);
+      alert('Failed to delete list');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -134,7 +112,13 @@ export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
 
       <FlatList
         data={lists}
-        renderItem={renderListCard}
+        renderItem={({ item }) => (
+          <ListCard
+            list={item}
+            onPress={() => onSelectList(item)}
+            onDelete={() => handleDeleteList(item)}
+          />
+        )}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
       />
@@ -307,3 +291,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+export const AllLists = withObservables(['familyId'], ({ database, familyId }: AllListsProps) => ({
+  lists: database.get<List>('lists').query(Q.where('family_id', familyId)).observe(),
+}))(AllListsComponent);
