@@ -4,6 +4,7 @@ import { Family } from '../model/models';
 
 const AUTH_TOKEN_KEY = '@family_dashboard:auth_token';
 const USER_DATA_KEY = '@family_dashboard:user_data';
+const KIOSK_TIMEOUT_KEY = '@family_dashboard:kiosk_timeout';
 
 interface UserData {
   id: string;
@@ -23,15 +24,20 @@ class AuthProvider {
   private user: UserData | null = null;
   private listeners: Set<(state: AuthState) => void> = new Set();
   private kioskTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private kioskTimeoutSeconds: number = 120; // Default 2 minutes
+  private kioskTimeoutSeconds: number = 0; // Default 0 (disabled)
   private lastActivityTime: number = Date.now();
 
   async initialize(): Promise<void> {
     try {
-      const [token, userData] = await Promise.all([
+      const [token, userData, kioskTimeout] = await Promise.all([
         AsyncStorage.getItem(AUTH_TOKEN_KEY),
         AsyncStorage.getItem(USER_DATA_KEY),
+        AsyncStorage.getItem(KIOSK_TIMEOUT_KEY),
       ]);
+
+      if (kioskTimeout !== null) {
+        this.kioskTimeoutSeconds = parseInt(kioskTimeout, 10);
+      }
 
       if (token && userData) {
         this.token = token;
@@ -55,7 +61,8 @@ class AuthProvider {
     try {
       const family = await database.get<Family>('families').find(this.user.familyId);
       if (family) {
-        this.kioskTimeoutSeconds = family.kioskTimeoutSeconds || 120;
+        const timeout = family.kioskTimeoutSeconds ?? 120;
+        this.setKioskTimeout(timeout);
         return;
       }
     } catch {
@@ -72,7 +79,8 @@ class AuthProvider {
 
       if (response.ok) {
         const family = await response.json();
-        this.kioskTimeoutSeconds = family.kiosk_timeout_seconds || 120;
+        const timeout = family.kiosk_timeout_seconds ?? 120;
+        this.setKioskTimeout(timeout);
       }
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -120,6 +128,7 @@ class AuthProvider {
 
   setKioskTimeout(seconds: number): void {
     this.kioskTimeoutSeconds = seconds;
+    AsyncStorage.setItem(KIOSK_TIMEOUT_KEY, seconds.toString());
     if (this.token) {
       this.startKioskTimer();
     }
@@ -171,7 +180,7 @@ class AuthProvider {
     this.stopKioskTimer();
     this.token = null;
     this.user = null;
-    await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, USER_DATA_KEY]);
+    await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, USER_DATA_KEY, KIOSK_TIMEOUT_KEY]);
     this.notifyListeners();
   }
 
