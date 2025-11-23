@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Animated, Text, StyleSheet } from 'react-native';
+import { Animated, Text, StyleSheet, Platform } from 'react-native';
 
 interface ToastProps {
   message: string;
@@ -25,13 +25,13 @@ export const Toast: React.FC<ToastProps> = ({
         Animated.timing(opacity, {
           toValue: 1,
           duration: 300,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.delay(duration),
         Animated.timing(opacity, {
           toValue: 0,
           duration: 300,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ]).start(({ finished }) => {
         if (finished) {
@@ -48,9 +48,10 @@ export const Toast: React.FC<ToastProps> = ({
       style={[
         styles.container, 
         { opacity },
-        type === 'error' ? styles.error : styles.success
+        type === 'error' ? styles.error : styles.success,
+        Platform.OS === 'web' ? { pointerEvents: 'none' } : undefined,
       ]}
-      pointerEvents="none"
+      pointerEvents={Platform.OS === 'web' ? undefined : 'none'}
     >
       <Text style={styles.text}>{message}</Text>
     </Animated.View>
@@ -69,13 +70,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 9999,
     elevation: 10, // Increase elevation
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
   },
   success: {
     backgroundColor: '#10B981', // Green

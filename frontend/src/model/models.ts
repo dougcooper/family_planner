@@ -1,5 +1,5 @@
-import { Model, Query } from '@nozbe/watermelondb';
-import { field, date, readonly, children } from '@nozbe/watermelondb/decorators';
+import { Model, Query, Relation } from '@nozbe/watermelondb';
+import { field, date, readonly, children, relation } from '@nozbe/watermelondb/decorators';
 import type { 
   Family as IFamily, 
   User as IUser, 
@@ -72,6 +72,8 @@ export class Task extends Model implements ITask {
   @field('creator_id') creatorId!: string;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
+
+  @relation('users', 'assignee_id') assignee!: Relation<User>;
 }
 
 export class Event extends Model implements IEvent {

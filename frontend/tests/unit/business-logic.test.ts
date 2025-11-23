@@ -23,8 +23,8 @@ describe('Auth Logic', () => {
   });
 
   describe('Kiosk Timer', () => {
-    it('should initialize with default timeout of 120 seconds', () => {
-      expect(authProvider.getKioskTimeout()).toBe(120);
+    it('should initialize with default timeout of 0 seconds (disabled)', () => {
+      expect(authProvider.getKioskTimeout()).toBe(0);
     });
 
     it('should allow setting custom timeout', () => {

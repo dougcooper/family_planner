@@ -1,13 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Platform, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Platform, TouchableOpacity, Modal, Image } from 'react-native';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Q } from '@nozbe/watermelondb';
 import { database } from '../src/model/database';
-import { Task } from '../src/model/models';
+import { Task, User } from '../src/model/models';
 import { DashboardLayout } from '../src/components/dashboard/DashboardLayout';
 import { TaskDetail } from '../src/components/tasks/TaskDetail';
 import { CreateTaskModal } from '../src/components/tasks/CreateTaskModal';
 import { authProvider } from '../src/logic/auth';
+
+interface TaskListItemProps {
+  task: Task;
+  assignee: User;
+  onPress: (task: Task) => void;
+}
+
+const TaskListItemComponent = ({ task, assignee, onPress }: TaskListItemProps) => (
+  <TouchableOpacity onPress={() => onPress(task)}>
+    <View style={styles.taskItem}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.taskTitle}>{task.title}</Text>
+        <View style={styles.assigneeContainer}>
+          {assignee?.avatarUrl ? (
+            <Image source={{ uri: assignee.avatarUrl }} style={styles.avatar} />
+          ) : (
+            <Text style={styles.assigneeEmoji}>👤</Text>
+          )}
+          <Text style={styles.assigneeText}>
+            {assignee ? assignee.name : 'Unassigned'}
+          </Text>
+        </View>
+      </View>
+      <View style={{ alignItems: 'flex-end' }}>
+        <Text style={styles.taskStatus}>{task.status.replace('_', ' ')}</Text>
+        <Text style={styles.taskPoints}>{task.points} pts</Text>
+      </View>
+    </View>
+  </TouchableOpacity>
+);
+
+const enhanceTaskListItem = withObservables(['task'], ({ task }: { task: Task }) => ({
+  task,
+  assignee: task.assignee,
+}));
+
+const TaskListItem = enhanceTaskListItem(TaskListItemComponent);
 
 interface TasksScreenProps {
   tasks: Task[];
@@ -26,13 +63,7 @@ const TasksScreen = ({ tasks }: TasksScreenProps) => {
   }, []);
 
   const renderItem = ({ item }: { item: Task }) => (
-    <TouchableOpacity onPress={() => setSelectedTask(item)}>
-      <View style={styles.taskItem}>
-        <Text style={styles.taskTitle}>{item.title}</Text>
-        <Text style={styles.taskStatus}>{item.status}</Text>
-        <Text style={styles.taskPoints}>{item.points} pts</Text>
-      </View>
-    </TouchableOpacity>
+    <TaskListItem task={item} onPress={setSelectedTask} />
   );
 
   return (
@@ -119,29 +150,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    ...Platform.select({
-      web: {
-        boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.1)',
-      },
-      default: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
-      },
-    }),
+    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.1)',
+    elevation: 2,
   },
   taskTitle: {
     fontSize: 16,
     fontWeight: '500',
-    flex: 1,
+    marginBottom: 4,
+  },
+  assigneeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  avatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+  assigneeEmoji: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  assigneeText: {
+    fontSize: 12,
+    color: '#64748B',
   },
   taskStatus: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#666',
-    marginRight: 8,
+    marginBottom: 4,
     textTransform: 'uppercase',
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   taskPoints: {
     fontSize: 14,

@@ -172,6 +172,35 @@ export async function pushChanges(
             if ('recurrence_rule' in record) update.recurrenceRule = record.recurrence_rule;
             if ('assignee_id' in record) update.assigneeId = record.assignee_id;
             if ('creator_id' in record) update.creatorId = record.creator_id;
+
+            // Point Awarding Logic
+            // If status is changing to COMPLETED, award points to the assignee
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if ('status' in record && (record as any).status === 'COMPLETED') {
+              const [currentTask] = await db.select().from(tasks).where(eq(tasks.id, record.id));
+              
+              // Only award if not already completed
+              if (currentTask && currentTask.status !== 'COMPLETED') {
+                // Use new values if present in update, otherwise use existing
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const points = 'points' in record ? Number((record as any).points) : currentTask.points;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const assigneeId = 'assignee_id' in record ? (record as any).assignee_id : currentTask.assigneeId;
+
+                if (assigneeId && points > 0) {
+                  const [assignee] = await db.select().from(users).where(eq(users.id, assigneeId));
+                  if (assignee) {
+                    await db.update(users)
+                      .set({ 
+                        pointsBalance: assignee.pointsBalance + points,
+                        updatedAt: new Date()
+                      })
+                      .where(eq(users.id, assigneeId));
+                  }
+                }
+              }
+            }
+
             await db.update(tasks).set(update).where(eq(tasks.id, record.id));
             break;
           }

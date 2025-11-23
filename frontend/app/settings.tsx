@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Modal, TextInput, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Modal, TextInput, Alert, Platform, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { DashboardLayout } from '../src/components/dashboard/DashboardLayout';
 import { authProvider } from '../src/logic/auth';
 import { database } from '../src/model/database';
@@ -7,6 +8,8 @@ import { User, Family } from '../src/model/models';
 import { Q } from '@nozbe/watermelondb';
 import { Toast } from '../src/components/common/Toast';
 import { syncDatabase } from '../src/logic/sync';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
 export default function SettingsScreen() {
   const [currentUser, setCurrentUser] = useState(authProvider.getState().user);
@@ -17,6 +20,14 @@ export default function SettingsScreen() {
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberRole, setNewMemberRole] = useState<'PARENT' | 'CHILD'>('CHILD');
   const [newMemberPin, setNewMemberPin] = useState('');
+  const [newMemberAvatar, setNewMemberAvatar] = useState('');
+
+  // Edit Member State
+  const [editingMember, setEditingMember] = useState<User | null>(null);
+  const [editMemberName, setEditMemberName] = useState('');
+  const [editMemberRole, setEditMemberRole] = useState<'PARENT' | 'CHILD'>('CHILD');
+  const [editMemberAvatar, setEditMemberAvatar] = useState('');
+  const [isEditMemberModalVisible, setIsEditMemberModalVisible] = useState(false);
   
   // Toast state
   const [toastVisible, setToastVisible] = useState(false);
@@ -66,7 +77,7 @@ export default function SettingsScreen() {
           await syncDatabase();
           // Debug: check what families exist
           const allFamilies = await database.get<Family>('families').query().fetch();
-          console.log('All families in DB:', allFamilies.map(f => ({ id: f.id, name: f.name })));
+          console.log('All families in DB:', allFamilies.map((f: Family) => ({ id: f.id, name: f.name })));
 
           const familyRecord = await database.get<Family>('families').find(user.familyId);
           console.log('Found family after sync:', familyRecord);
@@ -78,6 +89,57 @@ export default function SettingsScreen() {
       }
     } else {
       console.warn('No familyId found on user');
+    }
+  };
+
+  const handlePickImage = async (setAvatar: (url: string) => void) => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
+
+      if (!result.canceled) {
+        const asset = result.assets[0];
+        showToast('Uploading image...', 'success');
+        
+        // Upload to backend
+        const formData = new FormData();
+
+        if (Platform.OS === 'web') {
+          const res = await fetch(asset.uri);
+          const blob = await res.blob();
+          formData.append('file', blob, 'avatar.jpg');
+        } else {
+          formData.append('file', {
+            uri: asset.uri,
+            name: 'avatar.jpg',
+            type: 'image/jpeg',
+          } as any);
+        }
+
+        const token = authProvider.getToken();
+        const response = await fetch(`${API_URL}/upload`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+
+        const data = await response.json();
+        setAvatar(data.url);
+        showToast('Image uploaded successfully', 'success');
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      showToast('Failed to upload image', 'error');
     }
   };
 
@@ -130,18 +192,20 @@ export default function SettingsScreen() {
 
     try {
       await database.write(async () => {
-        await database.get<User>('users').create(user => {
+        await database.get<User>('users').create((user: User) => {
           user.name = newMemberName;
           user.role = newMemberRole;
           user.familyId = currentUser?.familyId || '';
           user.pinHash = newMemberPin; // In a real app, hash this!
           user.pointsBalance = 0;
           user.emailFrequency = 'WEEKLY';
+          user.avatarUrl = newMemberAvatar;
         });
       });
       
       setNewMemberName('');
       setNewMemberPin('');
+      setNewMemberAvatar('');
       setIsAddMemberModalVisible(false);
       loadData();
       showToast('Family member added successfully', 'success');
@@ -151,18 +215,58 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleUpdateMember = async () => {
+    if (!editingMember || !editMemberName) {
+      showToast('Please enter a name', 'error');
+      return;
+    }
+
+    try {
+      await database.write(async () => {
+        await editingMember.update((user: User) => {
+          user.name = editMemberName;
+          user.role = editMemberRole;
+          user.avatarUrl = editMemberAvatar;
+        });
+      });
+      
+      setEditingMember(null);
+      setIsEditMemberModalVisible(false);
+      loadData();
+      showToast('Member updated successfully', 'success');
+    } catch (error) {
+      console.error('Failed to update member:', error);
+      showToast('Failed to update member', 'error');
+    }
+  };
+
   const handleLogout = async () => {
     await authProvider.logout();
   };
 
   const renderUserItem = ({ item }: { item: User }) => (
     <View style={styles.userItem}>
-      <View>
-        <Text style={styles.userName}>{item.name}</Text>
-        <Text style={styles.userRole}>{item.role}</Text>
+      <View style={styles.userInfo}>
+        {item.avatarUrl ? (
+          <Image source={{ uri: item.avatarUrl }} style={styles.userAvatar} />
+        ) : (
+          <View style={styles.userAvatarPlaceholder}>
+            <Text style={styles.userAvatarPlaceholderText}>{item.name.charAt(0).toUpperCase()}</Text>
+          </View>
+        )}
+        <View>
+          <Text style={styles.userName}>{item.name}</Text>
+          <Text style={styles.userRole}>{item.role}</Text>
+        </View>
       </View>
       {currentUser?.role === 'PARENT' && (
-        <TouchableOpacity onPress={() => Alert.alert('Edit', 'Edit functionality coming soon')}>
+        <TouchableOpacity onPress={() => {
+          setEditingMember(item);
+          setEditMemberName(item.name);
+          setEditMemberRole(item.role);
+          setEditMemberAvatar(item.avatarUrl || '');
+          setIsEditMemberModalVisible(true);
+        }}>
           <Text style={styles.editButton}>Edit</Text>
         </TouchableOpacity>
       )}
@@ -354,8 +458,88 @@ export default function SettingsScreen() {
                   secureTextEntry
                 />
 
+                <Text style={styles.label}>Profile Picture</Text>
+                <View style={styles.avatarUploadContainer}>
+                  {newMemberAvatar ? (
+                    <Image source={{ uri: newMemberAvatar }} style={styles.avatarPreview} />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <Text style={styles.avatarPlaceholderText}>?</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity 
+                    style={styles.uploadButton} 
+                    onPress={() => handlePickImage(setNewMemberAvatar)}
+                  >
+                    <Text style={styles.uploadButtonText}>{newMemberAvatar ? 'Change Photo' : 'Upload Photo'}</Text>
+                  </TouchableOpacity>
+                </View>
+
                 <TouchableOpacity style={styles.createButton} onPress={handleAddMember}>
                   <Text style={styles.createButtonText}>Add Member</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+
+          <Modal
+            visible={isEditMemberModalVisible}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={() => setIsEditMemberModalVisible(false)}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Edit Family Member</Text>
+                <TouchableOpacity onPress={() => setIsEditMemberModalVisible(false)}>
+                  <Text style={styles.closeButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.modalContent}>
+                <Text style={styles.label}>Name</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editMemberName}
+                  onChangeText={setEditMemberName}
+                  placeholder="Name"
+                />
+
+                <Text style={styles.label}>Role</Text>
+                <View style={styles.roleSelector}>
+                  <TouchableOpacity 
+                    style={[styles.roleOption, editMemberRole === 'PARENT' && styles.roleOptionSelected]}
+                    onPress={() => setEditMemberRole('PARENT')}
+                  >
+                    <Text style={[styles.roleText, editMemberRole === 'PARENT' && styles.roleTextSelected]}>Parent</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.roleOption, editMemberRole === 'CHILD' && styles.roleOptionSelected]}
+                    onPress={() => setEditMemberRole('CHILD')}
+                  >
+                    <Text style={[styles.roleText, editMemberRole === 'CHILD' && styles.roleTextSelected]}>Child</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.label}>Profile Picture</Text>
+                <View style={styles.avatarUploadContainer}>
+                  {editMemberAvatar ? (
+                    <Image source={{ uri: editMemberAvatar }} style={styles.avatarPreview} />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <Text style={styles.avatarPlaceholderText}>?</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity 
+                    style={styles.uploadButton} 
+                    onPress={() => handlePickImage(setEditMemberAvatar)}
+                  >
+                    <Text style={styles.uploadButtonText}>{editMemberAvatar ? 'Change Photo' : 'Upload Photo'}</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity style={styles.createButton} onPress={handleUpdateMember}>
+                  <Text style={styles.createButtonText}>Save Changes</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -400,6 +584,30 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  userAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  userAvatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  userAvatarPlaceholderText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#64748B',
   },
   userName: {
     fontSize: 16,
@@ -526,5 +734,41 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: 'white',
     fontWeight: '600',
+  },
+  uploadButton: {
+    backgroundColor: '#E0F2FE',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  uploadButtonText: {
+    color: '#0284C7',
+    fontWeight: '600',
+  },
+  avatarUploadContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  avatarPlaceholder: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  avatarPlaceholderText: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  avatarPreview: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginRight: 16,
   },
 });

@@ -384,10 +384,7 @@ const styles = StyleSheet.create({
   todayHeader: {
     backgroundColor: '#2563EB',
     elevation: 4,
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    boxShadow: '0px 2px 4px rgba(37, 99, 235, 0.3)',
   },
   todayLabel: {
     fontSize: 10,
@@ -431,10 +428,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
     elevation: 1,
   },
   mealText: {
