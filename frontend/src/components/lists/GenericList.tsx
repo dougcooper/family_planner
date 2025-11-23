@@ -202,6 +202,8 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
               <TouchableOpacity
                 style={styles.toggleButton}
                 onPress={() => setShowCompleted(!showCompleted)}
+                accessibilityLabel={`${showCompleted ? 'Hide' : 'Show'} ${checkedCount} completed item${checkedCount !== 1 ? 's' : ''}`}
+                accessibilityRole="button"
               >
                 <Text style={styles.toggleButtonText}>
                   {showCompleted ? '👁️ Hide' : '👁️ Show'} Completed ({checkedCount})
