@@ -1,32 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
-import { GroceryItem } from '../../model/models';
+import { ListItem, List } from '../../model/models';
 
-interface GroceryListProps {
+interface GenericListProps {
   database: Database;
-  familyId: string;
+  list: List;
+  onBack?: () => void;
 }
 
-export function GroceryList({ database, familyId }: GroceryListProps) {
-  const [items, setItems] = useState<GroceryItem[]>([]);
+export function GenericList({ database, list, onBack }: GenericListProps) {
+  const [items, setItems] = useState<ListItem[]>([]);
   const [newItemName, setNewItemName] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadItems();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [list]);
 
   const loadItems = async () => {
     try {
-      const groceryItems = await database
-        .get<GroceryItem>('grocery_items')
-        .query(Q.where('family_id', familyId))
+      const listItems = await database
+        .get<ListItem>('list_items')
+        .query(Q.where('list_id', list.id))
         .fetch();
       
       // Sort: unchecked items first, then by creation date
-      const sorted = groceryItems.sort((a, b) => {
+      const sorted = listItems.sort((a, b) => {
         if (a.isChecked !== b.isChecked) {
           return a.isChecked ? 1 : -1;
         }
@@ -36,7 +37,7 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
       setItems(sorted);
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Error loading grocery items:', error);
+      console.error('Error loading list items:', error);
     } finally {
       setLoading(false);
     }
@@ -47,9 +48,9 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
 
     try {
       await database.write(async () => {
-        await database.get<GroceryItem>('grocery_items').create((item) => {
-          item.familyId = familyId;
-          item.name = newItemName.trim();
+        await database.get<ListItem>('list_items').create((item) => {
+          item.listId = list.id;
+          item.text = newItemName.trim();
           item.isChecked = false;
         });
       });
@@ -58,12 +59,12 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
       await loadItems();
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Error adding grocery item:', error);
+      console.error('Error adding list item:', error);
       alert('Failed to add item');
     }
   };
 
-  const handleToggleCheck = async (item: GroceryItem) => {
+  const handleToggleCheck = async (item: ListItem) => {
     try {
       await database.write(async () => {
         await item.update((i) => {
@@ -79,7 +80,7 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
     }
   };
 
-  const handleDeleteItem = async (item: GroceryItem) => {
+  const handleDeleteItem = async (item: ListItem) => {
     try {
       await database.write(async () => {
         await item.markAsDeleted();
@@ -115,7 +116,7 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
     }
   };
 
-  const renderItem = ({ item }: { item: GroceryItem }) => {
+  const renderItem = ({ item }: { item: ListItem }) => {
     return (
       <View style={styles.itemCard}>
         <TouchableOpacity
@@ -128,7 +129,7 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
         </TouchableOpacity>
 
         <Text style={[styles.itemName, item.isChecked && styles.itemNameChecked]}>
-          {item.name}
+          {item.text}
         </Text>
 
         <TouchableOpacity
@@ -147,7 +148,7 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading grocery list...</Text>
+        <Text style={styles.loadingText}>Loading list...</Text>
       </View>
     );
   }
@@ -155,10 +156,15 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Grocery List</Text>
+        {onBack && (
+          <TouchableOpacity onPress={onBack} style={styles.backButton}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+        )}
+        <Text style={styles.headerTitle}>{list.name}</Text>
         <View style={styles.stats}>
           <Text style={styles.statsText}>
-            {uncheckedCount} to buy • {checkedCount} checked
+            {uncheckedCount} to do • {checkedCount} done
           </Text>
         </View>
       </View>
@@ -183,8 +189,8 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
 
       {items.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>🛒</Text>
-          <Text style={styles.emptyText}>Your grocery list is empty</Text>
+          <Text style={styles.emptyIcon}>📝</Text>
+          <Text style={styles.emptyText}>This list is empty</Text>
           <Text style={styles.emptySubtext}>Add items above to get started!</Text>
         </View>
       ) : (
@@ -224,6 +230,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+  },
+  backButton: {
+    marginBottom: 8,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#4A90E2',
+    fontWeight: '600',
   },
   headerTitle: {
     fontSize: 24,

@@ -4,6 +4,7 @@ export type TaskStatus = 'TODO' | 'PENDING_REVIEW' | 'COMPLETED';
 export type MealType = 'BREAKFAST' | 'LUNCH' | 'DINNER';
 export type NotificationType = 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
 export type EmailFrequency = 'IMMEDIATE' | 'DAILY' | 'WEEKLY' | 'OFF';
+export type ListType = 'GROCERY' | 'TODO' | 'OTHER';
 
 // Entity Interfaces
 export interface Family {
@@ -95,6 +96,24 @@ export interface GroceryItem {
   id: string;
   familyId: string;
   name: string;
+  isChecked: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface List {
+  id: string;
+  familyId: string;
+  name: string;
+  type: ListType;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ListItem {
+  id: string;
+  listId: string;
+  text: string;
   isChecked: boolean;
   createdAt: Date;
   updatedAt: Date;

@@ -1,5 +1,5 @@
-import { Database } from '@nozbe/watermelondb';
-import { GroceryItem } from '../model/models';
+import { Database, Q } from '@nozbe/watermelondb';
+import { ListItem, List } from '../model/models';
 
 /**
  * Meal-to-grocery-list logic
@@ -53,24 +53,43 @@ export async function addMealToGroceryList(
     let itemsAdded = 0;
 
     await database.write(async () => {
+      // Find or create Grocery List
+      const lists = await database
+        .get<List>('lists')
+        .query(
+          Q.where('family_id', familyId),
+          Q.where('type', 'GROCERY')
+        )
+        .fetch();
+      
+      let groceryList: List;
+      if (lists.length > 0) {
+        groceryList = lists[0];
+      } else {
+        groceryList = await database.get<List>('lists').create((list) => {
+          list.familyId = familyId;
+          list.name = 'Grocery List';
+          list.type = 'GROCERY';
+        });
+      }
+
       for (const ingredient of ingredients) {
         // Check if item already exists in the grocery list
-        const existing = await database
-          .get<GroceryItem>('grocery_items')
-          .query()
+        const listItems = await database
+          .get<ListItem>('list_items')
+          .query(Q.where('list_id', groceryList.id))
           .fetch();
 
-        const alreadyExists = existing.some(
+        const alreadyExists = listItems.some(
           item => 
-            item.familyId === familyId && 
-            item.name.toLowerCase() === ingredient.toLowerCase() &&
+            item.text.toLowerCase() === ingredient.toLowerCase() &&
             !item.isChecked
         );
 
         if (!alreadyExists) {
-          await database.get<GroceryItem>('grocery_items').create((item) => {
-            item.familyId = familyId;
-            item.name = ingredient;
+          await database.get<ListItem>('list_items').create((item) => {
+            item.listId = groceryList.id;
+            item.text = ingredient;
             item.isChecked = false;
           });
           itemsAdded++;
@@ -102,27 +121,46 @@ export async function bulkAddToGroceryList(
     let itemsAdded = 0;
 
     await database.write(async () => {
+      // Find or create Grocery List
+      const lists = await database
+        .get<List>('lists')
+        .query(
+          Q.where('family_id', familyId),
+          Q.where('type', 'GROCERY')
+        )
+        .fetch();
+      
+      let groceryList: List;
+      if (lists.length > 0) {
+        groceryList = lists[0];
+      } else {
+        groceryList = await database.get<List>('lists').create((list) => {
+          list.familyId = familyId;
+          list.name = 'Grocery List';
+          list.type = 'GROCERY';
+        });
+      }
+
       for (const itemName of items) {
         const trimmed = itemName.trim();
         if (trimmed.length === 0) continue;
 
         // Check if item already exists
-        const existing = await database
-          .get<GroceryItem>('grocery_items')
-          .query()
+        const listItems = await database
+          .get<ListItem>('list_items')
+          .query(Q.where('list_id', groceryList.id))
           .fetch();
 
-        const alreadyExists = existing.some(
+        const alreadyExists = listItems.some(
           item => 
-            item.familyId === familyId && 
-            item.name.toLowerCase() === trimmed.toLowerCase() &&
+            item.text.toLowerCase() === trimmed.toLowerCase() &&
             !item.isChecked
         );
 
         if (!alreadyExists) {
-          await database.get<GroceryItem>('grocery_items').create((item) => {
-            item.familyId = familyId;
-            item.name = trimmed;
+          await database.get<ListItem>('list_items').create((item) => {
+            item.listId = groceryList.id;
+            item.text = trimmed;
             item.isChecked = false;
           });
           itemsAdded++;

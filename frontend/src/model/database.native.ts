@@ -3,7 +3,8 @@ import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
 import { setGenerator } from '@nozbe/watermelondb/utils/common/randomId';
 import { v4 as uuidv4 } from 'uuid';
 import { schema } from './schema';
-import { Family, User, Notification, Task, Event, EventAttendee, MealPlan, GroceryItem, Reward } from './models';
+import migrations from './migrations';
+import { Family, User, Notification, Task, Event, EventAttendee, MealPlan, GroceryItem, Reward, List, ListItem } from './models';
 
 // Use UUIDs for all IDs to match backend requirements
 setGenerator(() => {
@@ -13,6 +14,7 @@ setGenerator(() => {
 
 const adapter = new SQLiteAdapter({
   schema,
+  migrations,
   dbName: 'family_dashboard',
   jsi: true,
   onSetUpError: (error) => {
@@ -23,7 +25,7 @@ const adapter = new SQLiteAdapter({
 
 export const database = new Database({
   adapter,
-  modelClasses: [Family, User, Notification, Task, Event, EventAttendee, MealPlan, GroceryItem, Reward],
+  modelClasses: [Family, User, Notification, Task, Event, EventAttendee, MealPlan, GroceryItem, Reward, List, ListItem],
 });
 
 export default database;

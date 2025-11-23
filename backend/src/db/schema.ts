@@ -6,6 +6,7 @@ export const emailFrequencyEnum = pgEnum('email_frequency', ['IMMEDIATE', 'DAILY
 export const notificationTypeEnum = pgEnum('notification_type', ['INFO', 'SUCCESS', 'WARNING', 'ERROR']);
 export const taskStatusEnum = pgEnum('task_status', ['TODO', 'PENDING_REVIEW', 'COMPLETED']);
 export const mealTypeEnum = pgEnum('meal_type', ['BREAKFAST', 'LUNCH', 'DINNER']);
+export const listTypeEnum = pgEnum('list_type', ['GROCERY', 'TODO', 'OTHER']);
 
 // Family table
 export const families = pgTable('families', {
@@ -107,6 +108,26 @@ export const groceryItems = pgTable('grocery_items', {
   id: uuid('id').primaryKey().defaultRandom(),
   familyId: uuid('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }).notNull(),
+  isChecked: boolean('is_checked').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Lists table
+export const lists = pgTable('lists', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  type: listTypeEnum('type').notNull().default('OTHER'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// List Items table
+export const listItems = pgTable('list_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  listId: uuid('list_id').notNull().references(() => lists.id, { onDelete: 'cascade' }),
+  text: varchar('text', { length: 255 }).notNull(),
   isChecked: boolean('is_checked').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),

@@ -1,5 +1,5 @@
-import { Model } from '@nozbe/watermelondb';
-import { field, date, readonly } from '@nozbe/watermelondb/decorators';
+import { Model, Query } from '@nozbe/watermelondb';
+import { field, date, readonly, children } from '@nozbe/watermelondb/decorators';
 import type { 
   Family as IFamily, 
   User as IUser, 
@@ -9,12 +9,15 @@ import type {
   EventAttendee as IEventAttendee, 
   MealPlan as IMealPlan, 
   GroceryItem as IGroceryItem, 
+  List as IList,
+  ListItem as IListItem,
   Reward as IReward,
   UserRole,
   EmailFrequency,
   TaskStatus,
   MealType,
-  NotificationType
+  NotificationType,
+  ListType
 } from '@family-planner/types';
 
 export class Family extends Model implements IFamily {
@@ -106,6 +109,28 @@ export class GroceryItem extends Model implements IGroceryItem {
 
   @field('family_id') familyId!: string;
   @field('name') name!: string;
+  @field('is_checked') isChecked!: boolean;
+  @readonly @date('created_at') createdAt!: Date;
+  @readonly @date('updated_at') updatedAt!: Date;
+}
+
+export class List extends Model implements IList {
+  static table = 'lists';
+
+  @field('family_id') familyId!: string;
+  @field('name') name!: string;
+  @field('type') type!: ListType;
+  @readonly @date('created_at') createdAt!: Date;
+  @readonly @date('updated_at') updatedAt!: Date;
+
+  @children('list_items') items!: Query<ListItem>;
+}
+
+export class ListItem extends Model implements IListItem {
+  static table = 'list_items';
+
+  @field('list_id') listId!: string;
+  @field('text') text!: string;
   @field('is_checked') isChecked!: boolean;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
