@@ -101,6 +101,17 @@ export interface GroceryItem {
   updatedAt: Date;
 }
 
+export interface Recipe {
+  id: string;
+  familyId: string;
+  name: string;
+  description?: string;
+  ingredients: string[];
+  instructions?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface List {
   id: string;
   familyId: string;

@@ -12,6 +12,7 @@ import type {
   List as IList,
   ListItem as IListItem,
   Reward as IReward,
+  Recipe as IRecipe,
   UserRole,
   EmailFrequency,
   TaskStatus,
@@ -104,6 +105,30 @@ export class MealPlan extends Model implements IMealPlan {
   @field('description') description!: string;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
+}
+
+export class Recipe extends Model implements IRecipe {
+  static table = 'recipes';
+
+  @field('family_id') familyId!: string;
+  @field('name') name!: string;
+  @field('description') description?: string;
+  @field('ingredients') _ingredients!: string;
+  @field('instructions') instructions?: string;
+  @readonly @date('created_at') createdAt!: Date;
+  @readonly @date('updated_at') updatedAt!: Date;
+
+  get ingredients(): string[] {
+    try {
+      return JSON.parse(this._ingredients);
+    } catch {
+      return [];
+    }
+  }
+
+  set ingredients(value: string[]) {
+    this._ingredients = JSON.stringify(value);
+  }
 }
 
 export class GroceryItem extends Model implements IGroceryItem {
