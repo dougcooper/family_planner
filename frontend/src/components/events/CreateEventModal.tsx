@@ -30,6 +30,13 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
       return;
     }
     try {
+      const count = parseInt(recurrenceCount, 10);
+      
+      if (isNaN(count) || count <= 0) {
+        alert('Please enter a valid number of occurrences');
+        return;
+      }
+      
       const params = {
         title,
         startTime,
@@ -38,7 +45,7 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
         recurrenceRule: isRecurring 
           ? buildRecurrenceRule({ 
               frequency: recurrenceFrequency, 
-              count: parseInt(recurrenceCount) || 10 
+              count 
             })
           : undefined,
       };

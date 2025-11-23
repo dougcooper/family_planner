@@ -53,7 +53,7 @@ describe('Recurring Events Logic', () => {
         frequency: 'DAILY',
         until: untilDate,
       });
-      expect(rule).toBe(`FREQ=DAILY;UNTIL=${untilDate.toISOString()}`);
+      expect(rule).toBe('FREQ=DAILY;UNTIL=20241231T235959Z');
     });
 
     it('should build rule with only frequency when no other options provided', () => {

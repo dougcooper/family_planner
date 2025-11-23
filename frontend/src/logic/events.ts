@@ -48,7 +48,15 @@ export function buildRecurrenceRule(options: RecurrenceOptions): string {
   }
   
   if (options.until) {
-    parts.push(`UNTIL=${options.until.toISOString()}`);
+    // Format as YYYYMMDDTHHMMSSZ for iCalendar compatibility
+    const year = options.until.getUTCFullYear();
+    const month = String(options.until.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(options.until.getUTCDate()).padStart(2, '0');
+    const hours = String(options.until.getUTCHours()).padStart(2, '0');
+    const minutes = String(options.until.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(options.until.getUTCSeconds()).padStart(2, '0');
+    const formattedDate = `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+    parts.push(`UNTIL=${formattedDate}`);
   }
   
   return parts.join(';');

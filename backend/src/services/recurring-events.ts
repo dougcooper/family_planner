@@ -51,9 +51,9 @@ export interface RecurringEventInstance {
  * Example: "FREQ=WEEKLY;BYDAY=MO,WE,FR;COUNT=10"
  */
 export function parseRecurrenceRule(rrule: string): RecurrenceRule | null {
-  if (!rrule) return null;
+  if (!rrule || !rrule.trim()) return null;
 
-  const parts = rrule.split(';');
+  const parts = rrule.trim().split(';');
   const rule: Partial<RecurrenceRule> = {};
 
   for (const part of parts) {
@@ -72,7 +72,10 @@ export function parseRecurrenceRule(rrule: string): RecurrenceRule | null {
         rule.count = parseInt(value, 10);
         break;
       case 'UNTIL':
-        rule.until = new Date(value);
+        const untilDate = new Date(value);
+        if (!isNaN(untilDate.getTime())) {
+          rule.until = untilDate;
+        }
         break;
       case 'BYDAY':
         rule.byDay = value.split(',');
@@ -123,8 +126,11 @@ export function generateEventInstances(
   let count = 0;
   const maxCount = rule.count || maxInstances;
   const untilDate = rule.until || endDate;
+  let iterations = 0;
+  const maxIterations = maxInstances * 10; // Safety limit for infinite loop prevention
 
-  while (count < maxCount && currentDate <= untilDate && currentDate <= endDate) {
+  while (count < maxCount && currentDate <= untilDate && currentDate <= endDate && iterations < maxIterations) {
+    iterations++;
     if (currentDate >= startDate && shouldIncludeDate(currentDate, rule)) {
       const instanceStartTime = new Date(currentDate);
       const instanceEndTime = new Date(currentDate.getTime() + eventDuration);
@@ -152,14 +158,15 @@ export function generateEventInstances(
 /**
  * Check if a date should be included based on the recurrence rule
  */
+const DAY_MAP: { [key: string]: number } = {
+  'SU': 0, 'MO': 1, 'TU': 2, 'WE': 3, 'TH': 4, 'FR': 5, 'SA': 6
+};
+
 function shouldIncludeDate(date: Date, rule: RecurrenceRule): boolean {
   // Check BYDAY for weekly recurrence
   if (rule.frequency === 'WEEKLY' && rule.byDay && rule.byDay.length > 0) {
-    const dayMap: { [key: string]: number } = {
-      'SU': 0, 'MO': 1, 'TU': 2, 'WE': 3, 'TH': 4, 'FR': 5, 'SA': 6
-    };
     const dayOfWeek = date.getDay();
-    const matchesDay = rule.byDay.some(day => dayMap[day] === dayOfWeek);
+    const matchesDay = rule.byDay.some(day => DAY_MAP[day] === dayOfWeek);
     if (!matchesDay) return false;
   }
 
@@ -208,13 +215,15 @@ function getNextOccurrence(date: Date, rule: RecurrenceRule, interval: number): 
 /**
  * Create a recurring event and generate its instances for a given time range
  */
+const DEFAULT_GENERATION_DAYS = 90; // Default to generate instances for next 3 months
+
 export async function createRecurringEvent(
   params: CreateRecurringEventParams,
   generateUntil?: Date
 ): Promise<{ success: boolean; eventIds: string[]; error?: string }> {
   try {
     // Default generate instances for next 3 months if not specified
-    const until = generateUntil || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+    const until = generateUntil || new Date(Date.now() + DEFAULT_GENERATION_DAYS * 24 * 60 * 60 * 1000);
     
     // Generate event instances
     const instances = generateEventInstances(
