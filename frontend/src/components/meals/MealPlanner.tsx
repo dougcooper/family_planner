@@ -260,17 +260,21 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
           </View>
 
           {/* Days columns */}
-          {weekDays.map((day) => (
-            <View key={day.date} style={styles.dayColumn}>
-              <View style={styles.dayHeader}>
-                <Text style={styles.dayName}>{getDayName(day.date)}</Text>
-                <Text style={styles.dayDate}>{getDateDisplay(day.date)}</Text>
+          {weekDays.map((day) => {
+            const isToday = day.date === formatDateToYYYYMMDD(new Date());
+            return (
+              <View key={day.date} style={[styles.dayColumn, isToday && styles.todayColumn]}>
+                <View style={[styles.dayHeader, isToday && styles.todayHeader]}>
+                  <Text style={styles.dayName}>{getDayName(day.date)}</Text>
+                  <Text style={styles.dayDate}>{getDateDisplay(day.date)}</Text>
+                  {isToday && <Text style={styles.todayLabel}>TODAY</Text>}
+                </View>
+                {renderMealSlot(day, 'BREAKFAST', day.breakfast)}
+                {renderMealSlot(day, 'LUNCH', day.lunch)}
+                {renderMealSlot(day, 'DINNER', day.dinner)}
               </View>
-              {renderMealSlot(day, 'BREAKFAST', day.breakfast)}
-              {renderMealSlot(day, 'LUNCH', day.lunch)}
-              {renderMealSlot(day, 'DINNER', day.dinner)}
-            </View>
-          ))}
+            );
+          })}
         </View>
       </ScrollView>
 
@@ -364,12 +368,34 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   dayHeader: {
-    height: 60,
+    height: 75,
     backgroundColor: '#4A90E2',
     borderRadius: 8,
     padding: 8,
     justifyContent: 'center',
     marginBottom: 8,
+  },
+  todayColumn: {
+    backgroundColor: '#EBF8FF',
+    borderRadius: 12,
+    padding: 4,
+    marginRight: 4, // Adjust margin to account for padding
+  },
+  todayHeader: {
+    backgroundColor: '#2563EB',
+    elevation: 4,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  todayLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#FFD700',
+    textAlign: 'center',
+    marginTop: 2,
+    letterSpacing: 1,
   },
   dayName: {
     fontSize: 16,
