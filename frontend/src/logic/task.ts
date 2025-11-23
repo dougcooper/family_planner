@@ -31,6 +31,12 @@ export async function approveTask(database: Database, taskId: string): Promise<T
       }
       t.status = 'COMPLETED';
     });
+    
+    // Award points to the assignee
+    const assignee = await task.assignee.fetch();
+    await assignee.update((u) => {
+      u.pointsBalance = u.pointsBalance + task.points;
+    });
   });
 
   return task;
