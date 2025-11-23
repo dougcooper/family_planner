@@ -25,7 +25,6 @@ export async function syncDatabase(): Promise<void> {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Pull sync failed:', response.status, errorText);
         throw new Error(`Pull sync failed: ${response.status} ${errorText}`);
       }
 
@@ -37,7 +36,6 @@ export async function syncDatabase(): Promise<void> {
       };
     },
     pushChanges: async ({ changes, lastPulledAt }) => {
-      console.log('Pushing changes:', JSON.stringify(changes, null, 2));
       const response = await fetch(`${API_URL}/sync/push`, {
         method: 'POST',
         headers: {
@@ -52,7 +50,6 @@ export async function syncDatabase(): Promise<void> {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Push sync failed:', response.status, errorText);
         throw new Error(`Push sync failed: ${response.status} ${errorText}`);
       }
     },
@@ -65,6 +62,7 @@ export async function autoSync(): Promise<void> {
   try {
     await syncDatabase();
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Auto-sync failed:', error);
     // Don't throw - let the app continue with local data
   }

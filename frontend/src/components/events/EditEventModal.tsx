@@ -35,6 +35,7 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
       });
       onClose();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Failed to update event:', error);
       alert('Failed to update event');
     }
@@ -49,6 +50,7 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
           await deleteEvent(database, event.id);
           onClose();
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error('Failed to delete event:', error);
           alert('Failed to delete event');
         }
@@ -67,6 +69,7 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
                 await deleteEvent(database, event.id);
                 onClose();
               } catch (error) {
+                // eslint-disable-next-line no-console
                 console.error('Failed to delete event:', error);
                 alert('Failed to delete event');
               }

@@ -37,6 +37,7 @@ export async function redeemReward(
       newBalance,
     };
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error redeeming reward:', error);
     return {
       success: false,
@@ -53,6 +54,7 @@ export async function getUserPointsBalance(
     const user = await database.get<User>('users').find(userId);
     return user.pointsBalance;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error getting user points balance:', error);
     return 0;
   }
@@ -68,6 +70,7 @@ export async function canAffordReward(
     const reward = await database.get<Reward>('rewards').find(rewardId);
     return user.pointsBalance >= reward.cost;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error checking if user can afford reward:', error);
     return false;
   }

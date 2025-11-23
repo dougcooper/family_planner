@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../db/index.js';
 import { users, notifications, tasks, events, mealPlans, groceryItems, rewards, families } from '../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 
 interface ChangeRecord {
   id: string;
@@ -94,12 +94,15 @@ export async function pushChanges(
             });
             break;
           case 'meal_plans':
+            console.log('Pushing meal plan:', JSON.stringify(record, null, 2));
             await db.insert(mealPlans).values({
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               ...(record as any),
               familyId,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               mealType: (record as any).meal_type,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              date: (record as any).date,
             });
             break;
           case 'grocery_items':
@@ -211,8 +214,35 @@ export async function pushChanges(
         }
       }
 
-      // Handle deleted records (soft delete recommended for sync)
-      // Implementation depends on soft delete strategy
+      // Handle deleted records
+      if (tableChanges.deleted && tableChanges.deleted.length > 0) {
+        switch (tableName) {
+          case 'families':
+            await db.delete(families).where(inArray(families.id, tableChanges.deleted));
+            break;
+          case 'users':
+            await db.delete(users).where(inArray(users.id, tableChanges.deleted));
+            break;
+          case 'notifications':
+            await db.delete(notifications).where(inArray(notifications.id, tableChanges.deleted));
+            break;
+          case 'tasks':
+            await db.delete(tasks).where(inArray(tasks.id, tableChanges.deleted));
+            break;
+          case 'events':
+            await db.delete(events).where(inArray(events.id, tableChanges.deleted));
+            break;
+          case 'meal_plans':
+            await db.delete(mealPlans).where(inArray(mealPlans.id, tableChanges.deleted));
+            break;
+          case 'grocery_items':
+            await db.delete(groceryItems).where(inArray(groceryItems.id, tableChanges.deleted));
+            break;
+          case 'rewards':
+            await db.delete(rewards).where(inArray(rewards.id, tableChanges.deleted));
+            break;
+        }
+      }
     }
 
     return reply.send({ success: true });

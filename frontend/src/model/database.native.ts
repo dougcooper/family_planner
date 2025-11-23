@@ -8,7 +8,6 @@ import { Family, User, Notification, Task, Event, EventAttendee, MealPlan, Groce
 // Use UUIDs for all IDs to match backend requirements
 setGenerator(() => {
   const id = uuidv4();
-  console.log('Generated UUID (Native):', id);
   return id;
 });
 
@@ -17,6 +16,7 @@ const adapter = new SQLiteAdapter({
   dbName: 'family_dashboard',
   jsi: true,
   onSetUpError: (error) => {
+    // eslint-disable-next-line no-console
     console.error('Database setup error:', error);
   },
 });

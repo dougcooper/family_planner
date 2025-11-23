@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, timestamp, integer, boolean, pgEnum, date, text } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, integer, boolean, pgEnum, date, text, unique } from 'drizzle-orm/pg-core';
 
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['PARENT', 'CHILD']);
@@ -98,7 +98,9 @@ export const mealPlans = pgTable('meal_plans', {
   description: varchar('description', { length: 500 }).notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
-});
+}, (t) => ({
+  unq: unique().on(t.familyId, t.date, t.mealType),
+}));
 
 // Grocery Items table
 export const groceryItems = pgTable('grocery_items', {

@@ -35,6 +35,7 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
       
       setItems(sorted);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error loading grocery items:', error);
     } finally {
       setLoading(false);
@@ -56,6 +57,7 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
       setNewItemName('');
       await loadItems();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error adding grocery item:', error);
       alert('Failed to add item');
     }
@@ -71,6 +73,7 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
 
       await loadItems();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error toggling item:', error);
       alert('Failed to update item');
     }
@@ -84,6 +87,7 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
 
       await loadItems();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error deleting item:', error);
       alert('Failed to delete item');
     }
@@ -105,6 +109,7 @@ export function GroceryList({ database, familyId }: GroceryListProps) {
 
       await loadItems();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error clearing completed items:', error);
       alert('Failed to clear completed items');
     }

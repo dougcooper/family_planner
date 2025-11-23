@@ -83,6 +83,7 @@ export async function addMealToGroceryList(
       itemsAdded,
     };
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error adding meal to grocery list:', error);
     return {
       success: false,
@@ -134,6 +135,7 @@ export async function bulkAddToGroceryList(
       itemsAdded,
     };
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error bulk adding to grocery list:', error);
     return {
       success: false,

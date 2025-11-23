@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Alert, Platform } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
 import { MealPlan } from '../../model/models';
 import { addMealToGroceryList } from '../../logic/meals';
+import { getStartOfWeek, formatDateToYYYYMMDD } from '../../logic/date';
 
 interface MealPlannerProps {
   database: Database;
@@ -28,16 +29,6 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const getStartOfWeek = () => {
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Sunday
-    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Start on Monday
-    const monday = new Date(today);
-    monday.setDate(today.getDate() + diff);
-    monday.setHours(0, 0, 0, 0);
-    return monday;
-  };
-
   const loadWeekMeals = async () => {
     try {
       const startOfWeek = getStartOfWeek();
@@ -47,14 +38,16 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
       for (let i = 0; i < 7; i++) {
         const date = new Date(startOfWeek);
         date.setDate(startOfWeek.getDate() + i);
-        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dateStr = formatDateToYYYYMMDD(date);
+        // console.log('Loading meals for:', dateStr);
 
         // Load meals for this day
         const dayMeals = await database
           .get<MealPlan>('meal_plans')
           .query(
             Q.where('family_id', familyId),
-            Q.where('date', dateStr)
+            Q.where('date', dateStr),
+            Q.sortBy('updated_at', Q.asc) // Process oldest to newest, so newest wins in the loop
           )
           .fetch();
 
@@ -70,6 +63,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
 
       setWeekDays(days);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error loading week meals:', error);
     } finally {
       setLoading(false);
@@ -91,16 +85,24 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
         .query(
           Q.where('family_id', familyId),
           Q.where('date', editingMeal.date),
-          Q.where('meal_type', editingMeal.mealType)
+          Q.where('meal_type', editingMeal.mealType),
+          Q.sortBy('updated_at', Q.desc)
         )
         .fetch();
 
       await database.write(async () => {
         if (existing.length > 0) {
-          // Update existing meal
+          // Update the most recent existing meal
           await existing[0].update((meal) => {
             meal.description = mealDescription.trim();
           });
+          
+          // Clean up duplicates if any
+          if (existing.length > 1) {
+            for (let i = 1; i < existing.length; i++) {
+              await existing[i].markAsDeleted();
+            }
+          }
         } else {
           // Create new meal
           await database.get<MealPlan>('meal_plans').create((meal) => {
@@ -117,24 +119,39 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
       setMealDescription('');
       await loadWeekMeals();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error saving meal:', error);
       alert('Failed to save meal');
     }
   };
 
   const handleDeleteMeal = async (meal: MealPlan) => {
-    const confirmed = confirm(`Delete "${meal.description}"?`);
-    if (!confirmed) return;
+    const deleteAction = async () => {
+      try {
+        await database.write(async () => {
+          await meal.markAsDeleted();
+        });
+        await loadWeekMeals();
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error deleting meal:', error);
+        alert('Failed to delete meal');
+      }
+    };
 
-    try {
-      await database.write(async () => {
-        await meal.markAsDeleted();
-      });
-
-      await loadWeekMeals();
-    } catch (error) {
-      console.error('Error deleting meal:', error);
-      alert('Failed to delete meal');
+    if (Platform.OS === 'web') {
+      if (confirm(`Delete "${meal.description}"?`)) {
+        await deleteAction();
+      }
+    } else {
+      Alert.alert(
+        'Delete Meal',
+        `Delete "${meal.description}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: deleteAction }
+        ]
+      );
     }
   };
 
@@ -147,6 +164,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
         alert(`Failed to add to grocery list: ${result.error}`);
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error adding meal to grocery list:', error);
       alert('Failed to add to grocery list');
     }

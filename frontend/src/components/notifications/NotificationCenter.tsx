@@ -37,6 +37,7 @@ export function NotificationCenter({ database, userId }: NotificationCenterProps
       
       setNotifications(filtered);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error loading notifications:', error);
     } finally {
       setLoading(false);
@@ -55,6 +56,7 @@ export function NotificationCenter({ database, userId }: NotificationCenterProps
 
       await loadNotifications();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error marking notification as read:', error);
     }
   };
@@ -74,6 +76,7 @@ export function NotificationCenter({ database, userId }: NotificationCenterProps
 
       await loadNotifications();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error marking all as read:', error);
     }
   };
@@ -86,6 +89,7 @@ export function NotificationCenter({ database, userId }: NotificationCenterProps
 
       await loadNotifications();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error deleting notification:', error);
     }
   };

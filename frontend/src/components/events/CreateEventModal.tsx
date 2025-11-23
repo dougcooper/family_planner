@@ -38,6 +38,7 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
       setEndTime(new Date(Date.now() + 3600000));
       onClose();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Failed to create event:', error);
       alert('Failed to create event');
     }

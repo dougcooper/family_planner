@@ -33,6 +33,7 @@ export function RewardCatalog({ database, currentUserId }: RewardCatalogProps) {
       
       setRewards(rewardsList);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error loading rewards:', error);
     } finally {
       setLoading(false);
@@ -60,6 +61,7 @@ export function RewardCatalog({ database, currentUserId }: RewardCatalogProps) {
         alert(`Failed to redeem reward: ${result.error}`);
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error redeeming reward:', error);
       alert('An error occurred while redeeming the reward');
     }

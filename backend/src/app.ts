@@ -5,6 +5,7 @@ import { login } from './api/auth/login.js';
 import { pullChanges, SyncPullQuery } from './sync/pull.js';
 import { pushChanges, SyncPushBody } from './sync/push.js';
 import { authenticate } from './middleware/auth.js';
+import { runMigrations } from './db/migrate.js';
 
 const app = Fastify({
   logger: {
@@ -37,6 +38,9 @@ app.post<{ Body: SyncPushBody }>('/sync/push', { preHandler: authenticate }, pus
 // Server startup
 const start = async () => {
   try {
+    // Run database migrations
+    await runMigrations();
+
     const port = parseInt(process.env.PORT || '3000', 10);
     await app.listen({ port, host: '0.0.0.0' });
     console.log(`🚀 Backend server ready at http://localhost:${port}`);

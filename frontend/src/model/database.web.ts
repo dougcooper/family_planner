@@ -8,7 +8,6 @@ import { Family, User, Notification, Task, Event, EventAttendee, MealPlan, Groce
 // Use UUIDs for all IDs to match backend requirements
 setGenerator(() => {
   const id = uuidv4();
-  console.log('Generated UUID (Web):', id);
   return id;
 });
 
@@ -16,8 +15,14 @@ const adapter = new LokiJSAdapter({
   schema,
   useWebWorker: false,
   useIncrementalIndexedDB: true,
+  dbName: 'family_dashboard', // Ensure consistent DB name for persistence
   onSetUpError: (error: Error) => {
+    // eslint-disable-next-line no-console
     console.error('Database setup error:', error);
+  },
+  extraLokiOptions: {
+    autosave: true,
+    autosaveInterval: 500,
   },
 });
 

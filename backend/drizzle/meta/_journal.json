@@ -15,6 +15,13 @@
       "when": 1763740723499,
       "tag": "0001_unique_kinsey_walden",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1763867278554,
+      "tag": "0002_awesome_human_cannonball",
+      "breakpoints": true
     }
   ]
 }

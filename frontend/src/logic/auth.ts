@@ -22,7 +22,7 @@ class AuthProvider {
   private token: string | null = null;
   private user: UserData | null = null;
   private listeners: Set<(state: AuthState) => void> = new Set();
-  private kioskTimeoutId: any = null;
+  private kioskTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private kioskTimeoutSeconds: number = 120; // Default 2 minutes
   private lastActivityTime: number = Date.now();
 
@@ -43,6 +43,7 @@ class AuthProvider {
         this.startKioskTimer();
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Auth initialization failed:', error);
     }
   }
@@ -74,6 +75,7 @@ class AuthProvider {
         this.kioskTimeoutSeconds = family.kiosk_timeout_seconds || 120;
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Failed to load family settings:', error);
     }
   }
@@ -101,7 +103,6 @@ class AuthProvider {
       const inactiveTime = (Date.now() - this.lastActivityTime) / 1000;
       
       if (inactiveTime >= this.kioskTimeoutSeconds) {
-        console.log('Kiosk timeout - logging out due to inactivity');
         this.logout();
       } else {
         // Re-schedule if activity was detected

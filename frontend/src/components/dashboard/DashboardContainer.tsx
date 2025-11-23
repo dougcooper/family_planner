@@ -8,16 +8,23 @@ import { EventList } from './EventList';
 import { TaskListSummary } from './TaskListSummary';
 import { DinnerSummary } from './DinnerSummary';
 import { Task, Event, MealPlan } from '../../model/models';
+import { formatDateToYYYYMMDD } from '../../logic/date';
 
-interface DashboardContainerProps {
+interface DashboardInputProps {
+  familyId?: string;
+}
+
+interface DashboardContainerProps extends DashboardInputProps {
   tasks: Task[];
   events: Event[];
   mealPlans: MealPlan[];
 }
 
 const DashboardContainer = ({ tasks, events, mealPlans }: DashboardContainerProps) => {
-  const dinnerPlan = mealPlans.length > 0 ? mealPlans[0].description : null;
-
+  // Filter for dinner specifically, in case the query returns multiple types
+  const dinnerMeal = mealPlans.find(m => m.mealType === 'DINNER');
+  const dinnerPlan = dinnerMeal ? dinnerMeal.description : null;
+  
   return (
     <DashboardLayout>
       <TodayWidget 
@@ -27,21 +34,34 @@ const DashboardContainer = ({ tasks, events, mealPlans }: DashboardContainerProp
       />
       <EventList events={events} />
       <TaskListSummary tasks={tasks} />
-      <DinnerSummary mealPlan={mealPlans[0] || null} />
+      <DinnerSummary mealPlan={dinnerMeal || null} />
     </DashboardLayout>
   );
 };
 
-const enhance = withObservables([], () => ({
-  tasks: database.collections.get<Task>('tasks').query(
-    Q.sortBy('created_at', Q.desc)
-  ),
-  events: database.collections.get<Event>('events').query(
-    Q.sortBy('start_time', Q.asc)
-  ),
-  mealPlans: database.collections.get<MealPlan>('meal_plans').query(
-    Q.sortBy('date', Q.desc)
-  ),
-}));
+const enhance = withObservables(['familyId'], ({ familyId }: DashboardInputProps) => {
+  const todayStr = formatDateToYYYYMMDD(new Date());
+  
+  const mealQuery = familyId 
+    ? database.collections.get<MealPlan>('meal_plans').query(
+        Q.where('family_id', familyId),
+        Q.where('date', todayStr),
+        Q.sortBy('updated_at', Q.desc)
+      )
+    : database.collections.get<MealPlan>('meal_plans').query(
+        Q.where('date', todayStr),
+        Q.sortBy('updated_at', Q.desc)
+      );
+
+  return {
+    tasks: database.collections.get<Task>('tasks').query(
+      Q.sortBy('created_at', Q.desc)
+    ),
+    events: database.collections.get<Event>('events').query(
+      Q.sortBy('start_time', Q.asc)
+    ),
+    mealPlans: mealQuery,
+  };
+});
 
 export default enhance(DashboardContainer);

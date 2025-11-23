@@ -9,7 +9,7 @@ export interface SyncPullQuery {
 }
 
 // Helper to map Drizzle camelCase to WatermelonDB snake_case
-const toWatermelon = (record: Record<string, unknown>) => {
+export const toWatermelon = (record: Record<string, unknown>) => {
   const newRecord: Record<string, unknown> = {};
   
   for (const [key, value] of Object.entries(record)) {
@@ -32,6 +32,21 @@ const toWatermelon = (record: Record<string, unknown>) => {
     }
     if (key === 'endTime') {
       newRecord.end_time = new Date(value as string | number | Date).getTime();
+      continue;
+    }
+    if (key === 'date') {
+      if (value instanceof Date) {
+        // Use UTC methods to avoid timezone shifts when the server is not in UTC
+        // Date-only fields are typically parsed as UTC midnight
+        const year = value.getUTCFullYear();
+        const month = String(value.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(value.getUTCDate()).padStart(2, '0');
+        newRecord.date = `${year}-${month}-${day}`;
+      } else if (typeof value === 'string') {
+        // Ensure it's just YYYY-MM-DD
+        newRecord.date = value.split('T')[0];
+      }
+      // console.log('Pulling date:', value, '->', newRecord.date);
       continue;
     }
 
@@ -136,6 +151,10 @@ export async function pullChanges(
     ]);
 
     // Format response for WatermelonDB
+    if (mealPlanChanges.length > 0) {
+      console.log('Pulling meal plans:', JSON.stringify(mealPlanChanges, null, 2));
+    }
+
     const changes = {
       families: {
         created: familyChanges.filter(f => f.createdAt > lastPulledDate).map(toWatermelon),

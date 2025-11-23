@@ -1,0 +1,1 @@
+ALTER TABLE "meal_plans" ADD CONSTRAINT "meal_plans_family_id_date_meal_type_unique" UNIQUE("family_id","date","meal_type");

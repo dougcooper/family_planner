@@ -49,6 +49,7 @@ export function CreateTaskModal({ visible, onClose, database, currentUserId, fam
       setAssigneeId('');
       onClose();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Failed to create task:', error);
       alert('Failed to create task');
     }
