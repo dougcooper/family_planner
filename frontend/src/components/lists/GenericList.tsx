@@ -13,6 +13,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
   const [items, setItems] = useState<ListItem[]>([]);
   const [newItemName, setNewItemName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(true);
 
   useEffect(() => {
     loadItems();
@@ -144,6 +145,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
 
   const uncheckedCount = items.filter((item) => !item.isChecked).length;
   const checkedCount = items.filter((item) => item.isChecked).length;
+  const displayedItems = showCompleted ? items : items.filter((item) => !item.isChecked);
 
   if (loading) {
     return (
@@ -195,8 +197,21 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
         </View>
       ) : (
         <>
+          {checkedCount > 0 && (
+            <View style={styles.toggleSection}>
+              <TouchableOpacity
+                style={styles.toggleButton}
+                onPress={() => setShowCompleted(!showCompleted)}
+              >
+                <Text style={styles.toggleButtonText}>
+                  {showCompleted ? '👁️ Hide' : '👁️ Show'} Completed ({checkedCount})
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <FlatList
-            data={items}
+            data={displayedItems}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.list}
@@ -361,6 +376,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
+  },
+  toggleSection: {
+    padding: 16,
+    paddingBottom: 8,
+    backgroundColor: '#F8FAFC',
+  },
+  toggleButton: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+  },
+  toggleButtonText: {
+    color: '#4A90E2',
+    fontSize: 15,
+    fontWeight: '600',
   },
   footer: {
     padding: 16,
