@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { Home, CheckSquare, Utensils, List, Gift, Settings } from 'lucide-react-native';
 import { authProvider } from '../src/logic/auth';
-import { syncDatabase } from '../src/logic/sync';
+import { syncDatabase, setupPeriodicSync } from '../src/logic/sync';
 
 // Cast icons to any to avoid type errors with color prop
 const HomeIcon = Home as any;
@@ -20,10 +20,23 @@ export default function RootLayout() {
   const router = useRouter();
 
   useEffect(() => {
+    let cleanupSync: (() => void) | undefined;
+
     const unsubscribe = authProvider.subscribe((state) => {
       setIsAuthenticated(state.isAuthenticated);
       if (state.isAuthenticated) {
+        // Initial sync
         syncDatabase().catch(console.error);
+        // Setup periodic sync (every 1 minute)
+        if (!cleanupSync) {
+          cleanupSync = setupPeriodicSync(60000);
+        }
+      } else {
+        // Stop syncing if logged out
+        if (cleanupSync) {
+          cleanupSync();
+          cleanupSync = undefined;
+        }
       }
     });
     
@@ -31,7 +44,10 @@ export default function RootLayout() {
       setIsLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      if (cleanupSync) cleanupSync();
+    };
   }, []);
 
   useEffect(() => {

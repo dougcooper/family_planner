@@ -1,7 +1,23 @@
 import { Model } from '@nozbe/watermelondb';
 import { field, date, readonly } from '@nozbe/watermelondb/decorators';
+import type { 
+  Family as IFamily, 
+  User as IUser, 
+  Notification as INotification, 
+  Task as ITask, 
+  Event as IEvent, 
+  EventAttendee as IEventAttendee, 
+  MealPlan as IMealPlan, 
+  GroceryItem as IGroceryItem, 
+  Reward as IReward,
+  UserRole,
+  EmailFrequency,
+  TaskStatus,
+  MealType,
+  NotificationType
+} from '@family-planner/types';
 
-export class Family extends Model {
+export class Family extends Model implements IFamily {
   static table = 'families';
 
   @field('name') name!: string;
@@ -10,41 +26,43 @@ export class Family extends Model {
   @readonly @date('updated_at') updatedAt!: Date;
 }
 
-export class User extends Model {
+export class User extends Model implements IUser {
   static table = 'users';
 
   @field('family_id') familyId!: string;
   @field('email') email?: string;
   @field('name') name!: string;
-  @field('role') role!: string;
+  @field('role') role!: UserRole;
   @field('pin_hash') pinHash!: string;
   @field('points_balance') pointsBalance!: number;
-  @field('email_frequency') emailFrequency!: string;
+  @field('email_frequency') emailFrequency!: EmailFrequency;
   @field('avatar_url') avatarUrl?: string;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
+  // Optional passwordHash from interface, not stored in frontend DB
+  passwordHash?: string;
 }
 
-export class Notification extends Model {
+export class Notification extends Model implements INotification {
   static table = 'notifications';
 
   @field('user_id') userId!: string;
   @field('title') title!: string;
   @field('message') message!: string;
-  @field('type') type!: string;
+  @field('type') type!: NotificationType;
   @field('is_read') isRead!: boolean;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
 }
 
-export class Task extends Model {
+export class Task extends Model implements ITask {
   static table = 'tasks';
 
   @field('family_id') familyId!: string;
   @field('title') title!: string;
   @field('description') description?: string;
   @field('points') points!: number;
-  @field('status') status!: string;
+  @field('status') status!: TaskStatus;
   @date('due_date') dueDate?: Date;
   @field('recurrence_rule') recurrenceRule?: string;
   @field('assignee_id') assigneeId!: string;
@@ -53,7 +71,7 @@ export class Task extends Model {
   @readonly @date('updated_at') updatedAt!: Date;
 }
 
-export class Event extends Model {
+export class Event extends Model implements IEvent {
   static table = 'events';
 
   @field('family_id') familyId!: string;
@@ -65,25 +83,25 @@ export class Event extends Model {
   @readonly @date('updated_at') updatedAt!: Date;
 }
 
-export class EventAttendee extends Model {
+export class EventAttendee extends Model implements IEventAttendee {
   static table = 'event_attendees';
 
   @field('event_id') eventId!: string;
   @field('user_id') userId!: string;
 }
 
-export class MealPlan extends Model {
+export class MealPlan extends Model implements IMealPlan {
   static table = 'meal_plans';
 
   @field('family_id') familyId!: string;
   @field('date') date!: string;
-  @field('meal_type') mealType!: string;
+  @field('meal_type') mealType!: MealType;
   @field('description') description!: string;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
 }
 
-export class GroceryItem extends Model {
+export class GroceryItem extends Model implements IGroceryItem {
   static table = 'grocery_items';
 
   @field('family_id') familyId!: string;
@@ -93,7 +111,7 @@ export class GroceryItem extends Model {
   @readonly @date('updated_at') updatedAt!: Date;
 }
 
-export class Reward extends Model {
+export class Reward extends Model implements IReward {
   static table = 'rewards';
 
   @field('family_id') familyId!: string;

@@ -70,12 +70,14 @@ export async function createTask(
     description,
     points,
     assigneeId,
+    creatorId,
     familyId,
   }: {
     title: string;
     description?: string;
     points: number;
     assigneeId: string;
+    creatorId: string;
     familyId: string;
   }
 ): Promise<Task> {
@@ -85,6 +87,7 @@ export async function createTask(
       t.description = description;
       t.points = points;
       t.assigneeId = assigneeId;
+      t.creatorId = creatorId;
       t.familyId = familyId;
       t.status = 'TODO';
     });

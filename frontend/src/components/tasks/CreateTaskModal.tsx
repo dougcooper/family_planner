@@ -12,7 +12,7 @@ interface CreateTaskModalProps {
   familyId: string;
 }
 
-export function CreateTaskModal({ visible, onClose, database, familyId }: CreateTaskModalProps) {
+export function CreateTaskModal({ visible, onClose, database, currentUserId, familyId }: CreateTaskModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [points, setPoints] = useState('10');
@@ -40,6 +40,7 @@ export function CreateTaskModal({ visible, onClose, database, familyId }: Create
         description,
         points: parseInt(points, 10) || 0,
         assigneeId,
+        creatorId: currentUserId,
         familyId,
       });
       setTitle('');

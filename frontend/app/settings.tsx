@@ -136,7 +136,7 @@ export default function SettingsScreen() {
           user.familyId = currentUser?.familyId || '';
           user.pinHash = newMemberPin; // In a real app, hash this!
           user.pointsBalance = 0;
-          user.emailFrequency = 'weekly';
+          user.emailFrequency = 'WEEKLY';
         });
       });
       

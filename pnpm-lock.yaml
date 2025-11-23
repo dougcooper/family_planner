@@ -36,6 +36,9 @@ importers:
 
   backend:
     dependencies:
+      '@family-planner/types':
+        specifier: workspace:^
+        version: link:../packages/types
       '@fastify/cors':
         specifier: ^8.5.0
         version: 8.5.0
@@ -103,6 +106,9 @@ importers:
       '@expo/server':
         specifier: ^0.3.1
         version: 0.3.1
+      '@family-planner/types':
+        specifier: workspace:^
+        version: link:../packages/types
       '@nozbe/watermelondb':
         specifier: ^0.27.1
         version: 0.27.1

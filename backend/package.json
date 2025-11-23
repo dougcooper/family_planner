@@ -16,6 +16,7 @@
     "lint:staged": "eslint --fix"
   },
   "dependencies": {
+    "@family-planner/types": "workspace:^",
     "@fastify/cors": "^8.5.0",
     "bcrypt": "^5.1.1",
     "drizzle-orm": "^0.29.1",
