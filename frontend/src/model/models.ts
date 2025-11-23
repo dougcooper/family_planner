@@ -13,12 +13,14 @@ import type {
   ListItem as IListItem,
   Reward as IReward,
   Recipe as IRecipe,
+  RewardClaim as IRewardClaim,
   UserRole,
   EmailFrequency,
   TaskStatus,
   MealType,
   NotificationType,
-  ListType
+  ListType,
+  RewardClaimStatus
 } from '@family-planner/types';
 
 export class Family extends Model implements IFamily {
@@ -172,4 +174,21 @@ export class Reward extends Model implements IReward {
   @field('image_url') imageUrl?: string;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
+}
+
+export class RewardClaim extends Model implements IRewardClaim {
+  static table = 'reward_claims';
+
+  @field('reward_id') rewardId!: string;
+  @field('user_id') userId!: string;
+  @field('points_cost') pointsCost!: number;
+  @field('status') status!: RewardClaimStatus;
+  @date('claimed_at') claimedAt!: Date;
+  @date('unclaimed_at') unclaimedAt?: Date;
+  @field('unclaimed_by') unclaimedBy?: string;
+  @readonly @date('created_at') createdAt!: Date;
+  @readonly @date('updated_at') updatedAt!: Date;
+
+  @relation('rewards', 'reward_id') reward!: Relation<Reward>;
+  @relation('users', 'user_id') user!: Relation<User>;
 }

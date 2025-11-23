@@ -44,5 +44,24 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 4,
+      steps: [
+        createTable({
+          name: 'reward_claims',
+          columns: [
+            { name: 'reward_id', type: 'string', isIndexed: true },
+            { name: 'user_id', type: 'string', isIndexed: true },
+            { name: 'points_cost', type: 'number' },
+            { name: 'status', type: 'string' },
+            { name: 'claimed_at', type: 'number' },
+            { name: 'unclaimed_at', type: 'number', isOptional: true },
+            { name: 'unclaimed_by', type: 'string', isOptional: true },
+            { name: 'created_at', type: 'number' },
+            { name: 'updated_at', type: 'number' },
+          ],
+        }),
+      ],
+    },
   ],
 });
