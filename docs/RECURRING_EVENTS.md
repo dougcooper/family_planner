@@ -229,18 +229,24 @@ When "Recurring Event" is checked, the modal displays additional options for con
 
 ### Delete Options for Recurring Events
 
-When deleting a recurring event, users have three options:
+When deleting a recurring event, users have three options. All deletions happen through WatermelonDB and sync to the backend via push/pull:
 
 - **Delete Single Instance**: Delete only the selected occurrence
-- **Delete All Occurrences**: Delete the entire recurring series
+- **Delete All Occurrences**: Delete the entire recurring series (all events with same recurrence_id)
 - **Delete Future Occurrences**: Delete this and all future instances
 
-API endpoint: `POST /events/delete`
+Frontend usage:
 ```typescript
-{
-  eventId: string;
-  deleteType: 'single' | 'all' | 'future';
-}
+import { deleteRecurringEvent } from './logic/events';
+
+// Delete single instance
+await deleteRecurringEvent(database, eventId, 'single');
+
+// Delete all instances in the series
+await deleteRecurringEvent(database, eventId, 'all');
+
+// Delete this and all future instances
+await deleteRecurringEvent(database, eventId, 'future');
 ```
 
 ## Database Schema

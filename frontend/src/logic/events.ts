@@ -1,4 +1,5 @@
 import { Database } from '@nozbe/watermelondb';
+import { Q } from '@nozbe/watermelondb';
 import { Event } from '../model/models';
 
 export interface CreateEventParams {
@@ -99,7 +100,8 @@ export async function updateEvent(database: Database, eventId: string, params: P
 }
 
 /**
- * Delete a single event (for non-recurring events or single instance deletion)
+ * Delete a single event instance
+ * This marks the event as deleted in WatermelonDB which will sync to backend
  */
 export async function deleteEvent(database: Database, eventId: string) {
   await database.write(async () => {
@@ -109,43 +111,87 @@ export async function deleteEvent(database: Database, eventId: string) {
 }
 
 /**
- * Delete recurring event with options (calls backend API)
- * @param eventId - The ID of the event to delete
+ * Delete recurring events based on delete type
+ * All deletions happen through WatermelonDB and sync to backend via push/pull
+ * 
+ * @param database - WatermelonDB database instance
+ * @param eventId - The ID of the event to start deletion from
  * @param deleteType - 'single' | 'all' | 'future'
- * @param apiBaseUrl - Base URL for the backend API
- * @param token - Authentication token
  */
 export async function deleteRecurringEvent(
+  database: Database,
   eventId: string,
-  deleteType: DeleteEventType,
-  apiBaseUrl: string,
-  token: string
+  deleteType: DeleteEventType
 ): Promise<{ success: boolean; deletedCount: number; error?: string }> {
   try {
-    const response = await fetch(`${apiBaseUrl}/events/delete`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ eventId, deleteType }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      return { 
-        success: false, 
-        deletedCount: 0, 
-        error: errorData.error || 'Failed to delete event' 
-      };
+    const event = await database.get<Event>('events').find(eventId);
+    
+    if (!event) {
+      return { success: false, deletedCount: 0, error: 'Event not found' };
     }
 
-    return await response.json();
+    let deletedCount = 0;
+
+    await database.write(async () => {
+      switch (deleteType) {
+        case 'single':
+          // Delete only this instance
+          await event.markAsDeleted();
+          deletedCount = 1;
+          break;
+
+        case 'all':
+          // Delete all instances with the same recurrence_id
+          if (event.recurrenceId) {
+            const allEvents = await database
+              .get<Event>('events')
+              .query(Q.where('recurrence_id', event.recurrenceId))
+              .fetch();
+            
+            for (const e of allEvents) {
+              await e.markAsDeleted();
+            }
+            deletedCount = allEvents.length;
+          } else {
+            // Non-recurring event, just delete this one
+            await event.markAsDeleted();
+            deletedCount = 1;
+          }
+          break;
+
+        case 'future':
+          // Delete this and all future instances
+          if (event.recurrenceId) {
+            const eventStartTime = event.startTime.getTime();
+            const futureEvents = await database
+              .get<Event>('events')
+              .query(
+                Q.and(
+                  Q.where('recurrence_id', event.recurrenceId),
+                  Q.where('start_time', Q.gte(eventStartTime))
+                )
+              )
+              .fetch();
+            
+            for (const e of futureEvents) {
+              await e.markAsDeleted();
+            }
+            deletedCount = futureEvents.length;
+          } else {
+            // Non-recurring event, just delete this one
+            await event.markAsDeleted();
+            deletedCount = 1;
+          }
+          break;
+      }
+    });
+
+    return { success: true, deletedCount };
   } catch (error) {
     return { 
       success: false, 
       deletedCount: 0, 
-      error: error instanceof Error ? error.message : 'Network error' 
+      error: error instanceof Error ? error.message : 'Unknown error' 
     };
   }
 }
