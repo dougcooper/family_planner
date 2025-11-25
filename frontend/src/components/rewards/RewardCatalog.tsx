@@ -4,6 +4,7 @@ import { Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Reward, User } from '../../model/models';
 import { redeemReward } from '../../logic/rewards';
+import { RewardHistoryModal } from './RewardHistoryModal';
 
 interface RewardCatalogProps {
   database: Database;
@@ -19,6 +20,10 @@ const RewardCatalogComponent = ({ database, user, rewards, familyMembers }: Rewa
   const [title, setTitle] = useState('');
   const [cost, setCost] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+
+  // History Modal State
+  const [historyModalVisible, setHistoryModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const openModal = (reward?: Reward) => {
     if (reward) {
@@ -144,6 +149,11 @@ const RewardCatalogComponent = ({ database, user, rewards, familyMembers }: Rewa
     return user.pointsBalance >= cost;
   };
 
+  const handleAvatarClick = (member: User) => {
+    setSelectedUser(member);
+    setHistoryModalVisible(true);
+  };
+
   const renderReward = ({ item }: { item: Reward }) => {
     const affordable = canAfford(item.cost);
 
@@ -210,7 +220,11 @@ const RewardCatalogComponent = ({ database, user, rewards, familyMembers }: Rewa
       <Text style={styles.leaderboardTitle}>Family Leaderboard 🏆</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.leaderboardList}>
         {familyMembers.map(member => (
-          <View key={member.id} style={styles.leaderboardItem}>
+          <TouchableOpacity 
+            key={member.id} 
+            style={styles.leaderboardItem}
+            onPress={() => handleAvatarClick(member)}
+          >
             {member.avatarUrl ? (
               <Image 
                 source={{ uri: member.avatarUrl }} 
@@ -231,7 +245,7 @@ const RewardCatalogComponent = ({ database, user, rewards, familyMembers }: Rewa
               {member.id === user.id ? 'You' : member.name}
             </Text>
             <Text style={styles.memberPoints}>{member.pointsBalance} pts</Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </View>
@@ -321,6 +335,16 @@ const RewardCatalogComponent = ({ database, user, rewards, familyMembers }: Rewa
           </View>
         </View>
       </Modal>
+
+      {selectedUser && (
+        <RewardHistoryModal
+          visible={historyModalVisible}
+          onClose={() => setHistoryModalVisible(false)}
+          database={database}
+          targetUser={selectedUser}
+          currentUser={user}
+        />
+      )}
     </View>
   );
 }

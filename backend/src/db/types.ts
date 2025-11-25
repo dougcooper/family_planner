@@ -1,5 +1,5 @@
 import { InferSelectModel } from 'drizzle-orm';
-import { users, families, tasks, notifications, events, mealPlans, groceryItems, rewards } from './schema.js';
+import { users, families, tasks, notifications, events, mealPlans, groceryItems, rewards, rewardClaims } from './schema.js';
 import { 
   User as IUser, 
   Family as IFamily, 
@@ -16,6 +16,7 @@ export type DrizzleEvent = InferSelectModel<typeof events>;
 export type DrizzleMealPlan = InferSelectModel<typeof mealPlans>;
 export type DrizzleGroceryItem = InferSelectModel<typeof groceryItems>;
 export type DrizzleReward = InferSelectModel<typeof rewards>;
+export type DrizzleRewardClaim = InferSelectModel<typeof rewardClaims>;
 
 // Type assertions to ensure compatibility
 // These are not executed, just checked by TypeScript

@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../db/index.js';
-import { users, notifications, tasks, events, mealPlans, groceryItems, rewards, families, lists, listItems, recipes } from '../db/schema.js';
+import { users, notifications, tasks, events, mealPlans, groceryItems, rewards, rewardClaims, families, lists, listItems, recipes } from '../db/schema.js';
 import { eq, inArray } from 'drizzle-orm';
 
 interface ChangeRecord {
@@ -144,6 +144,24 @@ export async function pushChanges(
               imageUrl: (record as any).image_url,
             });
             break;
+          case 'reward_claims':
+            await db.insert(rewardClaims).values({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(record as any),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              rewardId: (record as any).reward_id,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              userId: (record as any).user_id,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              pointsCost: (record as any).points_cost,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              claimedAt: (record as any).claimed_at ? new Date((record as any).claimed_at) : new Date(),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              unclaimedAt: (record as any).unclaimed_at ? new Date((record as any).unclaimed_at) : null,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              unclaimedBy: (record as any).unclaimed_by,
+            });
+            break;
           case 'lists':
             await db.insert(lists).values({
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -285,6 +303,15 @@ export async function pushChanges(
             await db.update(rewards).set(update).where(eq(rewards.id, record.id));
             break;
           }
+          case 'reward_claims': {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const update: any = { updatedAt: new Date() };
+            if ('status' in record) update.status = record.status;
+            if ('unclaimed_at' in record) update.unclaimedAt = record.unclaimed_at ? new Date(record.unclaimed_at as string) : null;
+            if ('unclaimed_by' in record) update.unclaimedBy = record.unclaimed_by;
+            await db.update(rewardClaims).set(update).where(eq(rewardClaims.id, record.id));
+            break;
+          }
           case 'lists': {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const update: any = { updatedAt: new Date() };
@@ -341,6 +368,9 @@ export async function pushChanges(
             break;
           case 'rewards':
             await db.delete(rewards).where(inArray(rewards.id, tableChanges.deleted));
+            break;
+          case 'reward_claims':
+            await db.delete(rewardClaims).where(inArray(rewardClaims.id, tableChanges.deleted));
             break;
           case 'lists':
             await db.delete(lists).where(inArray(lists.id, tableChanges.deleted));
