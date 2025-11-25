@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Platform, TouchableOpacity, Modal, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Image, Switch } from 'react-native';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Q } from '@nozbe/watermelondb';
 import { database } from '../src/model/database';
@@ -54,6 +54,7 @@ const TasksScreen = ({ tasks }: TasksScreenProps) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [currentUser, setCurrentUser] = useState(authProvider.getState().user);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   useEffect(() => {
     const unsubscribe = authProvider.subscribe((state) => {
@@ -61,6 +62,10 @@ const TasksScreen = ({ tasks }: TasksScreenProps) => {
     });
     return unsubscribe;
   }, []);
+
+  const filteredTasks = tasks.filter(task => 
+    showCompleted ? true : task.status !== 'COMPLETED'
+  );
 
   const renderItem = ({ item }: { item: Task }) => (
     <TaskListItem task={item} onPress={setSelectedTask} />
@@ -71,14 +76,20 @@ const TasksScreen = ({ tasks }: TasksScreenProps) => {
       <View style={styles.container}>
         <View style={styles.headerContainer}>
           <Text style={styles.header}>All Tasks</Text>
-          {currentUser?.role === 'PARENT' && (
-            <TouchableOpacity onPress={() => setIsCreateModalVisible(true)} style={styles.addButton}>
-              <Text style={styles.addButtonText}>+ New Task</Text>
-            </TouchableOpacity>
-          )}
+          <View style={styles.headerControls}>
+            <View style={styles.toggleContainer}>
+              <Text style={styles.toggleLabel}>Show Completed</Text>
+              <Switch value={showCompleted} onValueChange={setShowCompleted} />
+            </View>
+            {currentUser?.role === 'PARENT' && (
+              <TouchableOpacity onPress={() => setIsCreateModalVisible(true)} style={styles.addButton}>
+                <Text style={styles.addButtonText}>+ New Task</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
         <FlatList
-          data={tasks}
+          data={filteredTasks}
           renderItem={renderItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
@@ -124,6 +135,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+  },
+  headerControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  toggleLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginRight: 8,
   },
   header: {
     fontSize: 24,

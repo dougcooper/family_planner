@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Switch } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
 import { ListItem, List } from '../../model/models';
 
@@ -13,6 +13,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
   const [items, setItems] = useState<ListItem[]>([]);
   const [newItemName, setNewItemName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(true);
 
   useEffect(() => {
     loadItems();
@@ -145,6 +146,10 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
   const uncheckedCount = items.filter((item) => !item.isChecked).length;
   const checkedCount = items.filter((item) => item.isChecked).length;
 
+  const filteredItems = items.filter(item => 
+    showCompleted ? true : !item.isChecked
+  );
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -161,7 +166,13 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
             <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
         )}
-        <Text style={styles.headerTitle}>{list.name}</Text>
+        <View style={styles.headerTopRow}>
+          <Text style={styles.headerTitle}>{list.name}</Text>
+          <View style={styles.toggleContainer}>
+            <Text style={styles.toggleLabel}>Show Done</Text>
+            <Switch value={showCompleted} onValueChange={setShowCompleted} />
+          </View>
+        </View>
         <View style={styles.stats}>
           <Text style={styles.statsText}>
             {uncheckedCount} to do • {checkedCount} done
@@ -196,7 +207,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
       ) : (
         <>
           <FlatList
-            data={items}
+            data={filteredItems}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.list}
@@ -230,6 +241,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  toggleLabel: {
+    fontSize: 14,
+    color: '#64748B',
+    marginRight: 8,
   },
   backButton: {
     marginBottom: 8,
