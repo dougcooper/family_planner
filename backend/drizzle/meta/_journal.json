@@ -36,6 +36,13 @@
       "when": 1763927760661,
       "tag": "0004_elite_anthem",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1764032827359,
+      "tag": "0005_adorable_silverclaw",
+      "breakpoints": true
     }
   ]
 }
