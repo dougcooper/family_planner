@@ -16,13 +16,13 @@ type FrequencyType = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY' | 'CUSTOM';
 type DayOfWeek = 'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA';
 
 const DAYS_OF_WEEK: { key: DayOfWeek; label: string }[] = [
-  { key: 'SU', label: 'S' },
-  { key: 'MO', label: 'M' },
-  { key: 'TU', label: 'T' },
-  { key: 'WE', label: 'W' },
-  { key: 'TH', label: 'T' },
-  { key: 'FR', label: 'F' },
-  { key: 'SA', label: 'S' },
+  { key: 'SU', label: 'Su' },
+  { key: 'MO', label: 'Mo' },
+  { key: 'TU', label: 'Tu' },
+  { key: 'WE', label: 'We' },
+  { key: 'TH', label: 'Th' },
+  { key: 'FR', label: 'Fr' },
+  { key: 'SA', label: 'Sa' },
 ];
 
 export function CreateEventModal({ visible, onClose, database, familyId }: CreateEventModalProps) {
@@ -369,9 +369,9 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
                   <View style={styles.customDaysSection}>
                     <Text style={styles.label}>Repeat on</Text>
                     <View style={styles.daysRow}>
-                      {DAYS_OF_WEEK.map((day, index) => (
+                      {DAYS_OF_WEEK.map((day) => (
                         <TouchableOpacity
-                          key={`${day.key}-${index}`}
+                          key={day.key}
                           style={[
                             styles.dayButton,
                             selectedDays.includes(day.key) && styles.dayButtonActive
@@ -655,9 +655,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   dayButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#F2F2F7',
     borderWidth: 1,
     borderColor: '#E5E5EA',
@@ -669,7 +669,7 @@ const styles = StyleSheet.create({
     borderColor: '#4A90E2',
   },
   dayButtonText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#000000',
     fontWeight: '600',
   },
