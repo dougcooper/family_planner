@@ -97,6 +97,7 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
         endTime,
         familyId,
         recurrenceRule,
+        isAllDay,
       };
       
       await createEvent(database, params);

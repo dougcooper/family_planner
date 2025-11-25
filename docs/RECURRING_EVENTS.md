@@ -206,19 +206,52 @@ FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=25;COUNT=5
 
 The CreateEventModal component has been updated to support recurring events:
 
-1. **Recurring Event Checkbox**: Enable/disable recurring events
-2. **Frequency Selector**: Choose between Daily, Weekly, Monthly, Yearly
-3. **Occurrence Count Input**: Specify how many instances to create
+1. **All Day Toggle**: Hide time inputs for all-day events
+2. **Recurring Event Checkbox**: Enable/disable recurring events
+3. **Frequency Selector**: Choose between Daily, Weekly, Monthly, Yearly, or Custom
+4. **Custom Day Selector**: When "Custom" is selected, pick specific days of the week
+5. **Recurrence End Options**:
+   - **Never**: Infinite recurrence (no COUNT or UNTIL)
+   - **On Date**: End on a specific date (uses UNTIL)
+   - **After**: End after X occurrences (uses COUNT)
 
 When "Recurring Event" is checked, the modal displays additional options for configuring the recurrence pattern.
+
+## Sync Architecture
+
+### How Recurring Events Sync
+
+1. **Frontend Creates Base Event**: User creates a recurring event in the UI with recurrence rule
+2. **Sync Push to Backend**: Event syncs to backend with recurrence_rule field
+3. **Backend Generates Instances**: Backend detects recurrence rule and generates all instances
+4. **Instances Sync Back**: Generated instances sync back to frontend on next pull
+5. **All Instances Share recurrence_id**: Related events are grouped by recurrence_id for series operations
+
+### Delete Options for Recurring Events
+
+When deleting a recurring event, users have three options:
+
+- **Delete Single Instance**: Delete only the selected occurrence
+- **Delete All Occurrences**: Delete the entire recurring series
+- **Delete Future Occurrences**: Delete this and all future instances
+
+API endpoint: `POST /events/delete`
+```typescript
+{
+  eventId: string;
+  deleteType: 'single' | 'all' | 'future';
+}
+```
 
 ## Database Schema
 
 Events with recurrence rules are stored with:
 
-- `recurrence_rule`: VARCHAR(500) - Optional RRULE format string
+- `recurrence_rule`: VARCHAR(500) - iCalendar RRULE format string
+- `recurrence_id`: UUID - Groups related recurring event instances
+- `is_all_day`: BOOLEAN - Whether the event is an all-day event
 - Individual event instances are created in the database
-- All instances share the same `recurrence_rule` value for series management
+- All instances in a series share the same `recurrence_id` value
 
 ## Testing
 

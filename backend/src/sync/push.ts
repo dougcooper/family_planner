@@ -2,6 +2,8 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../db/index.js';
 import { users, notifications, tasks, events, mealPlans, groceryItems, rewards, families, lists, listItems } from '../db/schema.js';
 import { eq, inArray } from 'drizzle-orm';
+import { generateEventInstances, parseRecurrenceRule, DEFAULT_GENERATION_DAYS } from '../services/recurring-events.js';
+import { randomUUID } from 'crypto';
 
 interface ChangeRecord {
   id: string;
@@ -101,19 +103,59 @@ export async function pushChanges(
                }
             }
             break;
-          case 'events':
-            await db.insert(events).values({
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              ...(record as any),
-              familyId,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              startTime: new Date((record as any).start_time),
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              endTime: new Date((record as any).end_time),
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              recurrenceRule: (record as any).recurrence_rule,
-            });
+          case 'events': {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const eventRecord = record as any;
+            const startTime = new Date(eventRecord.start_time);
+            const endTime = new Date(eventRecord.end_time);
+            const recurrenceRule = eventRecord.recurrence_rule;
+            const isAllDay = eventRecord.is_all_day || false;
+            
+            // If event has a recurrence rule, generate all instances
+            if (recurrenceRule && parseRecurrenceRule(recurrenceRule)) {
+              const recurrenceId = randomUUID(); // Group all instances together
+              const until = new Date(Date.now() + DEFAULT_GENERATION_DAYS * 24 * 60 * 60 * 1000);
+              
+              const instances = generateEventInstances(
+                {
+                  familyId,
+                  title: eventRecord.title,
+                  startTime,
+                  endTime,
+                  recurrenceRule,
+                },
+                startTime,
+                until,
+                100
+              );
+              
+              if (instances.length > 0) {
+                await db.insert(events).values(
+                  instances.map(instance => ({
+                    familyId,
+                    title: instance.title,
+                    startTime: instance.startTime,
+                    endTime: instance.endTime,
+                    recurrenceRule: instance.recurrenceRule,
+                    recurrenceId,
+                    isAllDay,
+                  }))
+                );
+              }
+            } else {
+              // Non-recurring event - insert single instance
+              await db.insert(events).values({
+                id: eventRecord.id,
+                familyId,
+                title: eventRecord.title,
+                startTime,
+                endTime,
+                recurrenceRule,
+                isAllDay,
+              });
+            }
             break;
+          }
           case 'meal_plans':
             console.log('Pushing meal plan:', JSON.stringify(record, null, 2));
             await db.insert(mealPlans).values({
@@ -249,6 +291,7 @@ export async function pushChanges(
             if ('start_time' in record) update.startTime = new Date(record.start_time as string);
             if ('end_time' in record) update.endTime = new Date(record.end_time as string);
             if ('recurrence_rule' in record) update.recurrenceRule = record.recurrence_rule;
+            if ('is_all_day' in record) update.isAllDay = record.is_all_day;
             await db.update(events).set(update).where(eq(events.id, record.id));
             break;
           }

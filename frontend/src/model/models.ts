@@ -84,6 +84,8 @@ export class Event extends Model implements IEvent {
   @date('start_time') startTime!: Date;
   @date('end_time') endTime!: Date;
   @field('recurrence_rule') recurrenceRule?: string;
+  @field('recurrence_id') recurrenceId?: string;
+  @field('is_all_day') isAllDay!: boolean;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
 }

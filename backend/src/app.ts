@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { register } from './api/auth/register.js';
 import { login } from './api/auth/login.js';
 import { uploadFile } from './api/upload.js';
+import { deleteRecurringEvent, getRecurringSeries, DeleteRecurringEventBody, GetRecurringSeriesParams } from './api/events.js';
 import { pullChanges, SyncPullQuery } from './sync/pull.js';
 import { pushChanges, SyncPushBody } from './sync/push.js';
 import { authenticate } from './middleware/auth.js';
@@ -49,6 +50,10 @@ app.post('/auth/login', login);
 
 // Upload route (protected)
 app.post('/upload', { preHandler: authenticate }, uploadFile);
+
+// Events routes (protected)
+app.post<{ Body: DeleteRecurringEventBody }>('/events/delete', { preHandler: authenticate }, deleteRecurringEvent);
+app.get<{ Params: GetRecurringSeriesParams }>('/events/:eventId/series', { preHandler: authenticate }, getRecurringSeries);
 
 // Sync routes (protected)
 app.get<{ Querystring: SyncPullQuery }>('/sync/pull', { preHandler: authenticate }, pullChanges);

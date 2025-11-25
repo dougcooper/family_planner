@@ -1,4 +1,4 @@
-import { schemaMigrations, createTable } from '@nozbe/watermelondb/Schema/migrations';
+import { schemaMigrations, createTable, addColumns } from '@nozbe/watermelondb/Schema/migrations';
 
 export default schemaMigrations({
   migrations: [
@@ -23,6 +23,18 @@ export default schemaMigrations({
             { name: 'is_checked', type: 'boolean' },
             { name: 'created_at', type: 'number' },
             { name: 'updated_at', type: 'number' },
+          ],
+        }),
+      ],
+    },
+    {
+      toVersion: 4,
+      steps: [
+        addColumns({
+          table: 'events',
+          columns: [
+            { name: 'recurrence_id', type: 'string', isOptional: true, isIndexed: true },
+            { name: 'is_all_day', type: 'boolean' },
           ],
         }),
       ],

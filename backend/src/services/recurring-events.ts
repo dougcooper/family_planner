@@ -215,7 +215,7 @@ function getNextOccurrence(date: Date, rule: RecurrenceRule, interval: number): 
 /**
  * Create a recurring event and generate its instances for a given time range
  */
-const DEFAULT_GENERATION_DAYS = 90; // Default to generate instances for next 3 months
+export const DEFAULT_GENERATION_DAYS = 90; // Default to generate instances for next 3 months
 
 export async function createRecurringEvent(
   params: CreateRecurringEventParams,

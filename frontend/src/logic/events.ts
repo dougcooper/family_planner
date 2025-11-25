@@ -7,6 +7,7 @@ export interface CreateEventParams {
   endTime: Date;
   familyId: string;
   recurrenceRule?: string;
+  isAllDay?: boolean;
 }
 
 export interface RecurrenceOptions {
@@ -18,6 +19,8 @@ export interface RecurrenceOptions {
   byMonthDay?: number;
   byMonth?: number;
 }
+
+export type DeleteEventType = 'single' | 'all' | 'future';
 
 /**
  * Build a recurrence rule string from options
@@ -65,6 +68,7 @@ export function buildRecurrenceRule(options: RecurrenceOptions): string {
 /**
  * Create a single event (one-time or recurring)
  * For recurring events, the recurrenceRule should be provided in iCalendar RRULE format
+ * The backend will generate all recurring instances when this event is synced
  */
 export async function createEvent(database: Database, params: CreateEventParams) {
   await database.write(async () => {
@@ -73,6 +77,7 @@ export async function createEvent(database: Database, params: CreateEventParams)
       event.startTime = params.startTime;
       event.endTime = params.endTime;
       event.familyId = params.familyId;
+      event.isAllDay = params.isAllDay || false;
       if (params.recurrenceRule) {
         event.recurrenceRule = params.recurrenceRule;
       }
@@ -88,13 +93,73 @@ export async function updateEvent(database: Database, eventId: string, params: P
       if (params.startTime) e.startTime = params.startTime;
       if (params.endTime) e.endTime = params.endTime;
       if (params.recurrenceRule !== undefined) e.recurrenceRule = params.recurrenceRule;
+      if (params.isAllDay !== undefined) e.isAllDay = params.isAllDay;
     });
   });
 }
 
+/**
+ * Delete a single event (for non-recurring events or single instance deletion)
+ */
 export async function deleteEvent(database: Database, eventId: string) {
   await database.write(async () => {
     const event = await database.get<Event>('events').find(eventId);
     await event.markAsDeleted();
   });
+}
+
+/**
+ * Delete recurring event with options (calls backend API)
+ * @param eventId - The ID of the event to delete
+ * @param deleteType - 'single' | 'all' | 'future'
+ * @param apiBaseUrl - Base URL for the backend API
+ * @param token - Authentication token
+ */
+export async function deleteRecurringEvent(
+  eventId: string,
+  deleteType: DeleteEventType,
+  apiBaseUrl: string,
+  token: string
+): Promise<{ success: boolean; deletedCount: number; error?: string }> {
+  try {
+    const response = await fetch(`${apiBaseUrl}/events/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ eventId, deleteType }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return { 
+        success: false, 
+        deletedCount: 0, 
+        error: errorData.error || 'Failed to delete event' 
+      };
+    }
+
+    return await response.json();
+  } catch (error) {
+    return { 
+      success: false, 
+      deletedCount: 0, 
+      error: error instanceof Error ? error.message : 'Network error' 
+    };
+  }
+}
+
+/**
+ * Check if an event is part of a recurring series
+ * 
+ * Events can be recurring in two ways:
+ * - recurrenceRule: The original event with the RRULE (before sync)
+ * - recurrenceId: A generated instance that's part of a series (after sync)
+ * 
+ * After syncing, backend replaces the single event with multiple instances
+ * that share the same recurrenceId but each has the recurrenceRule preserved.
+ */
+export function isRecurringEvent(event: Event): boolean {
+  return !!(event.recurrenceRule || event.recurrenceId);
 }

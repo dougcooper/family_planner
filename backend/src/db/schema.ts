@@ -80,6 +80,8 @@ export const events = pgTable('events', {
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('end_time').notNull(),
   recurrenceRule: varchar('recurrence_rule', { length: 500 }),
+  recurrenceId: uuid('recurrence_id'), // Groups related recurring event instances
+  isAllDay: boolean('is_all_day').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

@@ -73,6 +73,8 @@ export interface Event {
   startTime: Date;
   endTime: Date;
   recurrenceRule?: string;
+  recurrenceId?: string;
+  isAllDay: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
