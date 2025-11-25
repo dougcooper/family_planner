@@ -155,9 +155,9 @@ export async function pushChanges(
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               pointsCost: (record as any).points_cost,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              claimedAt: (record as any).claimed_at,
+              claimedAt: (record as any).claimed_at ? new Date((record as any).claimed_at) : new Date(),
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              unclaimedAt: (record as any).unclaimed_at,
+              unclaimedAt: (record as any).unclaimed_at ? new Date((record as any).unclaimed_at) : null,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               unclaimedBy: (record as any).unclaimed_by,
             });
