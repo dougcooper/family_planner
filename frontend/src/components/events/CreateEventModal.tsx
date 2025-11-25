@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Modal, ScrollView, Platform } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Database } from '@nozbe/watermelondb';
-import { createEvent } from '../../logic/events';
+import { createEvent, buildRecurrenceRule, type RecurrenceOptions } from '../../logic/events';
 
 interface CreateEventModalProps {
   visible: boolean;
@@ -11,15 +11,51 @@ interface CreateEventModalProps {
   familyId: string;
 }
 
+type RecurrenceEndType = 'never' | 'on_date' | 'after_count';
+type FrequencyType = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY' | 'CUSTOM';
+type DayOfWeek = 'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA';
+
+const DAYS_OF_WEEK: { key: DayOfWeek; label: string }[] = [
+  { key: 'SU', label: 'Su' },
+  { key: 'MO', label: 'Mo' },
+  { key: 'TU', label: 'Tu' },
+  { key: 'WE', label: 'We' },
+  { key: 'TH', label: 'Th' },
+  { key: 'FR', label: 'Fr' },
+  { key: 'SA', label: 'Sa' },
+];
+
 export function CreateEventModal({ visible, onClose, database, familyId }: CreateEventModalProps) {
   const [title, setTitle] = useState('');
   const [startTime, setStartTime] = useState(new Date());
   const [endTime, setEndTime] = useState(() => new Date(Date.now() + 3600000));
+  const [isAllDay, setIsAllDay] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<FrequencyType>('WEEKLY');
+  const [recurrenceEndType, setRecurrenceEndType] = useState<RecurrenceEndType>('after_count');
+  const [recurrenceCount, setRecurrenceCount] = useState('10');
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState(() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() + 3);
+    return date;
+  });
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(['MO', 'WE', 'FR']);
   
   // Android specific state
   const [mode, setMode] = useState<'date' | 'time'>('date');
   const [show, setShow] = useState(false);
-  const [activeField, setActiveField] = useState<'start' | 'end'>('start');
+  const [activeField, setActiveField] = useState<'start' | 'end' | 'recurrence_end'>('start');
+
+  const toggleDay = (day: DayOfWeek) => {
+    setSelectedDays(prev => {
+      if (prev.includes(day)) {
+        // Don't allow deselecting if it's the last day
+        if (prev.length === 1) return prev;
+        return prev.filter(d => d !== day);
+      }
+      return [...prev, day];
+    });
+  };
 
   const handleCreate = async () => {
     if (!title) {
@@ -27,15 +63,60 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
       return;
     }
     try {
-      await createEvent(database, {
+      let recurrenceRule: string | undefined;
+      
+      if (isRecurring) {
+        const options: RecurrenceOptions = {
+          frequency: recurrenceFrequency === 'CUSTOM' ? 'WEEKLY' : recurrenceFrequency,
+        };
+        
+        // Add day selection for CUSTOM or WEEKLY
+        if (recurrenceFrequency === 'CUSTOM') {
+          options.byDay = selectedDays;
+        }
+        
+        // Handle recurrence ending
+        if (recurrenceEndType === 'after_count') {
+          const count = parseInt(recurrenceCount, 10);
+          if (isNaN(count) || count <= 0) {
+            alert('Please enter a valid number of occurrences');
+            return;
+          }
+          options.count = count;
+        } else if (recurrenceEndType === 'on_date') {
+          options.until = recurrenceEndDate;
+        }
+        // 'never' means no count or until - infinite recurrence
+        
+        recurrenceRule = buildRecurrenceRule(options);
+      }
+      
+      const params = {
         title,
         startTime,
         endTime,
         familyId,
-      });
+        recurrenceRule,
+        isAllDay,
+      };
+      
+      await createEvent(database, params);
+      
+      // Reset form
       setTitle('');
       setStartTime(new Date());
       setEndTime(new Date(Date.now() + 3600000));
+      setIsAllDay(false);
+      setIsRecurring(false);
+      setRecurrenceFrequency('WEEKLY');
+      setRecurrenceEndType('after_count');
+      setRecurrenceCount('10');
+      setRecurrenceEndDate(() => {
+        const date = new Date();
+        date.setMonth(date.getMonth() + 3);
+        return date;
+      });
+      setSelectedDays(['MO', 'WE', 'FR']);
       onClose();
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -56,13 +137,15 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
         if (selectedDate > endTime) {
           setEndTime(new Date(selectedDate.getTime() + 3600000));
         }
-      } else {
+      } else if (activeField === 'end') {
         setEndTime(selectedDate);
+      } else if (activeField === 'recurrence_end') {
+        setRecurrenceEndDate(selectedDate);
       }
     }
   };
 
-  const showMode = (currentMode: 'date' | 'time', field: 'start' | 'end') => {
+  const showMode = (currentMode: 'date' | 'time', field: 'start' | 'end' | 'recurrence_end') => {
     setShow(true);
     setMode(currentMode);
     setActiveField(field);
@@ -97,6 +180,19 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
             />
           </View>
 
+          {/* All Day Toggle */}
+          <View style={styles.formGroup}>
+            <TouchableOpacity 
+              style={styles.checkbox}
+              onPress={() => setIsAllDay(!isAllDay)}
+            >
+              <View style={[styles.checkboxInner, isAllDay && styles.checkboxChecked]}>
+                {isAllDay && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <Text style={styles.checkboxLabel}>All Day</Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.formGroup}>
             <Text style={styles.label}>Starts</Text>
             {Platform.OS === 'ios' ? (
@@ -104,7 +200,7 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
                 <DateTimePicker
                   testID="dateTimePicker"
                   value={startTime}
-                  mode="datetime"
+                  mode={isAllDay ? 'date' : 'datetime'}
                   display="compact"
                   onChange={(e, date) => {
                     if (date) {
@@ -132,9 +228,9 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
                       }
                     }
                   },
-                  style: { padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#E5E5EA', fontSize: 17, marginRight: 10, borderStyle: 'solid', backgroundColor: '#FFFFFF' }
+                  style: { padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#E5E5EA', fontSize: 17, marginRight: isAllDay ? 0 : 10, borderStyle: 'solid', backgroundColor: '#FFFFFF' }
                 })}
-                {React.createElement('input', {
+                {!isAllDay && React.createElement('input', {
                   type: 'time',
                   value: startTime.toTimeString().slice(0, 5),
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,17 +250,19 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
             ) : (
               <View style={styles.androidDateTimeRow}>
                 <TouchableOpacity 
-                  style={styles.dateButton} 
+                  style={[styles.dateButton, isAllDay && styles.dateButtonFullWidth]} 
                   onPress={() => showMode('date', 'start')}
                 >
                   <Text style={styles.dateButtonText}>{formatDate(startTime)}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.timeButton} 
-                  onPress={() => showMode('time', 'start')}
-                >
-                  <Text style={styles.dateButtonText}>{formatTime(startTime)}</Text>
-                </TouchableOpacity>
+                {!isAllDay && (
+                  <TouchableOpacity 
+                    style={styles.timeButton} 
+                    onPress={() => showMode('time', 'start')}
+                  >
+                    <Text style={styles.dateButtonText}>{formatTime(startTime)}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
           </View>
@@ -176,7 +274,7 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
                 <DateTimePicker
                   testID="dateTimePicker"
                   value={endTime}
-                  mode="datetime"
+                  mode={isAllDay ? 'date' : 'datetime'}
                   display="compact"
                   onChange={(e, date) => date && setEndTime(date)}
                   minimumDate={startTime}
@@ -195,9 +293,9 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
                       setEndTime(newDate);
                     }
                   },
-                  style: { padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#E5E5EA', fontSize: 17, marginRight: 10, borderStyle: 'solid', backgroundColor: '#FFFFFF' }
+                  style: { padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#E5E5EA', fontSize: 17, marginRight: isAllDay ? 0 : 10, borderStyle: 'solid', backgroundColor: '#FFFFFF' }
                 })}
-                {React.createElement('input', {
+                {!isAllDay && React.createElement('input', {
                   type: 'time',
                   value: endTime.toTimeString().slice(0, 5),
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -214,17 +312,160 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
             ) : (
               <View style={styles.androidDateTimeRow}>
                 <TouchableOpacity 
-                  style={styles.dateButton} 
+                  style={[styles.dateButton, isAllDay && styles.dateButtonFullWidth]} 
                   onPress={() => showMode('date', 'end')}
                 >
                   <Text style={styles.dateButtonText}>{formatDate(endTime)}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.timeButton} 
-                  onPress={() => showMode('time', 'end')}
-                >
-                  <Text style={styles.dateButtonText}>{formatTime(endTime)}</Text>
-                </TouchableOpacity>
+                {!isAllDay && (
+                  <TouchableOpacity 
+                    style={styles.timeButton} 
+                    onPress={() => showMode('time', 'end')}
+                  >
+                    <Text style={styles.dateButtonText}>{formatTime(endTime)}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+          </View>
+
+          <View style={styles.formGroup}>
+            <View style={styles.checkboxRow}>
+              <TouchableOpacity 
+                style={styles.checkbox}
+                onPress={() => setIsRecurring(!isRecurring)}
+              >
+                <View style={[styles.checkboxInner, isRecurring && styles.checkboxChecked]}>
+                  {isRecurring && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.checkboxLabel}>Recurring Event</Text>
+              </TouchableOpacity>
+            </View>
+
+            {isRecurring && (
+              <View style={styles.recurrenceOptions}>
+                <Text style={styles.label}>Frequency</Text>
+                <View style={styles.frequencyButtons}>
+                  {(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'CUSTOM'] as const).map((freq) => (
+                    <TouchableOpacity
+                      key={freq}
+                      style={[
+                        styles.frequencyButton,
+                        recurrenceFrequency === freq && styles.frequencyButtonActive
+                      ]}
+                      onPress={() => setRecurrenceFrequency(freq)}
+                    >
+                      <Text style={[
+                        styles.frequencyButtonText,
+                        recurrenceFrequency === freq && styles.frequencyButtonTextActive
+                      ]}>
+                        {freq.charAt(0) + freq.slice(1).toLowerCase()}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Custom days selector */}
+                {recurrenceFrequency === 'CUSTOM' && (
+                  <View style={styles.customDaysSection}>
+                    <Text style={styles.label}>Repeat on</Text>
+                    <View style={styles.daysRow}>
+                      {DAYS_OF_WEEK.map((day) => (
+                        <TouchableOpacity
+                          key={day.key}
+                          style={[
+                            styles.dayButton,
+                            selectedDays.includes(day.key) && styles.dayButtonActive
+                          ]}
+                          onPress={() => toggleDay(day.key)}
+                        >
+                          <Text style={[
+                            styles.dayButtonText,
+                            selectedDays.includes(day.key) && styles.dayButtonTextActive
+                          ]}>
+                            {day.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                <Text style={[styles.label, styles.recurrenceEndLabel]}>Ends</Text>
+                <View style={styles.endTypeButtons}>
+                  {([
+                    { key: 'never' as const, label: 'Never' },
+                    { key: 'on_date' as const, label: 'On Date' },
+                    { key: 'after_count' as const, label: 'After' },
+                  ]).map((endType) => (
+                    <TouchableOpacity
+                      key={endType.key}
+                      style={[
+                        styles.endTypeButton,
+                        recurrenceEndType === endType.key && styles.endTypeButtonActive
+                      ]}
+                      onPress={() => setRecurrenceEndType(endType.key)}
+                    >
+                      <Text style={[
+                        styles.endTypeButtonText,
+                        recurrenceEndType === endType.key && styles.endTypeButtonTextActive
+                      ]}>
+                        {endType.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Recurrence end date picker */}
+                {recurrenceEndType === 'on_date' && (
+                  <View style={styles.endDateSection}>
+                    {Platform.OS === 'ios' ? (
+                      <DateTimePicker
+                        testID="recurrenceEndDatePicker"
+                        value={recurrenceEndDate}
+                        mode="date"
+                        display="compact"
+                        onChange={(e, date) => date && setRecurrenceEndDate(date)}
+                        minimumDate={startTime}
+                      />
+                    ) : Platform.OS === 'web' ? (
+                      React.createElement('input', {
+                        type: 'date',
+                        value: recurrenceEndDate.toISOString().split('T')[0],
+                        onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                          const [y, m, d] = e.target.value.split('-').map(Number);
+                          if (y && m && d) {
+                            const newDate = new Date(recurrenceEndDate);
+                            newDate.setFullYear(y, m - 1, d);
+                            setRecurrenceEndDate(newDate);
+                          }
+                        },
+                        style: { padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#E5E5EA', fontSize: 17, borderStyle: 'solid', backgroundColor: '#FFFFFF', width: '100%' }
+                      })
+                    ) : (
+                      <TouchableOpacity 
+                        style={styles.endDateButton} 
+                        onPress={() => showMode('date', 'recurrence_end')}
+                      >
+                        <Text style={styles.dateButtonText}>{formatDate(recurrenceEndDate)}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {/* Occurrence count input */}
+                {recurrenceEndType === 'after_count' && (
+                  <View style={styles.countSection}>
+                    <TextInput
+                      style={styles.countInput}
+                      value={recurrenceCount}
+                      onChangeText={setRecurrenceCount}
+                      placeholder="10"
+                      keyboardType="numeric"
+                    />
+                    <Text style={styles.countLabel}>occurrences</Text>
+                  </View>
+                )}
               </View>
             )}
           </View>
@@ -232,12 +473,12 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
           {Platform.OS === 'android' && show && (
             <DateTimePicker
               testID="dateTimePicker"
-              value={activeField === 'start' ? startTime : endTime}
+              value={activeField === 'start' ? startTime : activeField === 'end' ? endTime : recurrenceEndDate}
               mode={mode}
               is24Hour={false}
               display="default"
               onChange={onChange}
-              minimumDate={activeField === 'end' ? startTime : undefined}
+              minimumDate={activeField === 'end' ? startTime : activeField === 'recurrence_end' ? startTime : undefined}
             />
           )}
 
@@ -338,5 +579,158 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: '#000000',
     textAlign: 'center',
+  },
+  checkboxRow: {
+    marginBottom: 12,
+  },
+  checkbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkboxInner: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#4A90E2',
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#4A90E2',
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  checkboxLabel: {
+    fontSize: 17,
+    color: '#000000',
+  },
+  recurrenceOptions: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
+  },
+  frequencyButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  frequencyButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#F2F2F7',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  frequencyButtonActive: {
+    backgroundColor: '#4A90E2',
+    borderColor: '#4A90E2',
+  },
+  frequencyButtonText: {
+    fontSize: 15,
+    color: '#000000',
+    fontWeight: '500',
+  },
+  frequencyButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  recurrenceEndLabel: {
+    marginTop: 16,
+  },
+  dateButtonFullWidth: {
+    marginRight: 0,
+  },
+  customDaysSection: {
+    marginBottom: 16,
+  },
+  daysRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 4,
+  },
+  dayButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#F2F2F7',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayButtonActive: {
+    backgroundColor: '#4A90E2',
+    borderColor: '#4A90E2',
+  },
+  dayButtonText: {
+    fontSize: 12,
+    color: '#000000',
+    fontWeight: '600',
+  },
+  dayButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  endTypeButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  endTypeButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#F2F2F7',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    alignItems: 'center',
+  },
+  endTypeButtonActive: {
+    backgroundColor: '#4A90E2',
+    borderColor: '#4A90E2',
+  },
+  endTypeButtonText: {
+    fontSize: 14,
+    color: '#000000',
+    fontWeight: '500',
+  },
+  endTypeButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  endDateSection: {
+    marginTop: 8,
+  },
+  endDateButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  countSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 12,
+  },
+  countInput: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 17,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    width: 80,
+    textAlign: 'center',
+  },
+  countLabel: {
+    fontSize: 16,
+    color: '#000000',
   },
 });

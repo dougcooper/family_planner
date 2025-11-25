@@ -63,6 +63,8 @@ export const schema = appSchema({
         { name: 'start_time', type: 'number' },
         { name: 'end_time', type: 'number' },
         { name: 'recurrence_rule', type: 'string', isOptional: true },
+        { name: 'recurrence_id', type: 'string', isOptional: true, isIndexed: true },
+        { name: 'is_all_day', type: 'boolean' },
         { name: 'created_at', type: 'number' },
         { name: 'updated_at', type: 'number' },
       ],

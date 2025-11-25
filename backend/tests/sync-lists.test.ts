@@ -25,16 +25,18 @@ vi.mock('../src/db/index.js', () => ({
 }));
 
 vi.mock('../src/db/schema.js', () => ({
-  users: 'users',
-  families: 'families',
-  notifications: 'notifications',
-  tasks: 'tasks',
-  events: 'events',
-  mealPlans: 'mealPlans',
-  groceryItems: 'groceryItems',
-  rewards: 'rewards',
-  lists: 'lists',
+  users: { familyId: 'familyId', updatedAt: 'updatedAt' },
+  families: { id: 'id', updatedAt: 'updatedAt' },
+  notifications: { updatedAt: 'updatedAt' },
+  tasks: { familyId: 'familyId', updatedAt: 'updatedAt' },
+  events: { familyId: 'familyId', updatedAt: 'updatedAt' },
+  mealPlans: { familyId: 'familyId', updatedAt: 'updatedAt' },
+  groceryItems: { familyId: 'familyId', updatedAt: 'updatedAt' },
+  rewards: { id: 'id', familyId: 'familyId', updatedAt: 'updatedAt' },
+  rewardClaims: { rewardId: 'rewardId', updatedAt: 'updatedAt' },
+  lists: { id: 'id', familyId: 'familyId', updatedAt: 'updatedAt' },
   listItems: { id: 'id', listId: 'listId', text: 'text', isChecked: 'isChecked', createdAt: 'createdAt', updatedAt: 'updatedAt' },
+  recipes: { familyId: 'familyId', updatedAt: 'updatedAt' },
 }));
 
 vi.mock('drizzle-orm', () => ({
@@ -71,8 +73,10 @@ describe('Sync Lists', () => {
       .mockResolvedValueOnce([]) // mealPlans
       .mockResolvedValueOnce([]) // groceryItems
       .mockResolvedValueOnce([]) // rewards
+      .mockResolvedValueOnce([]) // rewardClaims
       .mockResolvedValueOnce([{ id: 'list-1', name: 'My List', createdAt: new Date(), updatedAt: new Date() }]) // lists
-      .mockResolvedValueOnce([{ id: 'item-1', listId: 'list-1', text: 'Item 1', createdAt: new Date(), updatedAt: new Date() }]); // listItems
+      .mockResolvedValueOnce([{ id: 'item-1', listId: 'list-1', text: 'Item 1', createdAt: new Date(), updatedAt: new Date() }]) // listItems
+      .mockResolvedValueOnce([]); // recipes
 
     // @ts-expect-error - Mocking request/reply objects partially
     await pullChanges(req, reply);
