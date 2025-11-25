@@ -90,5 +90,20 @@ describe('Recurring Events Logic', () => {
       });
       expect(rule).toBe('FREQ=WEEKLY;BYDAY=SU,MO,TU,WE,TH,FR,SA;COUNT=7');
     });
+
+    it('should build infinite recurrence rule (never ends)', () => {
+      const rule = buildRecurrenceRule({
+        frequency: 'WEEKLY',
+      });
+      expect(rule).toBe('FREQ=WEEKLY');
+    });
+
+    it('should build custom weekly pattern with specific days', () => {
+      const rule = buildRecurrenceRule({
+        frequency: 'WEEKLY',
+        byDay: ['MO', 'TH'],
+      });
+      expect(rule).toBe('FREQ=WEEKLY;BYDAY=MO,TH');
+    });
   });
 });
