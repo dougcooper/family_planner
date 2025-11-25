@@ -206,6 +206,21 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
         </View>
       ) : (
         <>
+          {checkedCount > 0 && (
+            <View style={styles.toggleSection}>
+              <TouchableOpacity
+                style={styles.toggleButton}
+                onPress={() => setShowCompleted(!showCompleted)}
+                accessibilityLabel={`${showCompleted ? 'Hide' : 'Show'} ${checkedCount} completed item${checkedCount !== 1 ? 's' : ''}`}
+                accessibilityRole="button"
+              >
+                <Text style={styles.toggleButtonText}>
+                  {showCompleted ? '👁️ Hide' : '👁️ Show'} Completed ({checkedCount})
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <FlatList
             data={filteredItems}
             renderItem={renderItem}
@@ -387,6 +402,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
+  },
+  toggleSection: {
+    padding: 16,
+    paddingBottom: 8,
+    backgroundColor: '#F8FAFC',
+  },
+  toggleButton: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+  },
+  toggleButtonText: {
+    color: '#4A90E2',
+    fontSize: 15,
+    fontWeight: '600',
   },
   footer: {
     padding: 16,

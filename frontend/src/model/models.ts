@@ -12,12 +12,15 @@ import type {
   List as IList,
   ListItem as IListItem,
   Reward as IReward,
+  Recipe as IRecipe,
+  RewardClaim as IRewardClaim,
   UserRole,
   EmailFrequency,
   TaskStatus,
   MealType,
   NotificationType,
-  ListType
+  ListType,
+  RewardClaimStatus
 } from '@family-planner/types';
 
 export class Family extends Model implements IFamily {
@@ -108,6 +111,30 @@ export class MealPlan extends Model implements IMealPlan {
   @readonly @date('updated_at') updatedAt!: Date;
 }
 
+export class Recipe extends Model implements IRecipe {
+  static table = 'recipes';
+
+  @field('family_id') familyId!: string;
+  @field('name') name!: string;
+  @field('description') description?: string;
+  @field('ingredients') _ingredients!: string;
+  @field('instructions') instructions?: string;
+  @readonly @date('created_at') createdAt!: Date;
+  @readonly @date('updated_at') updatedAt!: Date;
+
+  get ingredients(): string[] {
+    try {
+      return JSON.parse(this._ingredients);
+    } catch {
+      return [];
+    }
+  }
+
+  set ingredients(value: string[]) {
+    this._ingredients = JSON.stringify(value);
+  }
+}
+
 export class GroceryItem extends Model implements IGroceryItem {
   static table = 'grocery_items';
 
@@ -149,4 +176,21 @@ export class Reward extends Model implements IReward {
   @field('image_url') imageUrl?: string;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
+}
+
+export class RewardClaim extends Model implements IRewardClaim {
+  static table = 'reward_claims';
+
+  @field('reward_id') rewardId!: string;
+  @field('user_id') userId!: string;
+  @field('points_cost') pointsCost!: number;
+  @field('status') status!: RewardClaimStatus;
+  @date('claimed_at') claimedAt!: Date;
+  @date('unclaimed_at') unclaimedAt?: Date;
+  @field('unclaimed_by') unclaimedBy?: string;
+  @readonly @date('created_at') createdAt!: Date;
+  @readonly @date('updated_at') updatedAt!: Date;
+
+  @relation('rewards', 'reward_id') reward!: Relation<Reward>;
+  @relation('users', 'user_id') user!: Relation<User>;
 }

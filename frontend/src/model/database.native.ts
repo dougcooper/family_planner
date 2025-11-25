@@ -4,7 +4,7 @@ import { setGenerator } from '@nozbe/watermelondb/utils/common/randomId';
 import { v4 as uuidv4 } from 'uuid';
 import { schema } from './schema';
 import migrations from './migrations';
-import { Family, User, Notification, Task, Event, EventAttendee, MealPlan, GroceryItem, Reward, List, ListItem } from './models';
+import { Family, User, Notification, Task, Event, EventAttendee, MealPlan, GroceryItem, Reward, RewardClaim, List, ListItem, Recipe } from './models';
 
 // Use UUIDs for all IDs to match backend requirements
 setGenerator(() => {
@@ -25,7 +25,7 @@ const adapter = new SQLiteAdapter({
 
 export const database = new Database({
   adapter,
-  modelClasses: [Family, User, Notification, Task, Event, EventAttendee, MealPlan, GroceryItem, Reward, List, ListItem],
+  modelClasses: [Family, User, Notification, Task, Event, EventAttendee, MealPlan, GroceryItem, Reward, RewardClaim, List, ListItem, Recipe],
 });
 
 export default database;

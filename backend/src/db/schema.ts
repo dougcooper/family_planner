@@ -145,3 +145,31 @@ export const rewards = pgTable('rewards', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
+
+// Recipes table
+export const recipes = pgTable('recipes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  ingredients: text('ingredients').notNull(), // JSON string
+  instructions: text('instructions'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Reward Claims table - tracks when users claim rewards
+export const rewardClaimStatusEnum = pgEnum('reward_claim_status', ['ACTIVE', 'UNCLAIMED']);
+
+export const rewardClaims = pgTable('reward_claims', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  rewardId: uuid('reward_id').notNull().references(() => rewards.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  pointsCost: integer('points_cost').notNull(), // Store cost at time of claim
+  status: rewardClaimStatusEnum('status').notNull().default('ACTIVE'),
+  claimedAt: timestamp('claimed_at').notNull().defaultNow(),
+  unclaimedAt: timestamp('unclaimed_at'),
+  unclaimedBy: uuid('unclaimed_by').references(() => users.id), // Parent who approved unclaim
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});

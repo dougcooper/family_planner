@@ -101,6 +101,17 @@ Redeemable item for points.
 - `created_at`: Timestamp
 - `updated_at`: Timestamp (for sync)
 
+### Recipe
+A reusable meal definition.
+- `id`: UUID (PK)
+- `family_id`: UUID (FK -> Family)
+- `name`: String
+- `description`: String (optional)
+- `ingredients`: String (JSON array of strings)
+- `instructions`: String (optional)
+- `created_at`: Timestamp
+- `updated_at`: Timestamp (for sync)
+
 ## Relationships
 
 - **Family** has many **Users**

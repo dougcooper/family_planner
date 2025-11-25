@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../db/index.js';
-import { users, families, notifications, tasks, events, mealPlans, groceryItems, rewards, lists, listItems } from '../db/schema.js';
+import { users, families, notifications, tasks, events, mealPlans, groceryItems, rewards, rewardClaims, lists, listItems, recipes } from '../db/schema.js';
 import { eq, gt, and } from 'drizzle-orm';
 
 export interface SyncPullQuery {
@@ -32,6 +32,14 @@ export const toWatermelon = (record: Record<string, unknown>) => {
     }
     if (key === 'endTime') {
       newRecord.end_time = new Date(value as string | number | Date).getTime();
+      continue;
+    }
+    if (key === 'claimedAt' && value) {
+      newRecord.claimed_at = new Date(value as string | number | Date).getTime();
+      continue;
+    }
+    if (key === 'unclaimedAt' && value) {
+      newRecord.unclaimed_at = new Date(value as string | number | Date).getTime();
       continue;
     }
     if (key === 'date') {
@@ -80,8 +88,10 @@ export async function pullChanges(
       mealPlanChanges,
       groceryItemChanges,
       rewardChanges,
+      rewardClaimChanges,
       listChanges,
       listItemChanges,
+      recipeChanges,
     ] = await Promise.all([
       db
         .select()
@@ -152,6 +162,17 @@ export async function pullChanges(
         ),
       db
         .select()
+        .from(rewardClaims)
+        .innerJoin(rewards, eq(rewardClaims.rewardId, rewards.id))
+        .where(
+          and(
+            eq(rewards.familyId, familyId),
+            gt(rewardClaims.updatedAt, lastPulledDate)
+          )
+        )
+        .then(rows => rows.map(row => row.reward_claims)),
+      db
+        .select()
         .from(lists)
         .where(
           and(
@@ -174,6 +195,15 @@ export async function pullChanges(
           and(
             eq(lists.familyId, familyId),
             gt(listItems.updatedAt, lastPulledDate)
+          )
+        ),
+      db
+        .select()
+        .from(recipes)
+        .where(
+          and(
+            eq(recipes.familyId, familyId),
+            gt(recipes.updatedAt, lastPulledDate)
           )
         ),
     ]);
@@ -224,6 +254,11 @@ export async function pullChanges(
         updated: rewardChanges.filter(r => r.createdAt <= lastPulledDate).map(toWatermelon),
         deleted: [],
       },
+      reward_claims: {
+        created: rewardClaimChanges.filter(rc => rc.createdAt > lastPulledDate).map(toWatermelon),
+        updated: rewardClaimChanges.filter(rc => rc.createdAt <= lastPulledDate).map(toWatermelon),
+        deleted: [],
+      },
       lists: {
         created: listChanges.filter(l => l.createdAt > lastPulledDate).map(toWatermelon),
         updated: listChanges.filter(l => l.createdAt <= lastPulledDate).map(toWatermelon),
@@ -232,6 +267,11 @@ export async function pullChanges(
       list_items: {
         created: listItemChanges.filter(l => l.createdAt > lastPulledDate).map(toWatermelon),
         updated: listItemChanges.filter(l => l.createdAt <= lastPulledDate).map(toWatermelon),
+        deleted: [],
+      },
+      recipes: {
+        created: recipeChanges.filter(r => r.createdAt > lastPulledDate).map(toWatermelon),
+        updated: recipeChanges.filter(r => r.createdAt <= lastPulledDate).map(toWatermelon),
         deleted: [],
       },
     };

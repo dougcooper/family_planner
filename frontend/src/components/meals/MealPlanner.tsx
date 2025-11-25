@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Alert, Platform } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
-import { MealPlan } from '../../model/models';
+import { MealPlan, Recipe } from '../../model/models';
 import { addMealToGroceryList } from '../../logic/meals';
 import { getStartOfWeek, formatDateToYYYYMMDD } from '../../logic/date';
+import { RecipeManager } from './RecipeManager';
 
 interface MealPlannerProps {
   database: Database;
@@ -21,6 +22,8 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
   const [weekDays, setWeekDays] = useState<DayMeals[]>([]);
   const [loading, setLoading] = useState(true);
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [recipeManagerVisible, setRecipeManagerVisible] = useState(false);
+  const [selectingRecipeForMeal, setSelectingRecipeForMeal] = useState(false);
   const [editingMeal, setEditingMeal] = useState<{ date: string; mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' } | null>(null);
   const [mealDescription, setMealDescription] = useState('');
 
@@ -236,14 +239,30 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
     );
   }
 
+  const handleRecipeSelect = (recipe: Recipe) => {
+    setMealDescription(recipe.name);
+    setSelectingRecipeForMeal(false);
+    setRecipeManagerVisible(false);
+  };
+
+  const openRecipeManager = (forSelection = false) => {
+    setSelectingRecipeForMeal(forSelection);
+    setRecipeManagerVisible(true);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Weekly Meal Planner</Text>
-        <Text style={styles.headerSubtitle}>Plan your family meals for the week</Text>
+        <Text style={styles.title}>Weekly Meal Plan</Text>
+        <TouchableOpacity 
+          style={styles.recipeButton}
+          onPress={() => openRecipeManager(false)}
+        >
+          <Text style={styles.recipeButtonText}>Manage Recipes</Text>
+        </TouchableOpacity>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollContainer}>
+      <ScrollView style={styles.content}>
         <View style={styles.weekGrid}>
           {/* Meal type labels */}
           <View style={styles.mealTypeColumn}>
@@ -290,6 +309,16 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
             <Text style={styles.modalTitle}>
               {editingMeal ? `${getMealIcon(editingMeal.mealType)} ${editingMeal.mealType}` : 'Edit Meal'}
             </Text>
+
+            <TouchableOpacity 
+              style={styles.selectRecipeButton}
+              onPress={() => {
+                setEditModalVisible(false);
+                openRecipeManager(true);
+              }}
+            >
+              <Text style={styles.selectRecipeButtonText}>Select from Recipes</Text>
+            </TouchableOpacity>
             
             <TextInput
               style={styles.modalInput}
@@ -321,6 +350,30 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
           </View>
         </View>
       </Modal>
+
+      {/* Recipe Manager */}
+      <Modal
+        visible={recipeManagerVisible}
+        animationType="slide"
+        onRequestClose={() => setRecipeManagerVisible(false)}
+      >
+        <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 40 : 0 }}>
+          <RecipeManager 
+            database={database} 
+            familyId={familyId}
+            onClose={() => {
+              setRecipeManagerVisible(false);
+              if (selectingRecipeForMeal) {
+                setEditModalVisible(true);
+              }
+            }}
+            onSelectRecipe={selectingRecipeForMeal ? (recipe: Recipe) => {
+              handleRecipeSelect(recipe);
+              setEditModalVisible(true);
+            } : undefined}
+          />
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -335,16 +388,40 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  headerTitle: {
+  title: {
     fontSize: 24,
     fontWeight: '700',
     color: '#1E293B',
-    marginBottom: 4,
   },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#64748B',
+  recipeButton: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  recipeButtonText: {
+    color: '#475569',
+    fontWeight: '600',
+  },
+  content: {
+    flex: 1,
+  },
+  selectRecipeButton: {
+    backgroundColor: '#F0F9FF',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
+  selectRecipeButtonText: {
+    color: '#0284C7',
+    fontWeight: '600',
   },
   loadingText: {
     textAlign: 'center',

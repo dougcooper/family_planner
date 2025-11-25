@@ -105,6 +105,7 @@ export const schema = appSchema({
         { name: 'type', type: 'string' },
         { name: 'created_at', type: 'number' },
         { name: 'updated_at', type: 'number' },
+        { name: 'deleted_at', type: 'number', isOptional: true },
       ],
     }),
     tableSchema({
@@ -118,12 +119,38 @@ export const schema = appSchema({
       ],
     }),
     tableSchema({
+      name: 'recipes',
+      columns: [
+        { name: 'family_id', type: 'string', isIndexed: true },
+        { name: 'name', type: 'string' },
+        { name: 'description', type: 'string', isOptional: true },
+        { name: 'ingredients', type: 'string' }, // JSON array
+        { name: 'instructions', type: 'string', isOptional: true },
+        { name: 'created_at', type: 'number' },
+        { name: 'updated_at', type: 'number' },
+      ],
+    }),
+    tableSchema({
       name: 'rewards',
       columns: [
         { name: 'family_id', type: 'string', isIndexed: true },
         { name: 'title', type: 'string' },
         { name: 'cost', type: 'number' },
         { name: 'image_url', type: 'string', isOptional: true },
+        { name: 'created_at', type: 'number' },
+        { name: 'updated_at', type: 'number' },
+      ],
+    }),
+    tableSchema({
+      name: 'reward_claims',
+      columns: [
+        { name: 'reward_id', type: 'string', isIndexed: true },
+        { name: 'user_id', type: 'string', isIndexed: true },
+        { name: 'points_cost', type: 'number' },
+        { name: 'status', type: 'string' },
+        { name: 'claimed_at', type: 'number' },
+        { name: 'unclaimed_at', type: 'number', isOptional: true },
+        { name: 'unclaimed_by', type: 'string', isOptional: true },
         { name: 'created_at', type: 'number' },
         { name: 'updated_at', type: 'number' },
       ],

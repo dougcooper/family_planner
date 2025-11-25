@@ -5,6 +5,7 @@ export type MealType = 'BREAKFAST' | 'LUNCH' | 'DINNER';
 export type NotificationType = 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
 export type EmailFrequency = 'IMMEDIATE' | 'DAILY' | 'WEEKLY' | 'OFF';
 export type ListType = 'GROCERY' | 'TODO' | 'OTHER';
+export type RewardClaimStatus = 'ACTIVE' | 'UNCLAIMED';
 
 // Entity Interfaces
 export interface Family {
@@ -103,6 +104,17 @@ export interface GroceryItem {
   updatedAt: Date;
 }
 
+export interface Recipe {
+  id: string;
+  familyId: string;
+  name: string;
+  description?: string;
+  ingredients: string[];
+  instructions?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface List {
   id: string;
   familyId: string;
@@ -127,6 +139,19 @@ export interface Reward {
   title: string;
   cost: number;
   imageUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface RewardClaim {
+  id: string;
+  rewardId: string;
+  userId: string;
+  pointsCost: number;
+  status: RewardClaimStatus;
+  claimedAt: Date;
+  unclaimedAt?: Date;
+  unclaimedBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -3,6 +3,44 @@ import { schemaMigrations, createTable, addColumns } from '@nozbe/watermelondb/S
 export default schemaMigrations({
   migrations: [
     {
+      toVersion: 4,
+      steps: [
+        createTable({
+          name: 'recipes',
+          columns: [
+            { name: 'family_id', type: 'string', isIndexed: true },
+            { name: 'name', type: 'string' },
+            { name: 'description', type: 'string', isOptional: true },
+            { name: 'ingredients', type: 'string' },
+            { name: 'instructions', type: 'string', isOptional: true },
+            { name: 'created_at', type: 'number' },
+            { name: 'updated_at', type: 'number' },
+          ],
+        }),
+        createTable({
+          name: 'reward_claims',
+          columns: [
+            { name: 'reward_id', type: 'string', isIndexed: true },
+            { name: 'user_id', type: 'string', isIndexed: true },
+            { name: 'points_cost', type: 'number' },
+            { name: 'status', type: 'string' },
+            { name: 'claimed_at', type: 'number' },
+            { name: 'unclaimed_at', type: 'number', isOptional: true },
+            { name: 'unclaimed_by', type: 'string', isOptional: true },
+            { name: 'created_at', type: 'number' },
+            { name: 'updated_at', type: 'number' },
+          ],
+        }),
+        addColumns({
+          table: 'events',
+          columns: [
+            { name: 'recurrence_id', type: 'string', isOptional: true, isIndexed: true },
+            { name: 'is_all_day', type: 'boolean' },
+          ],
+        }),
+      ],
+    },
+    {
       toVersion: 3,
       steps: [
         createTable({
@@ -23,18 +61,6 @@ export default schemaMigrations({
             { name: 'is_checked', type: 'boolean' },
             { name: 'created_at', type: 'number' },
             { name: 'updated_at', type: 'number' },
-          ],
-        }),
-      ],
-    },
-    {
-      toVersion: 4,
-      steps: [
-        addColumns({
-          table: 'events',
-          columns: [
-            { name: 'recurrence_id', type: 'string', isOptional: true, isIndexed: true },
-            { name: 'is_all_day', type: 'boolean' },
           ],
         }),
       ],
