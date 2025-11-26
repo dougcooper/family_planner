@@ -31,6 +31,7 @@ export default function ListsScreen() {
   return (
     <DashboardLayout scrollable={false}>
       <View style={styles.wrapper}>
+        <Text style={styles.pageTitle}>My Lists</Text>
         <ListAssignmentSummary familyId={familyId} onUserPress={setSelectedUser} />
         <View style={styles.container}>
           <View style={styles.sidebar}>
@@ -92,5 +93,11 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 18,
     color: '#64748B',
+  },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 16,
   },
 });

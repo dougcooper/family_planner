@@ -12,7 +12,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     padding: 16,
     backgroundColor: '#FFFFFF',
@@ -308,7 +308,6 @@ export function AllLists({ database, familyId, onSelectList, selectedListId }: A
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{viewArchived ? 'Archived Lists' : 'My Lists'}</Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <TouchableOpacity
             style={[styles.createButton, { backgroundColor: viewArchived ? '#4A90E2' : '#E2E8F0' }]}
