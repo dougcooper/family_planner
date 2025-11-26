@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Alert, Platform } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
-import { MealPlan, Recipe } from '../../model/models';
-import { addMealToGroceryList } from '../../logic/meals';
+import { withObservables } from '@nozbe/watermelondb/react';
+import { MealPlan, Recipe, MealLabel } from '../../model/models';
+import { addMealToGroceryList, ensureDefaultMealLabels } from '../../logic/meals';
 import { getStartOfWeek, formatDateToYYYYMMDD } from '../../logic/date';
 import { RecipeManager } from './RecipeManager';
 import { RecipeDetail } from './RecipeDetail';
@@ -10,16 +11,15 @@ import { RecipeDetail } from './RecipeDetail';
 interface MealPlannerProps {
   database: Database;
   familyId: string;
+  mealLabels: MealLabel[];
 }
 
 interface DayMeals {
   date: string;
-  breakfast?: MealPlan;
-  lunch?: MealPlan;
-  dinner?: MealPlan;
+  meals: Record<string, MealPlan>; // Map labelId -> MealPlan
 }
 
-export function MealPlanner({ database, familyId }: MealPlannerProps) {
+function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerProps) {
   const [weekDays, setWeekDays] = useState<DayMeals[]>([]);
   const [loading, setLoading] = useState(true);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -27,13 +27,17 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
   const [selectingRecipeForMeal, setSelectingRecipeForMeal] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
-  const [editingMeal, setEditingMeal] = useState<{ date: string; mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' } | null>(null);
+  const [editingMeal, setEditingMeal] = useState<{ date: string; labelId: string; labelName: string } | null>(null);
   const [mealDescription, setMealDescription] = useState('');
+
+  useEffect(() => {
+    ensureDefaultMealLabels(database, familyId);
+  }, [database, familyId]);
 
   useEffect(() => {
     loadWeekMeals();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mealLabels]); // Reload when labels change
 
   const loadWeekMeals = async () => {
     try {
@@ -45,26 +49,25 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
         const date = new Date(startOfWeek);
         date.setDate(startOfWeek.getDate() + i);
         const dateStr = formatDateToYYYYMMDD(date);
-        // console.log('Loading meals for:', dateStr);
-
+        
         // Load meals for this day
         const dayMeals = await database
           .get<MealPlan>('meal_plans')
           .query(
             Q.where('family_id', familyId),
             Q.where('date', dateStr),
-            Q.sortBy('updated_at', Q.asc) // Process oldest to newest, so newest wins in the loop
+            Q.sortBy('updated_at', Q.asc)
           )
           .fetch();
 
-        const dayObj: DayMeals = { date: dateStr };
+        const mealsMap: Record<string, MealPlan> = {};
         for (const meal of dayMeals) {
-          if (meal.mealType === 'BREAKFAST') dayObj.breakfast = meal;
-          if (meal.mealType === 'LUNCH') dayObj.lunch = meal;
-          if (meal.mealType === 'DINNER') dayObj.dinner = meal;
+          if (meal.mealLabelId) {
+            mealsMap[meal.mealLabelId] = meal;
+          }
         }
 
-        days.push(dayObj);
+        days.push({ date: dateStr, meals: mealsMap });
       }
 
       setWeekDays(days);
@@ -76,8 +79,8 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
     }
   };
 
-  const handleEditMeal = async (date: string, mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER', existing?: MealPlan) => {
-    setEditingMeal({ date, mealType });
+  const handleEditMeal = async (date: string, label: MealLabel, existing?: MealPlan) => {
+    setEditingMeal({ date, labelId: label.id, labelName: label.name });
     setMealDescription(existing?.description || '');
     
     if (existing?.recipeId) {
@@ -105,7 +108,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
         .query(
           Q.where('family_id', familyId),
           Q.where('date', editingMeal.date),
-          Q.where('meal_type', editingMeal.mealType),
+          Q.where('meal_label_id', editingMeal.labelId),
           Q.sortBy('updated_at', Q.desc)
         )
         .fetch();
@@ -129,7 +132,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
           await database.get<MealPlan>('meal_plans').create((meal) => {
             meal.familyId = familyId;
             meal.date = editingMeal.date;
-            meal.mealType = editingMeal.mealType;
+            meal.mealLabelId = editingMeal.labelId;
             meal.description = mealDescription.trim();
             meal.recipeId = selectedRecipe?.id;
           });
@@ -216,18 +219,9 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const getMealIcon = (mealType: string) => {
-    switch (mealType) {
-      case 'BREAKFAST': return '🌅';
-      case 'LUNCH': return '☀️';
-      case 'DINNER': return '🌙';
-      default: return '🍽️';
-    }
-  };
-
-  const renderMealSlot = (day: DayMeals, mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER', meal?: MealPlan) => {
+  const renderMealSlot = (day: DayMeals, label: MealLabel, meal?: MealPlan) => {
     return (
-      <View key={`${day.date}-${mealType}`} style={styles.mealSlot}>
+      <View key={`${day.date}-${label.id}`} style={styles.mealSlot}>
         {meal ? (
           <View style={styles.mealCard}>
             <Text style={styles.mealText} numberOfLines={2}>
@@ -244,7 +238,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
               )}
               <TouchableOpacity
                 style={styles.iconButton}
-                onPress={() => handleEditMeal(day.date, mealType, meal)}
+                onPress={() => handleEditMeal(day.date, label, meal)}
               >
                 <Text style={styles.iconButtonText}>✏️</Text>
               </TouchableOpacity>
@@ -265,9 +259,9 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
         ) : (
           <TouchableOpacity
             style={styles.emptyMealSlot}
-            onPress={() => handleEditMeal(day.date, mealType)}
+            onPress={() => handleEditMeal(day.date, label)}
           >
-            <Text style={styles.emptyMealText}>+ Add {mealType.toLowerCase()}</Text>
+            <Text style={styles.emptyMealText}>+ Add</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -311,15 +305,11 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
           {/* Meal type labels */}
           <View style={styles.mealTypeColumn}>
             <View style={styles.dayHeader} />
-            <View style={styles.mealTypeLabel}>
-              <Text style={styles.mealTypeText}>🌅 Breakfast</Text>
-            </View>
-            <View style={styles.mealTypeLabel}>
-              <Text style={styles.mealTypeText}>☀️ Lunch</Text>
-            </View>
-            <View style={styles.mealTypeLabel}>
-              <Text style={styles.mealTypeText}>🌙 Dinner</Text>
-            </View>
+            {mealLabels.map(label => (
+              <View key={label.id} style={styles.mealTypeLabel}>
+                <Text style={styles.mealTypeText}>{label.name}</Text>
+              </View>
+            ))}
           </View>
 
           {/* Days columns */}
@@ -332,9 +322,9 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
                   <Text style={styles.dayDate}>{getDateDisplay(day.date)}</Text>
                   {isToday && <Text style={styles.todayLabel}>TODAY</Text>}
                 </View>
-                {renderMealSlot(day, 'BREAKFAST', day.breakfast)}
-                {renderMealSlot(day, 'LUNCH', day.lunch)}
-                {renderMealSlot(day, 'DINNER', day.dinner)}
+                {mealLabels.map(label => (
+                  renderMealSlot(day, label, day.meals[label.id])
+                ))}
               </View>
             );
           })}
@@ -351,7 +341,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>
-              {editingMeal ? `${getMealIcon(editingMeal.mealType)} ${editingMeal.mealType}` : 'Edit Meal'}
+              {editingMeal ? `Edit ${editingMeal.labelName}` : 'Edit Meal'}
             </Text>
 
             {selectedRecipe ? (
@@ -440,6 +430,12 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
     </View>
   );
 }
+
+const enhance = withObservables(['database'], ({ database }: { database: Database }) => ({
+  mealLabels: database.get<MealLabel>('meal_labels').query(Q.sortBy('sort_order', Q.asc)),
+}));
+
+export const MealPlanner = enhance(MealPlannerComponent);
 
 const styles = StyleSheet.create({
   container: {

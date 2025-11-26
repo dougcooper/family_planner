@@ -93,18 +93,35 @@ export const eventAttendees = pgTable('event_attendees', {
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
 });
 
+// Meal Labels table
+export const mealLabels = pgTable('meal_labels', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
 // Meal Plans table
 export const mealPlans = pgTable('meal_plans', {
   id: uuid('id').primaryKey().defaultRandom(),
   familyId: uuid('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
   date: date('date').notNull(),
-  mealType: mealTypeEnum('meal_type').notNull(),
+  mealType: mealTypeEnum('meal_type'), // Made nullable for migration
+  mealLabelId: uuid('meal_label_id').references(() => mealLabels.id, { onDelete: 'cascade' }),
   description: varchar('description', { length: 500 }).notNull(),
   recipeId: uuid('recipe_id').references(() => recipes.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => ({
-  unq: unique().on(t.familyId, t.date, t.mealType),
+  // Unique constraint will need to be updated in migration to use mealLabelId instead of mealType
+  // For now, we keep the old one and add a new one? No, that conflicts.
+  // We'll handle the constraint change in the migration file manually if needed, 
+  // but Drizzle might try to enforce it.
+  // Let's define the new constraint and remove the old one.
+  // unq: unique().on(t.familyId, t.date, t.mealType),
+  unq_label: unique().on(t.familyId, t.date, t.mealLabelId),
 }));
 
 // Grocery Items table

@@ -86,11 +86,21 @@ export interface EventAttendee {
   userId: string;
 }
 
+export interface MealLabel {
+  id: string;
+  familyId: string;
+  name: string;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface MealPlan {
   id: string;
   familyId: string;
   date: string; // YYYY-MM-DD format
-  mealType: MealType;
+  mealType?: MealType; // Deprecated, kept for backward compatibility during migration
+  mealLabelId?: string; // New field
   description: string;
   recipeId?: string;
   createdAt: Date;

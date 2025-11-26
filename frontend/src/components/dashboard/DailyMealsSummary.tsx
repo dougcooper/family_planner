@@ -1,26 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { MealPlan } from '../../model/models';
-import { MealType } from '@family-planner/types';
+import { MealPlan, MealLabel } from '../../model/models';
 
 interface DailyMealsSummaryProps {
   mealPlans: MealPlan[];
+  mealLabels: MealLabel[];
 }
 
-export function DailyMealsSummary({ mealPlans }: DailyMealsSummaryProps) {
-  const getMeal = (type: MealType) => mealPlans.find(m => m.mealType === type);
+export function DailyMealsSummary({ mealPlans, mealLabels }: DailyMealsSummaryProps) {
+  const getMeal = (labelId: string) => mealPlans.find(m => m.mealLabelId === labelId);
 
-  const breakfast = getMeal('BREAKFAST');
-  const lunch = getMeal('LUNCH');
-  const dinner = getMeal('DINNER');
+  const hasMeals = mealPlans.length > 0;
 
-  const hasMeals = breakfast || lunch || dinner;
-
-  const renderMealRow = (type: string, meal: MealPlan | undefined, icon: string) => {
+  const renderMealRow = (label: MealLabel, meal: MealPlan | undefined) => {
     if (!meal) return null;
     return (
-      <View style={styles.mealRow} key={type}>
-        <Text style={styles.mealType}>{icon} {type}</Text>
+      <View style={styles.mealRow} key={label.id}>
+        <Text style={styles.mealType}>{label.name}</Text>
         <Text style={styles.mealDescription}>{meal.description}</Text>
       </View>
     );
@@ -32,9 +28,7 @@ export function DailyMealsSummary({ mealPlans }: DailyMealsSummaryProps) {
       
       {hasMeals ? (
         <View style={styles.mealsList}>
-          {renderMealRow('Breakfast', breakfast, '🍳')}
-          {renderMealRow('Lunch', lunch, '🥪')}
-          {renderMealRow('Dinner', dinner, '🍽️')}
+          {mealLabels.map(label => renderMealRow(label, getMeal(label.id)))}
         </View>
       ) : (
         <View style={styles.emptyState}>

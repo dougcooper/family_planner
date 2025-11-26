@@ -10,7 +10,7 @@ import { TaskListSummary } from './TaskListSummary';
 import { DailyMealsSummary } from './DailyMealsSummary';
 import { ListsSummary } from './ListsSummary';
 import { RewardsSummary } from './RewardsSummary';
-import { Task, Event, MealPlan, List, User } from '../../model/models';
+import { Task, Event, MealPlan, List, User, MealLabel } from '../../model/models';
 import { formatDateToYYYYMMDD, getStartOfDay, getEndOfDay } from '../../logic/date';
 
 interface DashboardInputProps {
@@ -24,11 +24,17 @@ interface DashboardContainerProps extends DashboardInputProps {
   mealPlans: MealPlan[];
   lists: List[];
   users: User[];
+  mealLabels: MealLabel[];
 }
 
-const DashboardContainer = ({ tasks, events, mealPlans, lists, users }: DashboardContainerProps) => {
+const DashboardContainer = ({ tasks, events, mealPlans, lists, users, mealLabels }: DashboardContainerProps) => {
   // Filter for dinner specifically for the widget summary
-  const dinnerMeal = mealPlans.find(m => m.mealType === 'DINNER');
+  // Try to find a label named "Dinner" or similar
+  const dinnerLabel = mealLabels.find(l => l.name.toLowerCase() === 'dinner');
+  const dinnerMeal = dinnerLabel 
+    ? mealPlans.find(m => m.mealLabelId === dinnerLabel.id)
+    : mealPlans[mealPlans.length - 1]; // Fallback to last meal if no "Dinner" label
+
   const dinnerPlan = dinnerMeal ? dinnerMeal.description : null;
   
   return (
@@ -46,7 +52,7 @@ const DashboardContainer = ({ tasks, events, mealPlans, lists, users }: Dashboar
           <TaskListSummary tasks={tasks} />
         </View>
         <View style={styles.gridItem}>
-          <DailyMealsSummary mealPlans={mealPlans} />
+          <DailyMealsSummary mealPlans={mealPlans} mealLabels={mealLabels} />
         </View>
         <View style={styles.gridItem}>
           <ListsSummary lists={lists} />
@@ -97,31 +103,6 @@ const enhance = withObservables(['familyId', 'userId'], ({ familyId }: Dashboard
         Q.sortBy('updated_at', Q.desc)
       );
 
-  // userId is used here to potentially filter users if needed, but currently we want all users for the leaderboard.
-  // However, the linter complains it's unused. 
-  // If we want to show the current user differently, we might use it.
-  // For now, let's just use it in the query or remove it if not needed.
-  // The prompt asked for "points for each family member", so we need all users.
-  // But we might want to highlight the current user.
-  // Let's keep it simple and just remove it from the destructuring if it's truly not used, 
-  // OR use it to observe the specific user if we were showing "My Rewards".
-  // But we switched to "Leaderboard".
-  
-  // Wait, the previous code had:
-  // const userQuery = userId
-  //   ? database.collections.get<User>('users').findAndObserve(userId)
-  //   : null;
-  
-  // And I changed it to:
-  // const usersQuery = familyId ...
-  
-  // So userId is indeed unused in the new logic.
-  // But `withObservables` needs to know about props that trigger re-observation.
-  // If `userId` changes, do we need to re-run? Probably not for the leaderboard.
-  // But `familyId` definitely.
-  
-  // I will remove `userId` from the destructuring if I can, or prefix with `_`.
-  
   const usersQuery = familyId
     ? database.collections.get<User>('users').query(
         Q.where('family_id', familyId),
@@ -130,6 +111,10 @@ const enhance = withObservables(['familyId', 'userId'], ({ familyId }: Dashboard
     : database.collections.get<User>('users').query(
         Q.sortBy('points_balance', Q.desc)
       );
+
+  const mealLabelsQuery = database.collections.get<MealLabel>('meal_labels').query(
+    Q.sortBy('sort_order', Q.asc)
+  );
 
   return {
     tasks: database.collections.get<Task>('tasks').query(
@@ -143,6 +128,7 @@ const enhance = withObservables(['familyId', 'userId'], ({ familyId }: Dashboard
     mealPlans: mealQuery,
     lists: listQuery,
     users: usersQuery,
+    mealLabels: mealLabelsQuery,
   };
 });
 

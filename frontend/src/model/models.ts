@@ -8,6 +8,7 @@ import type {
   Event as IEvent, 
   EventAttendee as IEventAttendee, 
   MealPlan as IMealPlan, 
+  MealLabel as IMealLabel,
   GroceryItem as IGroceryItem, 
   List as IList,
   ListItem as IListItem,
@@ -103,18 +104,34 @@ export class EventAttendee extends Model implements IEventAttendee {
   @field('user_id') userId!: string;
 }
 
+export class MealLabel extends Model implements IMealLabel {
+  static table = 'meal_labels';
+
+  @field('family_id') familyId!: string;
+  @field('name') name!: string;
+  @field('sort_order') sortOrder!: number;
+  @readonly @date('created_at') createdAt!: Date;
+  @readonly @date('updated_at') updatedAt!: Date;
+}
+
 export class MealPlan extends Model implements IMealPlan {
   static table = 'meal_plans';
+  static associations = {
+    recipes: { type: 'belongs_to', key: 'recipe_id' },
+    meal_labels: { type: 'belongs_to', key: 'meal_label_id' },
+  } as const;
 
   @field('family_id') familyId!: string;
   @field('date') date!: string;
-  @field('meal_type') mealType!: MealType;
+  @field('meal_type') mealType?: MealType;
+  @field('meal_label_id') mealLabelId?: string;
   @field('description') description!: string;
   @field('recipe_id') recipeId?: string;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
 
   @relation('recipes', 'recipe_id') recipe!: Relation<Recipe>;
+  @relation('meal_labels', 'meal_label_id') mealLabel!: Relation<MealLabel>;
 }
 
 export class Recipe extends Model implements IRecipe {

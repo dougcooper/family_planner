@@ -8,6 +8,7 @@ import { User, Family } from '../src/model/models';
 import { Q } from '@nozbe/watermelondb';
 import { Toast } from '../src/components/common/Toast';
 import { syncDatabase } from '../src/logic/sync';
+import { MealLabelSettings } from '../src/components/settings/MealLabelSettings';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -278,6 +279,10 @@ export default function SettingsScreen() {
       <DashboardLayout>
         <View style={styles.container}>
           <Text style={styles.header}>Settings</Text>
+
+          {currentUser?.familyId && (
+            <MealLabelSettings database={database} familyId={currentUser.familyId} />
+          )}
 
           {currentUser?.role === 'PARENT' && (
             <View style={styles.section}>

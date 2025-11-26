@@ -1,5 +1,5 @@
 import { Database, Q } from '@nozbe/watermelondb';
-import { ListItem, List, MealPlan } from '../model/models';
+import { ListItem, List, MealPlan, MealLabel } from '../model/models';
 
 /**
  * Meal-to-grocery-list logic
@@ -196,5 +196,29 @@ export async function bulkAddToGroceryList(
       itemsAdded: 0,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
+  }
+}
+
+export async function ensureDefaultMealLabels(database: Database, familyId: string): Promise<void> {
+  try {
+    const count = await database.get<MealLabel>('meal_labels')
+      .query(Q.where('family_id', familyId))
+      .fetchCount();
+
+    if (count === 0) {
+      await database.write(async () => {
+        const labels = ['Breakfast', 'Lunch', 'Dinner'];
+        for (let i = 0; i < labels.length; i++) {
+          await database.get<MealLabel>('meal_labels').create(label => {
+            label.familyId = familyId;
+            label.name = labels[i];
+            label.sortOrder = i;
+          });
+        }
+      });
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error ensuring default meal labels:', error);
   }
 }

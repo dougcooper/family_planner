@@ -74,6 +74,7 @@
 - [X] T034 [US3] Define GroceryItem model in `frontend/src/model/schema.ts`
 - [X] T035 [US3] Implement Grocery List View (Add/Check/Delete) in `frontend/src/components/lists/GroceryList.tsx`
 - [X] T036 [US3] Implement Meal Planner Calendar View in `frontend/src/components/meals/MealPlanner.tsx`
+- [X] T036b [US3] Implement Custom Meal Labels (Schema, UI, Migration) in `frontend/src/components/meals/MealPlanner.tsx`
 - [X] T037 [US3] Implement "Quick Add to List" logic in `frontend/src/logic/meals.ts`
 - [X] T037b [US3] Implement Recipe Deletion Confirmation in `frontend/src/components/meals/RecipeManager.tsx`
 - [X] T037c [US3] Implement Recipe Linking in Meal Plans in `frontend/src/components/meals/MealPlanner.tsx`

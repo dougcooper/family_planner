@@ -3,6 +3,27 @@ import { schemaMigrations, createTable, addColumns } from '@nozbe/watermelondb/S
 export default schemaMigrations({
   migrations: [
     {
+      toVersion: 6,
+      steps: [
+        createTable({
+          name: 'meal_labels',
+          columns: [
+            { name: 'family_id', type: 'string', isIndexed: true },
+            { name: 'name', type: 'string' },
+            { name: 'sort_order', type: 'number' },
+            { name: 'created_at', type: 'number' },
+            { name: 'updated_at', type: 'number' },
+          ],
+        }),
+        addColumns({
+          table: 'meal_plans',
+          columns: [
+            { name: 'meal_label_id', type: 'string', isOptional: true, isIndexed: true },
+          ],
+        }),
+      ],
+    },
+    {
       toVersion: 5,
       steps: [
         addColumns({
