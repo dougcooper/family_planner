@@ -4,13 +4,10 @@ import { withObservables } from '@nozbe/watermelondb/react';
 import { Q } from '@nozbe/watermelondb';
 import { database } from '../../model/database';
 import { DashboardLayout } from './DashboardLayout';
-import { TodayWidget } from './TodayWidget';
 import { EventList } from './EventList';
 import { TaskListSummary } from './TaskListSummary';
 import { DailyMealsSummary } from './DailyMealsSummary';
-import { ListsSummary } from './ListsSummary';
-import { RewardsSummary } from './RewardsSummary';
-import { Task, Event, MealPlan, List, User, MealLabel } from '../../model/models';
+import { Task, Event, MealPlan, MealLabel } from '../../model/models';
 import { formatDateToYYYYMMDD, getStartOfDay, getEndOfDay } from '../../logic/date';
 
 interface DashboardInputProps {
@@ -22,29 +19,12 @@ interface DashboardContainerProps extends DashboardInputProps {
   tasks: Task[];
   events: Event[];
   mealPlans: MealPlan[];
-  lists: List[];
-  users: User[];
   mealLabels: MealLabel[];
 }
 
-const DashboardContainer = ({ tasks, events, mealPlans, lists, users, mealLabels }: DashboardContainerProps) => {
-  // Filter for dinner specifically for the widget summary
-  // Try to find a label named "Dinner" or similar
-  const dinnerLabel = mealLabels.find(l => l.name.toLowerCase() === 'dinner');
-  const dinnerMeal = dinnerLabel 
-    ? mealPlans.find(m => m.mealLabelId === dinnerLabel.id)
-    : mealPlans[mealPlans.length - 1]; // Fallback to last meal if no "Dinner" label
-
-  const dinnerPlan = dinnerMeal ? dinnerMeal.description : null;
-  
+const DashboardContainer = ({ tasks, events, mealPlans, mealLabels }: DashboardContainerProps) => {
   return (
     <DashboardLayout>
-      <TodayWidget 
-        taskCount={tasks.length} 
-        eventCount={events.length} 
-        dinnerPlan={dinnerPlan} 
-      />
-      
       <EventList events={events} />
       
       <View style={styles.gridContainer}>
@@ -53,12 +33,6 @@ const DashboardContainer = ({ tasks, events, mealPlans, lists, users, mealLabels
         </View>
         <View style={styles.gridItem}>
           <DailyMealsSummary mealPlans={mealPlans} mealLabels={mealLabels} />
-        </View>
-        <View style={styles.gridItem}>
-          <ListsSummary lists={lists} />
-        </View>
-        <View style={styles.gridItem}>
-          <RewardsSummary users={users} />
         </View>
       </View>
     </DashboardLayout>
@@ -94,24 +68,6 @@ const enhance = withObservables(['familyId', 'userId'], ({ familyId }: Dashboard
         Q.sortBy('updated_at', Q.desc)
       );
 
-  const listQuery = familyId
-    ? database.collections.get<List>('lists').query(
-        Q.where('family_id', familyId),
-        Q.sortBy('updated_at', Q.desc)
-      )
-    : database.collections.get<List>('lists').query(
-        Q.sortBy('updated_at', Q.desc)
-      );
-
-  const usersQuery = familyId
-    ? database.collections.get<User>('users').query(
-        Q.where('family_id', familyId),
-        Q.sortBy('points_balance', Q.desc)
-      )
-    : database.collections.get<User>('users').query(
-        Q.sortBy('points_balance', Q.desc)
-      );
-
   const mealLabelsQuery = database.collections.get<MealLabel>('meal_labels').query(
     Q.sortBy('sort_order', Q.asc)
   );
@@ -126,8 +82,6 @@ const enhance = withObservables(['familyId', 'userId'], ({ familyId }: Dashboard
       Q.sortBy('start_time', Q.asc)
     ),
     mealPlans: mealQuery,
-    lists: listQuery,
-    users: usersQuery,
     mealLabels: mealLabelsQuery,
   };
 });
