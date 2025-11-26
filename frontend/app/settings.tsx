@@ -9,6 +9,7 @@ import { Q } from '@nozbe/watermelondb';
 import { Toast } from '../src/components/common/Toast';
 import { syncDatabase } from '../src/logic/sync';
 import { MealLabelSettings } from '../src/components/settings/MealLabelSettings';
+import { getWeatherSettings, saveWeatherSettings, searchCity, CitySearchResult } from '../src/logic/weather';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -30,6 +31,12 @@ export default function SettingsScreen() {
   const [editMemberAvatar, setEditMemberAvatar] = useState('');
   const [isEditMemberModalVisible, setIsEditMemberModalVisible] = useState(false);
   
+  // Weather Settings
+  const [cityQuery, setCityQuery] = useState('');
+  const [cityResults, setCityResults] = useState<CitySearchResult[]>([]);
+  const [selectedCity, setSelectedCity] = useState<CitySearchResult | null>(null);
+  const [isSearchingCity, setIsSearchingCity] = useState(false);
+
   // Toast state
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -51,8 +58,25 @@ export default function SettingsScreen() {
   useEffect(() => {
     if (currentUser) {
       loadData();
+      loadWeatherSettings();
     }
   }, [currentUser]);
+
+  const loadWeatherSettings = async () => {
+    const settings = await getWeatherSettings();
+    if (settings.city) {
+      setCityQuery(settings.city);
+      if (settings.latitude && settings.longitude) {
+        setSelectedCity({
+          id: 0, // Dummy ID
+          name: settings.city,
+          latitude: settings.latitude,
+          longitude: settings.longitude,
+          country: settings.country || '',
+        });
+      }
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -182,6 +206,37 @@ export default function SettingsScreen() {
     } catch (error) {
       console.error('Failed to update timeout:', error);
       showToast('Failed to update timeout', 'error');
+    }
+  };
+
+  const handleSearchCity = async (text: string) => {
+    setCityQuery(text);
+    if (text.length > 2) {
+      setIsSearchingCity(true);
+      const results = await searchCity(text);
+      setCityResults(results);
+      setIsSearchingCity(false);
+    } else {
+      setCityResults([]);
+    }
+  };
+
+  const handleSelectCity = async (city: CitySearchResult) => {
+    setSelectedCity(city);
+    setCityQuery(city.name);
+    setCityResults([]);
+    
+    try {
+      await saveWeatherSettings({ 
+        latitude: city.latitude, 
+        longitude: city.longitude, 
+        city: city.name,
+        country: city.country
+      });
+      showToast("Weather location updated.", 'success');
+    } catch (error) {
+      console.error('Failed to update weather settings:', error);
+      showToast('Failed to update weather settings', 'error');
     }
   };
 
@@ -321,6 +376,40 @@ export default function SettingsScreen() {
               </View>
             </View>
           )}
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Weather Settings</Text>
+            <Text style={styles.label}>City Search</Text>
+            <View style={styles.row}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                value={cityQuery}
+                onChangeText={handleSearchCity}
+                placeholder="Search for a city..."
+              />
+            </View>
+            {isSearchingCity && <Text style={styles.helperText}>Searching...</Text>}
+            {cityResults.length > 0 && (
+              <View style={styles.searchResults}>
+                {cityResults.map((city) => (
+                  <TouchableOpacity 
+                    key={city.id} 
+                    style={styles.searchResultItem}
+                    onPress={() => handleSelectCity(city)}
+                  >
+                    <Text style={styles.searchResultText}>
+                      {city.name}, {city.admin1 ? `${city.admin1}, ` : ''}{city.country}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+            {selectedCity && !isSearchingCity && cityResults.length === 0 && (
+              <Text style={styles.helperText}>
+                Current Location: {selectedCity.name}, {selectedCity.country}
+              </Text>
+            )}
+          </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Family Members</Text>
@@ -792,5 +881,26 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     marginRight: 16,
+  },
+  searchResults: {
+    marginTop: 8,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  searchResultItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  searchResultText: {
+    fontSize: 16,
+    color: '#334155',
+  },
+  helperText: {
+    fontSize: 14,
+    color: '#64748b',
+    marginTop: 8,
   },
 });

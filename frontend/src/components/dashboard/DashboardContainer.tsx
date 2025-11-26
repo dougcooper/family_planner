@@ -7,6 +7,7 @@ import { DashboardLayout } from './DashboardLayout';
 import { EventList } from './EventList';
 import { TaskListSummary } from './TaskListSummary';
 import { DailyMealsSummary } from './DailyMealsSummary';
+import { WeeklyWeather } from '../weather/WeeklyWeather';
 import { Task, Event, MealPlan, MealLabel } from '../../model/models';
 import { formatDateToYYYYMMDD, getStartOfDay, getEndOfDay } from '../../logic/date';
 
@@ -25,6 +26,7 @@ interface DashboardContainerProps extends DashboardInputProps {
 const DashboardContainer = ({ tasks, events, mealPlans, mealLabels }: DashboardContainerProps) => {
   return (
     <DashboardLayout>
+      <WeeklyWeather />
       <EventList events={events} />
       
       <View style={styles.gridContainer}>

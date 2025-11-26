@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { UserMenu } from '../navigation/UserMenu';
+import { WeatherBanner } from '../weather/WeatherBanner';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -36,9 +37,10 @@ export function DashboardLayout({ children, scrollable = true }: DashboardLayout
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerLeft}>
           <Text style={styles.title}>Family Dashboard</Text>
           <Text style={styles.subtitle}>{dateStr} • {timeStr}</Text>
+          <WeatherBanner />
         </View>
         <UserMenu />
       </View>
@@ -57,22 +59,29 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#4A90E2',
-    padding: 20,
-    paddingTop: 60,
+    paddingHorizontal: 16,
+    paddingTop: 48,
+    paddingBottom: 12,
     boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 3,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    flexWrap: 'wrap',
+    gap: 12,
+  },
   title: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#ffffff',
-    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#ffffff',
     opacity: 0.9,
   },
