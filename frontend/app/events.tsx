@@ -6,10 +6,12 @@ import { Event, User } from '../src/model/models';
 import { DashboardLayout } from '../src/components/dashboard/DashboardLayout';
 import { CreateEventModal } from '../src/components/events/CreateEventModal';
 import { EditEventModal } from '../src/components/events/EditEventModal';
+import { FamilyAssignmentSummary } from '../src/components/common/FamilyAssignmentSummary';
 import { authProvider } from '../src/logic/auth';
 
 interface EventsScreenProps {
   events: Event[];
+  users: User[];
 }
 
 const EventListItem = ({ event, user, onPress }: { event: Event, user: User | null, onPress: (event: Event) => void }) => (
@@ -35,7 +37,7 @@ const EnhancedEventListItem = withObservables(['event'], ({ event }: { event: Ev
   user: event.user.observe(),
 }))(EventListItem);
 
-const EventsScreen = ({ events }: EventsScreenProps) => {
+const EventsScreen = ({ events, users }: EventsScreenProps) => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [currentUser, setCurrentUser] = useState(authProvider.getState().user);
@@ -47,6 +49,13 @@ const EventsScreen = ({ events }: EventsScreenProps) => {
     return unsubscribe;
   }, []);
 
+  const eventCounts = events.reduce((acc, event) => {
+    if (event.userId) {
+      acc[event.userId] = (acc[event.userId] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
   const renderItem = ({ item }: { item: Event }) => (
     <EnhancedEventListItem event={item} onPress={setSelectedEvent} />
   );
@@ -54,6 +63,7 @@ const EventsScreen = ({ events }: EventsScreenProps) => {
   return (
     <DashboardLayout>
       <View style={styles.container}>
+        <FamilyAssignmentSummary users={users} counts={eventCounts} title="Event Assignments" />
         <View style={styles.headerContainer}>
           <Text style={styles.header}>Events</Text>
           {currentUser?.role === 'PARENT' && (
@@ -171,6 +181,7 @@ const styles = StyleSheet.create({
 
 const enhance = withObservables([], () => ({
   events: database.get<Event>('events').query(),
+  users: database.collections.get<User>('users').query(),
 }));
 
 export default enhance(EventsScreen);

@@ -7,6 +7,7 @@ import { Task, User } from '../src/model/models';
 import { DashboardLayout } from '../src/components/dashboard/DashboardLayout';
 import { TaskDetail } from '../src/components/tasks/TaskDetail';
 import { CreateTaskModal } from '../src/components/tasks/CreateTaskModal';
+import { FamilyAssignmentSummary } from '../src/components/common/FamilyAssignmentSummary';
 import { authProvider } from '../src/logic/auth';
 
 interface TaskListItemProps {
@@ -48,9 +49,10 @@ const TaskListItem = enhanceTaskListItem(TaskListItemComponent);
 
 interface TasksScreenProps {
   tasks: Task[];
+  users: User[];
 }
 
-const TasksScreen = ({ tasks }: TasksScreenProps) => {
+const TasksScreen = ({ tasks, users }: TasksScreenProps) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [currentUser, setCurrentUser] = useState(authProvider.getState().user);
@@ -67,6 +69,14 @@ const TasksScreen = ({ tasks }: TasksScreenProps) => {
     showCompleted ? true : task.status !== 'COMPLETED'
   );
 
+  const taskCounts = tasks.reduce((acc, task) => {
+    if (task.status !== 'COMPLETED') {
+      const assigneeId = task.assigneeId;
+      acc[assigneeId] = (acc[assigneeId] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
   const renderItem = ({ item }: { item: Task }) => (
     <TaskListItem task={item} onPress={setSelectedTask} />
   );
@@ -74,6 +84,7 @@ const TasksScreen = ({ tasks }: TasksScreenProps) => {
   return (
     <DashboardLayout>
       <View style={styles.container}>
+        <FamilyAssignmentSummary users={users} counts={taskCounts} title="Task Assignments" />
         <View style={styles.headerContainer}>
           <Text style={styles.header}>All Tasks</Text>
           <View style={styles.headerControls}>
@@ -226,6 +237,7 @@ const enhance = withObservables([], () => ({
     Q.sortBy('status', Q.desc),
     Q.sortBy('created_at', Q.desc)
   ),
+  users: database.collections.get<User>('users').query(),
 }));
 
 export default enhance(TasksScreen);

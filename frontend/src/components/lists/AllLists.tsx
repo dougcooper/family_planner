@@ -4,6 +4,7 @@ import { Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { List, GroceryItem, ListItem } from '../../model/models';
 import ListCard from './ListCard';
+import { ListAssignmentSummary } from './ListAssignmentSummary';
 
 const styles = StyleSheet.create({
   container: {
@@ -303,6 +304,7 @@ export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
 
   return (
     <View style={styles.container}>
+      <ListAssignmentSummary familyId={familyId} />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{viewArchived ? 'Archived Lists' : 'My Lists'}</Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
