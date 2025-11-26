@@ -97,6 +97,7 @@ const TasksScreen = ({ tasks, users }: TasksScreenProps) => {
   return (
     <DashboardLayout>
       <View style={styles.container}>
+        <Text style={styles.pageTitle}>Tasks</Text>
         <FamilyAssignmentSummary 
           users={users} 
           counts={taskCounts} 
@@ -105,7 +106,6 @@ const TasksScreen = ({ tasks, users }: TasksScreenProps) => {
           selectedUserIds={selectedUserIds}
         />
         <View style={styles.headerContainer}>
-          <Text style={styles.header}>All Tasks</Text>
           <View style={styles.headerControls}>
             <View style={styles.toggleContainer}>
               <Text style={styles.toggleLabel}>Show Completed</Text>
@@ -160,9 +160,15 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
   },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 16,
+  },
   headerContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginBottom: 16,
   },
