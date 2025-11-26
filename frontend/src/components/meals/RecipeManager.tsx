@@ -15,6 +15,7 @@ interface RecipeManagerProps {
 function RecipeManagerComponent({ database, familyId, recipes, onSelectRecipe, onClose }: RecipeManagerProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Form state
   const [name, setName] = useState('');
@@ -191,6 +192,10 @@ function RecipeManagerComponent({ database, familyId, recipes, onSelectRecipe, o
     );
   }
 
+  const filteredRecipes = recipes.filter(recipe => 
+    recipe.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -203,8 +208,18 @@ function RecipeManagerComponent({ database, familyId, recipes, onSelectRecipe, o
         </TouchableOpacity>
       </View>
 
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search recipes..."
+          clearButtonMode="while-editing"
+        />
+      </View>
+
       <FlatList
-        data={recipes}
+        data={filteredRecipes}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity 
@@ -282,6 +297,20 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  searchContainer: {
+    padding: 16,
+    paddingBottom: 0,
+    backgroundColor: '#F8FAFC',
+  },
+  searchInput: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#1E293B',
   },
   listContent: {
     padding: 16,
