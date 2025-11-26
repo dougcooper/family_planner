@@ -25,6 +25,16 @@ Represents a family member.
 - `created_at`: Timestamp
 - `updated_at`: Timestamp (for sync)
 
+### Invitation
+Pending invite for a new family member.
+- `id`: UUID (PK)
+- `family_id`: UUID (FK -> Family)
+- `email`: String
+- `role`: Enum (PARENT)
+- `token`: String (unique)
+- `expires_at`: Timestamp
+- `created_at`: Timestamp
+
 ### Notification
 In-app alerts for users.
 - `id`: UUID (PK)
@@ -36,19 +46,10 @@ In-app alerts for users.
 - `created_at`: Timestamp
 - `updated_at`: Timestamp (for sync)
 
-### Invitation
-Pending invite for a new family member.
-- `id`: UUID (PK)
-- `family_id`: UUID (FK -> Family)
-- `email`: String
-- `role`: Enum (PARENT)
-- `token`: String (unique)
-- `expires_at`: Timestamp
-- `created_at`: Timestamp
-
 ### Task
 A chore or activity assigned to a user.
 - `id`: UUID (PK)
+- `family_id`: UUID (FK -> Family)
 - `title`: String
 - `description`: String (optional)
 - `points`: Integer
@@ -63,10 +64,14 @@ A chore or activity assigned to a user.
 ### Event
 Calendar event.
 - `id`: UUID (PK)
+- `family_id`: UUID (FK -> Family)
+- `user_id`: UUID (FK -> User, optional)
 - `title`: String
 - `start_time`: Timestamp
 - `end_time`: Timestamp
 - `recurrence_rule`: String (RRule format, optional)
+- `recurrence_id`: UUID (optional, groups related instances)
+- `is_all_day`: Boolean (default false)
 - `created_at`: Timestamp
 - `updated_at`: Timestamp (for sync)
 
@@ -75,18 +80,61 @@ Join table for Event <-> User.
 - `event_id`: UUID (FK -> Event)
 - `user_id`: UUID (FK -> User)
 
+### MealLabel
+Configurable labels for meals (e.g., Breakfast, Lunch, Dinner, Snack).
+- `id`: UUID (PK)
+- `family_id`: UUID (FK -> Family)
+- `name`: String
+- `sort_order`: Integer
+- `created_at`: Timestamp
+- `updated_at`: Timestamp (for sync)
+
+### Recipe
+Stored recipes with ingredients and instructions.
+- `id`: UUID (PK)
+- `family_id`: UUID (FK -> Family)
+- `name`: String
+- `description`: String (optional)
+- `ingredients`: String (JSON)
+- `instructions`: String (optional)
+- `created_at`: Timestamp
+- `updated_at`: Timestamp (for sync)
+
 ### MealPlan
 Daily meal entry.
 - `id`: UUID (PK)
+- `family_id`: UUID (FK -> Family)
 - `date`: Date (YYYY-MM-DD)
-- `meal_type`: Enum (BREAKFAST, LUNCH, DINNER)
+- `meal_label_id`: UUID (FK -> MealLabel)
 - `description`: String
+- `recipe_id`: UUID (FK -> Recipe, optional)
+- `created_at`: Timestamp
+- `updated_at`: Timestamp (for sync)
+
+### List
+Container for list items (Grocery, Todo, etc.).
+- `id`: UUID (PK)
+- `family_id`: UUID (FK -> Family)
+- `name`: String
+- `type`: Enum (GROCERY, TODO, OTHER)
+- `is_archived`: Boolean (default false)
+- `created_at`: Timestamp
+- `updated_at`: Timestamp (for sync)
+
+### ListItem
+Item within a list.
+- `id`: UUID (PK)
+- `list_id`: UUID (FK -> List)
+- `text`: String
+- `is_checked`: Boolean (default false)
+- `assignee_id`: UUID (FK -> User, optional)
 - `created_at`: Timestamp
 - `updated_at`: Timestamp (for sync)
 
 ### GroceryItem
-Shared shopping list item.
+Legacy table for shared shopping list items (kept for backward compatibility or specific use).
 - `id`: UUID (PK)
+- `family_id`: UUID (FK -> Family)
 - `name`: String
 - `is_checked`: Boolean (default false)
 - `created_at`: Timestamp
@@ -95,9 +143,25 @@ Shared shopping list item.
 ### Reward
 Redeemable item for points.
 - `id`: UUID (PK)
+- `family_id`: UUID (FK -> Family)
 - `title`: String
 - `cost`: Integer
 - `image_url`: String (optional)
+- `created_at`: Timestamp
+- `updated_at`: Timestamp (for sync)
+
+### RewardClaim
+Tracked claim of a reward by a user.
+- `id`: UUID (PK)
+- `reward_id`: UUID (FK -> Reward)
+- `user_id`: UUID (FK -> User)
+- `points_cost`: Integer (cost at time of claim)
+- `status`: Enum (ACTIVE, UNCLAIMED)
+- `claimed_at`: Timestamp
+- `unclaimed_at`: Timestamp (optional)
+- `unclaimed_by`: UUID (FK -> User, optional)
+- `created_at`: Timestamp
+- `updated_at`: Timestamp (for sync)
 - `created_at`: Timestamp
 - `updated_at`: Timestamp (for sync)
 

@@ -8,14 +8,14 @@
 ## Summary
 
 Build a Family Dashboard application aggregating schedules, tasks, and meal plans. The system features a "Kiosk Mode" for shared devices, a gamified reward system, and offline capabilities.
-**Technical Approach**: React Native (TypeScript) frontend for cross-platform (Web/Mobile/Desktop) reuse, communicating via REST with a backend (Node.js). Data synchronization is handled by WatermelonDB. Deployment is containerized (Docker) for self-hosting.
+**Technical Approach**: React Native (Expo) frontend for cross-platform (Web/Mobile/Desktop) reuse, communicating via REST (Fastify) with a backend (Node.js). Data synchronization is handled by WatermelonDB. Deployment is containerized (Docker) for self-hosting.
 
 ## Technical Context
 
-**Language/Version**: Frontend: TypeScript (React Native). Backend: Node.js (TypeScript).
-**Primary Dependencies**: React Native, WatermelonDB, Docker, Drizzle ORM, moon (monorepo tool), web-push (VAPID).
-**Storage**: Backend: PostgreSQL. Frontend: SQLite (via WatermelonDB).
-**Testing**: Frontend: Jest (Unit), Detox/Maestro (E2E). Backend: Jest/Vitest. Sync: Integration tests verifying Frontend Logic <-> Backend Sync Protocol.
+**Language/Version**: Frontend: TypeScript (React Native/Expo). Backend: Node.js (TypeScript).
+**Primary Dependencies**: React Native (Expo), WatermelonDB, Docker, Drizzle ORM, Turbo (monorepo tool), Fastify, web-push (VAPID).
+**Storage**: Backend: PostgreSQL. Frontend: SQLite (via WatermelonDB/LokiJS).
+**Testing**: Frontend: Jest (Unit). Backend: Vitest. E2E: Jest (Headless Sync Integration).
 **Target Platform**: Web (Dockerized), Desktop, Mobile (Future).
 **Project Type**: Monorepo (Frontend + Backend).
 **Performance Goals**: Dashboard load < 2s.
@@ -48,30 +48,34 @@ specs/001-family-dashboard/
 ### Source Code (repository root)
 
 ```text
-.moon/                   # Moonrepo configuration
+.turbo/                   # Turborepo configuration
 backend/
 ├── Dockerfile
 ├── src/
-│   ├── api/             # REST endpoints
-│   ├── db/              # ORM & Migrations
+│   ├── api/             # REST endpoints (Fastify)
+│   ├── db/              # Drizzle ORM & Migrations
 │   └── sync/            # WatermelonDB sync endpoints
-└── tests/
+└── tests/               # Vitest tests
 
 frontend/
 ├── Dockerfile
+├── app/                 # Expo Router pages
 ├── src/
 │   ├── components/      # UI Views
 │   ├── logic/           # Decoupled business logic
 │   ├── model/           # WatermelonDB Schema & Models
 │   └── api/             # API Client
 └── tests/
-    ├── unit/
-    └── sync-integration/ # Headless E2E sync tests
+    ├── unit/            # Jest tests
+    └── mocks/
+
+tests/
+└── e2e/                 # Jest E2E Sync tests
 
 docker-compose.yml       # Orchestration for self-hosting
 ```
 
-**Structure Decision**: Monorepo with distinct `frontend` and `backend` directories to support separate Docker builds while allowing shared type definitions if possible.
+**Structure Decision**: Monorepo with distinct `frontend` and `backend` directories managed by Turbo.
 
 ## Complexity Tracking
 
@@ -82,19 +86,17 @@ N/A - Plan aligns with Constitution.
 ## Phase 0: Outline & Research
 
 1.  **Extract unknowns from Technical Context**:
-    *   **Backend Language**: Rust vs Node.js? Needs to balance performance with "ORM code generation" and "WatermelonDB compliance".
-    *   **GraphQL + WatermelonDB**: WatermelonDB sync is typically JSON/REST. Need to validate GraphQL adapter or pattern.
-    *   **ORM Choice**: Must support code generation for client/server and ideally sync well with WatermelonDB.
-    *   **React Native Web Docker**: Best practice for serving the web build.
+    *   **Backend Language**: Node.js with Fastify chosen for performance and ecosystem.
+    *   **Sync Protocol**: WatermelonDB JSON sync over REST chosen (simpler than GraphQL adapter).
+    *   **ORM Choice**: Drizzle ORM chosen for TypeScript safety and migration management.
+    *   **Hosting**: Dockerized Node.js backend + Static frontend serving.
 
 2.  **Generate and dispatch research agents**:
 
-    ```text
-    Task: "Compare Rust vs Node.js for WatermelonDB compliant backend with GraphQL and ORM codegen"
-    Task: "Research WatermelonDB synchronization over GraphQL"
-    Task: "Find best ORM for code generation (Client & Server) compatible with chosen backend"
-    Task: "Research React Native Web Docker hosting patterns"
-    ```
+    *   *Completed*: Node.js (Fastify) selected.
+    *   *Completed*: REST Sync selected.
+    *   *Completed*: Drizzle ORM selected.
+    *   *Completed*: Docker containerization implemented.
 
 3.  **Consolidate findings** in `research.md`.
 

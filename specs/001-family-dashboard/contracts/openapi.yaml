@@ -65,6 +65,62 @@ paths:
                   user:
                     $ref: '#/components/schemas/User'
 
+  /upload:
+    post:
+      summary: Upload a file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+    delete:
+      summary: Delete an uploaded file
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+      responses:
+        '200':
+          description: File deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /jobs/recurring-top-up:
+    post:
+      summary: Trigger recurring events top-up job manually
+      responses:
+        '200':
+          description: Job executed
+          content:
+            application/json:
+              schema:
+                type: object
+
   /sync/pull:
     get:
       summary: Pull changes from server

@@ -76,6 +76,7 @@ As a family member, I want to view and edit shared grocery lists and meal plans,
     *   **Initial Setup**: System requires an Admin user to register and create a "Family" unit.
     *   **Invites**: Admin can invite other users (Parents) via email to join the Family.
     *   **Managed Profiles**: Parents can create Child profiles (no email required) and assign 4-digit PINs.
+    *   **Avatars**: Users can select or upload avatars for their profiles.
     *   **Roles**:
         *   *Admin/Parent*: Can manage users, settings, approve tasks, manage rewards.
         *   *Member/Child*: Can view dashboard, complete assigned tasks, redeem rewards.
@@ -88,20 +89,24 @@ As a family member, I want to view and edit shared grocery lists and meal plans,
 2.  **Dashboard Aggregation**
     *   Dashboard must display a "Today's Overview" widget.
     *   Dashboard must aggregate Calendar Events, Tasks, and Meal Plan for the current date.
+    *   **Weather Widget**: Dashboard must display current weather information for a user-configured city.
     *   Dashboard must be responsive and optimized for tablet/kiosk resolution (e.g., 1024x768+).
 
 3.  **Task & Reward System**
     *   Tasks must have properties: Title, Assignee(s), Due Date, Point Value, Status (Todo, Pending Review, Completed).
     *   Points are only awarded when a user with 'Parent' role approves a 'Pending Review' task.
     *   Rewards must have properties: Title, Cost (points), Icon (selected from a preset library, e.g., Lucide/Material).
+    *   **Reward Claims**: System must track claimed rewards with a status lifecycle (Active, Unclaimed) to manage redemption.
     *   System must track point balances for each user.
 
 4.  **Scheduling & Planning**
-    *   Internal Calendar system to create/edit events with start/end times and assigned members.
+    *   Internal Calendar system to create/edit events with start/end times and assigned members (supporting multiple attendees).
     *   Events and Tasks must support complex recurrence patterns (Daily, Weekly, Monthly, Yearly, Custom).
-    *   Meal Planner allowing 1 entry per meal type (Breakfast, Lunch, Dinner) per day.
+    *   **Meal Planner**:
+        *   Support for configurable meal labels (e.g., Breakfast, Lunch, Dinner, Snack) rather than fixed types.
+        *   **Recipes**: Ability to store recipes with ingredients and instructions.
     *   **Quick Add**: Ability to copy a meal plan entry directly to the grocery list.
-    *   Simple list management (add, remove, check-off items).
+    *   **List Management**: Support for multiple list types (Grocery, Todo, Other) with add, remove, and check-off capabilities.
 
 5.  **Notifications**
     *   **Channels**:
@@ -122,7 +127,7 @@ As a family member, I want to view and edit shared grocery lists and meal plans,
 
 ## Assumptions
 
-*   **Data Source**: For this MVP, all data (calendar, tasks) is internal to the application. No external sync (Google/Apple Calendar) is included in this version.
+*   **Data Source**: Application uses an offline-first architecture with local database (e.g., WatermelonDB) and background synchronization with the backend.
 *   **Authentication**: Kiosk-first approach. Initial login establishes Family context; daily usage relies on PINs.
 *   **Platform**: Web-based application accessible via browser.
 *   **External Services**: SMTP server or Push Notification service required for alerts.

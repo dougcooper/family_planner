@@ -50,6 +50,8 @@
 - [X] T022f [US1] Implement Nightly Top-Up Logic for Recurring Events in `backend/src/services/recurring-events.ts`
 - [X] T023 [US1] Implement Task List Summary Component in `frontend/src/components/dashboard/TaskListSummary.tsx`
 - [X] T024 [US1] Implement Dinner Summary Component in `frontend/src/components/dashboard/DinnerSummary.tsx`
+- [X] T024b [US1] Implement Weather Widget in `frontend/src/components/dashboard/WeatherWidget.tsx`
+- [X] T024c [US1] Implement Weather Settings in `frontend/src/components/settings/WeatherSettings.tsx`
 
 ## Phase 4: User Story 2 - Task Completion & Rewards (P1)
 
@@ -64,6 +66,7 @@
 - [X] T030 [US2] Create Task Detail/Edit View in `frontend/src/components/tasks/TaskDetail.tsx`
 - [X] T031 [US2] Create Reward Catalog View in `frontend/src/components/rewards/RewardCatalog.tsx`
 - [X] T032 [US2] Implement Reward Redemption Logic in `frontend/src/logic/rewards.ts`
+- [X] T032b [US2] Implement Reward Claims Lifecycle (Active/Unclaimed) in `backend/src/db/schema.ts` and `frontend/src/logic/rewards.ts`
 
 ## Phase 5: User Story 3 - Shared Lists & Meal Planning (P2)
 
@@ -73,6 +76,7 @@
 - [X] T033 [US3] Define GroceryItem schema in `backend/src/db/schema.ts`
 - [X] T034 [US3] Define GroceryItem model in `frontend/src/model/schema.ts`
 - [X] T035 [US3] Implement Grocery List View (Add/Check/Delete) in `frontend/src/components/lists/GroceryList.tsx`
+- [X] T035b [US3] Implement Multiple List Types (Grocery, Todo, Other) in `backend/src/db/schema.ts` and `frontend/src/components/lists/ListManager.tsx`
 - [X] T036 [US3] Implement Meal Planner Calendar View in `frontend/src/components/meals/MealPlanner.tsx`
 - [X] T036b [US3] Implement Custom Meal Labels (Schema, UI, Migration) in `frontend/src/components/meals/MealPlanner.tsx`
 - [X] T037 [US3] Implement "Quick Add to List" logic in `frontend/src/logic/meals.ts`
@@ -93,6 +97,8 @@
 - [X] T042 Implement Headless E2E Sync Tests in `frontend/tests/sync-integration/sync.test.ts`
 - [X] T044 Audit and Fix Accessibility (WCAG AA) across all views
 - [X] T045 Implement Unit Tests for Business Logic (Auth, Rewards, Tasks)
+- [X] T046 Implement Avatar Upload and Selection in `frontend/app/settings.tsx` and `backend/src/api/upload.ts`
+
 
 ## Dependencies
 
