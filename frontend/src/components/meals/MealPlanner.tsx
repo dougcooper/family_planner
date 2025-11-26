@@ -193,7 +193,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
 
   const handleAddToGroceryList = async (meal: MealPlan) => {
     try {
-      const result = await addMealToGroceryList(database, familyId, meal.description);
+      const result = await addMealToGroceryList(database, familyId, meal);
       if (result.success) {
         alert(`Added ${result.itemsAdded} item(s) to grocery list!`);
       } else {

@@ -1,5 +1,5 @@
 import { Database, Q } from '@nozbe/watermelondb';
-import { ListItem, List } from '../model/models';
+import { ListItem, List, MealPlan } from '../model/models';
 
 /**
  * Meal-to-grocery-list logic
@@ -37,16 +37,32 @@ function extractIngredients(mealDescription: string): string[] {
 export async function addMealToGroceryList(
   database: Database,
   familyId: string,
-  mealDescription: string
+  meal: MealPlan
 ): Promise<{ success: boolean; itemsAdded: number; error?: string }> {
   try {
-    const ingredients = extractIngredients(mealDescription);
+    let ingredients: string[] = [];
+
+    if (meal.recipeId) {
+      try {
+        const recipe = await meal.recipe.fetch();
+        if (recipe && recipe.ingredients && recipe.ingredients.length > 0) {
+          ingredients = recipe.ingredients;
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('Failed to fetch recipe for meal, falling back to description parsing', e);
+      }
+    }
+
+    if (ingredients.length === 0) {
+      ingredients = extractIngredients(meal.description);
+    }
 
     if (ingredients.length === 0) {
       return {
         success: false,
         itemsAdded: 0,
-        error: 'No ingredients found in meal description',
+        error: 'No ingredients found in meal description or recipe',
       };
     }
 

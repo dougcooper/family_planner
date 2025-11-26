@@ -79,6 +79,7 @@
 - [X] T037c [US3] Implement Recipe Linking in Meal Plans in `frontend/src/components/meals/MealPlanner.tsx`
 - [X] T037d [US3] Add Frontend Migration for Recipe Linking in `frontend/src/model/migrations.ts`
 - [X] T037e [US3] Implement Recipe Detail View in Meal Planner in `frontend/src/components/meals/RecipeDetail.tsx`
+- [X] T037f [US3] Enhance Grocery List Add to include Recipe Ingredients in `frontend/src/logic/meals.ts`
 
 ## Phase 6: Polish & Cross-Cutting
 
