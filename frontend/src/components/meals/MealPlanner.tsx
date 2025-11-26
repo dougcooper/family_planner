@@ -24,6 +24,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [recipeManagerVisible, setRecipeManagerVisible] = useState(false);
   const [selectingRecipeForMeal, setSelectingRecipeForMeal] = useState(false);
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [editingMeal, setEditingMeal] = useState<{ date: string; mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' } | null>(null);
   const [mealDescription, setMealDescription] = useState('');
 
@@ -73,9 +74,23 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
     }
   };
 
-  const handleEditMeal = (date: string, mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER', existing?: MealPlan) => {
+  const handleEditMeal = async (date: string, mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER', existing?: MealPlan) => {
     setEditingMeal({ date, mealType });
     setMealDescription(existing?.description || '');
+    
+    if (existing?.recipeId) {
+      try {
+        const recipe = await existing.recipe.fetch();
+        setSelectedRecipe(recipe);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching recipe:', e);
+        setSelectedRecipe(null);
+      }
+    } else {
+      setSelectedRecipe(null);
+    }
+
     setEditModalVisible(true);
   };
 
@@ -98,6 +113,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
           // Update the most recent existing meal
           await existing[0].update((meal) => {
             meal.description = mealDescription.trim();
+            meal.recipeId = selectedRecipe?.id;
           });
           
           // Clean up duplicates if any
@@ -113,6 +129,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
             meal.date = editingMeal.date;
             meal.mealType = editingMeal.mealType;
             meal.description = mealDescription.trim();
+            meal.recipeId = selectedRecipe?.id;
           });
         }
       });
@@ -120,6 +137,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
       setEditModalVisible(false);
       setEditingMeal(null);
       setMealDescription('');
+      setSelectedRecipe(null);
       await loadWeekMeals();
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -197,7 +215,9 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
       <View key={`${day.date}-${mealType}`} style={styles.mealSlot}>
         {meal ? (
           <View style={styles.mealCard}>
-            <Text style={styles.mealText}>{meal.description}</Text>
+            <Text style={styles.mealText} numberOfLines={2}>
+              {meal.recipeId ? '📖 ' : ''}{meal.description}
+            </Text>
             <View style={styles.mealActions}>
               <TouchableOpacity
                 style={styles.iconButton}
@@ -240,6 +260,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
   }
 
   const handleRecipeSelect = (recipe: Recipe) => {
+    setSelectedRecipe(recipe);
     setMealDescription(recipe.name);
     setSelectingRecipeForMeal(false);
     setRecipeManagerVisible(false);
@@ -310,15 +331,27 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
               {editingMeal ? `${getMealIcon(editingMeal.mealType)} ${editingMeal.mealType}` : 'Edit Meal'}
             </Text>
 
-            <TouchableOpacity 
-              style={styles.selectRecipeButton}
-              onPress={() => {
-                setEditModalVisible(false);
-                openRecipeManager(true);
-              }}
-            >
-              <Text style={styles.selectRecipeButtonText}>Select from Recipes</Text>
-            </TouchableOpacity>
+            {selectedRecipe ? (
+              <View style={styles.selectedRecipeContainer}>
+                <View style={styles.selectedRecipeInfo}>
+                  <Text style={styles.selectedRecipeLabel}>Recipe:</Text>
+                  <Text style={styles.selectedRecipeName}>{selectedRecipe.name}</Text>
+                </View>
+                <TouchableOpacity onPress={() => setSelectedRecipe(null)} style={styles.clearRecipeButton}>
+                  <Text style={styles.clearRecipeText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={styles.selectRecipeButton}
+                onPress={() => {
+                  setEditModalVisible(false);
+                  openRecipeManager(true);
+                }}
+              >
+                <Text style={styles.selectRecipeButtonText}>Select from Recipes</Text>
+              </TouchableOpacity>
+            )}
             
             <TextInput
               style={styles.modalInput}
@@ -593,5 +626,39 @@ const styles = StyleSheet.create({
     color: '#475569',
     fontSize: 16,
     fontWeight: '600',
+  },
+  selectedRecipeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F0FDF4',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+  },
+  selectedRecipeInfo: {
+    flex: 1,
+  },
+  selectedRecipeLabel: {
+    fontSize: 12,
+    color: '#15803D',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  selectedRecipeName: {
+    fontSize: 16,
+    color: '#166534',
+    fontWeight: '500',
+  },
+  clearRecipeButton: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  clearRecipeText: {
+    fontSize: 18,
+    color: '#15803D',
+    fontWeight: 'bold',
   },
 });

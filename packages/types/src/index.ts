@@ -92,6 +92,7 @@ export interface MealPlan {
   date: string; // YYYY-MM-DD format
   mealType: MealType;
   description: string;
+  recipeId?: string;
   createdAt: Date;
   updatedAt: Date;
 }

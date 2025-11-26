@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ScrollView, Alert, Platform } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Recipe } from '../../model/models';
@@ -66,19 +66,49 @@ function RecipeManagerComponent({ database, familyId, recipes, onSelectRecipe, o
       });
       resetForm();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error saving recipe:', error);
       alert('Failed to save recipe');
     }
   };
 
-  const handleDelete = async (recipe: Recipe) => {
-    try {
-      await database.write(async () => {
-        await recipe.markAsDeleted();
-      });
-    } catch (error) {
-      console.error('Error deleting recipe:', error);
-      alert('Failed to delete recipe');
+  const handleDelete = (recipe: Recipe) => {
+    const deleteAction = async () => {
+      try {
+        await database.write(async () => {
+          await recipe.markAsDeleted();
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error deleting recipe:', error);
+        if (Platform.OS === 'web') {
+          alert('Failed to delete recipe');
+        } else {
+          Alert.alert('Error', 'Failed to delete recipe');
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Are you sure you want to delete "${recipe.name}"?`)) {
+        deleteAction();
+      }
+    } else {
+      Alert.alert(
+        "Delete Recipe",
+        `Are you sure you want to delete "${recipe.name}"?`,
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: deleteAction
+          }
+        ]
+      );
     }
   };
 

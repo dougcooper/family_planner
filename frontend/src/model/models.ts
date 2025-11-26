@@ -110,8 +110,11 @@ export class MealPlan extends Model implements IMealPlan {
   @field('date') date!: string;
   @field('meal_type') mealType!: MealType;
   @field('description') description!: string;
+  @field('recipe_id') recipeId?: string;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
+
+  @relation('recipes', 'recipe_id') recipe!: Relation<Recipe>;
 }
 
 export class Recipe extends Model implements IRecipe {

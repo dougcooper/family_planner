@@ -100,6 +100,7 @@ export const mealPlans = pgTable('meal_plans', {
   date: date('date').notNull(),
   mealType: mealTypeEnum('meal_type').notNull(),
   description: varchar('description', { length: 500 }).notNull(),
+  recipeId: uuid('recipe_id').references(() => recipes.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => ({
