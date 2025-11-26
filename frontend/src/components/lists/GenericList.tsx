@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Switch } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Switch, Modal } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
-import { ListItem, List } from '../../model/models';
+import { ListItem, List, User } from '../../model/models';
 
 interface GenericListProps {
   database: Database;
@@ -11,14 +11,28 @@ interface GenericListProps {
 
 export function GenericList({ database, list, onBack }: GenericListProps) {
   const [items, setItems] = useState<ListItem[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [newItemName, setNewItemName] = useState('');
   const [loading, setLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(true);
+  const [assignModalVisible, setAssignModalVisible] = useState(false);
+  const [selectedItemForAssign, setSelectedItemForAssign] = useState<ListItem | null>(null);
 
   useEffect(() => {
     loadItems();
+    loadUsers();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [list]);
+
+  const loadUsers = async () => {
+    try {
+      const allUsers = await database.get<User>('users').query().fetch();
+      setUsers(allUsers);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error loading users:', error);
+    }
+  };
 
   const loadItems = async () => {
     try {
@@ -113,7 +127,34 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
     }
   };
 
+  const handleAssignUser = async (user: User | null) => {
+    if (!selectedItemForAssign) return;
+
+    try {
+      await database.write(async () => {
+        await selectedItemForAssign.update((item) => {
+          item.assigneeId = user ? user.id : undefined;
+        });
+      });
+
+      setAssignModalVisible(false);
+      setSelectedItemForAssign(null);
+      await loadItems();
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error assigning user:', error);
+      alert('Failed to assign user');
+    }
+  };
+
+  const openAssignModal = (item: ListItem) => {
+    setSelectedItemForAssign(item);
+    setAssignModalVisible(true);
+  };
+
   const renderItem = ({ item }: { item: ListItem }) => {
+    const assignee = users.find(u => u.id === item.assigneeId);
+
     return (
       <View style={styles.itemCard}>
         <TouchableOpacity
@@ -125,9 +166,19 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
           </View>
         </TouchableOpacity>
 
-        <Text style={[styles.itemName, item.isChecked && styles.itemNameChecked]}>
-          {item.text}
-        </Text>
+        <View style={styles.itemContent}>
+          <Text style={[styles.itemName, item.isChecked && styles.itemNameChecked]}>
+            {item.text}
+          </Text>
+          <TouchableOpacity 
+            style={styles.assigneeButton}
+            onPress={() => openAssignModal(item)}
+          >
+            <Text style={styles.assigneeText}>
+              {assignee ? `👤 ${assignee.name}` : '👤 Assign'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           style={styles.deleteButton}
@@ -238,6 +289,35 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
           )}
         </>
       )}
+
+      <Modal visible={assignModalVisible} animationType="slide">
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Assign User</Text>
+          <View style={styles.userList}>
+            {users.map((user) => (
+              <TouchableOpacity
+                key={user.id}
+                style={styles.userItem}
+                onPress={() => handleAssignUser(user)}
+              >
+                <Text style={styles.userName}>{user.name}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.userItem}
+              onPress={() => handleAssignUser(null)}
+            >
+              <Text style={styles.userName}>Unassign</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            style={styles.modalCloseButton}
+            onPress={() => setAssignModalVisible(false)}
+          >
+            <Text style={styles.modalCloseButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -358,6 +438,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981',
     borderColor: '#10B981',
   },
+  itemContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  assigneeButton: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  assigneeText: {
+    fontSize: 12,
+    color: '#64748B',
+  },
   checkmark: {
     color: '#FFFFFF',
     fontSize: 16,
@@ -432,6 +529,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   clearButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 16,
+  },
+  userList: {
+    width: '100%',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    paddingTop: 8,
+  },
+  userItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  userName: {
+    fontSize: 16,
+    color: '#1E293B',
+  },
+  modalCloseButton: {
+    marginTop: 16,
+    backgroundColor: '#4A90E2',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalCloseButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',

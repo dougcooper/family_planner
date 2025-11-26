@@ -141,6 +141,7 @@ export interface ListItem {
   listId: string;
   text: string;
   isChecked: boolean;
+  assigneeId?: string;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -172,13 +172,17 @@ export class ListItem extends Model implements IListItem {
   static table = 'list_items';
   static associations = {
     lists: { type: 'belongs_to', key: 'list_id' },
+    users: { type: 'belongs_to', key: 'assignee_id' },
   } as const;
 
   @field('list_id') listId!: string;
   @field('text') text!: string;
   @field('is_checked') isChecked!: boolean;
+  @field('assignee_id') assigneeId?: string;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
+
+  @relation('users', 'assignee_id') assignee!: Relation<User>;
 }
 
 export class List extends Model implements IList {

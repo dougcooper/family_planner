@@ -235,6 +235,8 @@ export async function pushChanges(
               listId: (record as any).list_id,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               isChecked: (record as any).is_checked,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              assigneeId: (record as any).assignee_id,
             });
             break;
           case 'recipes':
@@ -400,6 +402,7 @@ export async function pushChanges(
             if ('text' in record) update.text = record.text;
             if ('is_checked' in record) update.isChecked = record.is_checked;
             if ('list_id' in record) update.listId = record.list_id;
+            if ('assignee_id' in record) update.assigneeId = record.assignee_id;
             await db.update(listItems).set(update).where(eq(listItems.id, record.id));
             break;
           }

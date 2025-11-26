@@ -150,6 +150,7 @@ export const listItems = pgTable('list_items', {
   listId: uuid('list_id').notNull().references(() => lists.id, { onDelete: 'cascade' }),
   text: varchar('text', { length: 255 }).notNull(),
   isChecked: boolean('is_checked').notNull().default(false),
+  assigneeId: uuid('assignee_id').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

@@ -3,6 +3,17 @@ import { schemaMigrations, createTable, addColumns } from '@nozbe/watermelondb/S
 export default schemaMigrations({
   migrations: [
     {
+      toVersion: 7,
+      steps: [
+        addColumns({
+          table: 'list_items',
+          columns: [
+            { name: 'assignee_id', type: 'string', isOptional: true, isIndexed: true },
+          ],
+        }),
+      ],
+    },
+    {
       toVersion: 6,
       steps: [
         createTable({

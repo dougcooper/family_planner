@@ -187,6 +187,7 @@ export async function pullChanges(
           listId: listItems.listId,
           text: listItems.text,
           isChecked: listItems.isChecked,
+          assigneeId: listItems.assigneeId,
           createdAt: listItems.createdAt,
           updatedAt: listItems.updatedAt,
         })
