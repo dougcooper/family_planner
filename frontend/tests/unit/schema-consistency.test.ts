@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, jest } from '@jest/globals';
 
 // Mock WatermelonDB functions to return the config objects directly
@@ -7,6 +8,7 @@ jest.mock('@nozbe/watermelondb', () => ({
 }));
 
 import { schema } from '../../src/model/schema';
+// import { database } from '../../src/model/database';
 
 // Define the expected fields for each entity based on shared types
 // This serves as a runtime verification that our database schema supports our TypeScript interfaces

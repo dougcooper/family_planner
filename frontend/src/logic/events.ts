@@ -96,6 +96,7 @@ export async function updateEvent(database: Database, eventId: string, params: P
       if (params.startTime) e.startTime = params.startTime;
       if (params.endTime) e.endTime = params.endTime;
       if (params.userId !== undefined) e.userId = params.userId;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (params.recurrenceRule !== undefined) e.recurrenceRule = params.recurrenceRule as any;
       if (params.isAllDay !== undefined) e.isAllDay = params.isAllDay;
     });

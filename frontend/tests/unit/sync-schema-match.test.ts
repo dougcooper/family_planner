@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, jest } from '@jest/globals';
 
 // Mock WatermelonDB functions to return the config objects directly
@@ -26,6 +27,8 @@ jest.mock('@nozbe/watermelondb/decorators', () => {
 
 import { schema } from '../../src/model/schema';
 import { MealPlan } from '../../src/model/models';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 
 // Mock the backend response format based on our toWatermelon logic
 const mockBackendMealPlan = {

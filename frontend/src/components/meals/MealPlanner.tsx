@@ -23,6 +23,7 @@ interface DayMeals {
 function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerProps) {
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getStartOfWeek());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dateInputRef = useRef<any>(null);
   const [weekDays, setWeekDays] = useState<DayMeals[]>([]);
   const [loading, setLoading] = useState(true);
@@ -292,6 +293,7 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
             type: 'date',
             ref: dateInputRef,
             value: formatDateToYYYYMMDD(currentWeekStart),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange: (e: any) => {
               const date = new Date(e.target.value);
               if (!isNaN(date.getTime())) {

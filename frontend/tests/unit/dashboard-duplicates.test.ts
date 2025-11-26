@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { Database, Q } from '@nozbe/watermelondb';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import { formatDateToYYYYMMDD } from '../../src/logic/date';
+// import { database } from '../../src/model/database';
 
 // Mock schema creators
 jest.mock('@nozbe/watermelondb', () => {

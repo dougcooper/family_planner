@@ -19,6 +19,7 @@ export const UserMenu = () => {
         const userRecord = await database.get<User>('users').find(userId);
         setUser(userRecord);
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.log('Could not load user details', e);
       }
     };

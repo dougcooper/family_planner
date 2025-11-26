@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { Database, Q } from '@nozbe/watermelondb';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
@@ -17,6 +18,7 @@ jest.mock('@nozbe/watermelondb', () => {
 
 import { schema } from '../../src/model/schema';
 import { Task } from '../../src/model/models';
+
 
 describe('Dashboard Reactivity', () => {
   let database: Database;

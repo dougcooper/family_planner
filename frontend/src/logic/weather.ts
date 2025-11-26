@@ -39,6 +39,7 @@ export const getWeatherSettings = async (): Promise<WeatherSettings> => {
     const json = await AsyncStorage.getItem(WEATHER_SETTINGS_KEY);
     return json ? JSON.parse(json) : {};
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error('Failed to load weather settings', e);
     return {};
   }
@@ -48,6 +49,7 @@ export const saveWeatherSettings = async (settings: WeatherSettings) => {
   try {
     await AsyncStorage.setItem(WEATHER_SETTINGS_KEY, JSON.stringify(settings));
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error('Failed to save weather settings', e);
   }
 };
@@ -63,6 +65,7 @@ export const searchCity = async (query: string): Promise<CitySearchResult[]> => 
     const data = await response.json();
     return data.results || [];
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error('Error searching city', e);
     return [];
   }
@@ -101,6 +104,7 @@ export const fetchWeather = async (lat: number, lon: number): Promise<WeatherDat
       },
     };
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error('Error fetching weather', e);
     return null;
   }
