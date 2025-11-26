@@ -23,8 +23,10 @@
     "bcrypt": "^5.1.1",
     "drizzle-orm": "^0.29.1",
     "fastify": "^4.25.1",
+    "fastify-cron": "^1.4.0",
     "jsonwebtoken": "^9.0.2",
     "postgres": "^3.4.3",
+    "rrule": "^2.8.1",
     "web-push": "^3.6.6"
   },
   "devDependencies": {

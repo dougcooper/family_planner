@@ -54,6 +54,8 @@ const _checkTask = (d: DrizzleTask): ITask => {
 const _checkEvent = (d: DrizzleEvent): IEvent => {
   return {
     ...d,
+    userId: d.userId || undefined,
     recurrenceRule: d.recurrenceRule || undefined,
+    recurrenceId: d.recurrenceId || undefined,
   };
 };

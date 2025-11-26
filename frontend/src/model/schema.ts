@@ -59,6 +59,7 @@ export const schema = appSchema({
       name: 'events',
       columns: [
         { name: 'family_id', type: 'string', isIndexed: true },
+        { name: 'user_id', type: 'string', isOptional: true, isIndexed: true },
         { name: 'title', type: 'string' },
         { name: 'start_time', type: 'number' },
         { name: 'end_time', type: 'number' },

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { database } from '../src/model/database';
-import { Event } from '../src/model/models';
+import { Event, User } from '../src/model/models';
 import { DashboardLayout } from '../src/components/dashboard/DashboardLayout';
 import { CreateEventModal } from '../src/components/events/CreateEventModal';
 import { EditEventModal } from '../src/components/events/EditEventModal';
@@ -11,6 +11,29 @@ import { authProvider } from '../src/logic/auth';
 interface EventsScreenProps {
   events: Event[];
 }
+
+const EventListItem = ({ event, user, onPress }: { event: Event, user: User | null, onPress: (event: Event) => void }) => (
+  <TouchableOpacity onPress={() => onPress(event)}>
+    <View style={styles.eventItem}>
+      <Text style={styles.eventTitle}>{event.title}</Text>
+      <View style={styles.detailsRow}>
+        <Text style={styles.eventTime}>
+          {event.startTime.toLocaleString()} - {event.endTime.toLocaleString()}
+        </Text>
+        {user && (
+          <View style={styles.userBadge}>
+            <Text style={styles.userBadgeText}>{user.name}</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  </TouchableOpacity>
+);
+
+const EnhancedEventListItem = withObservables(['event'], ({ event }: { event: Event }) => ({
+  event: event.observe(),
+  user: event.user.observe(),
+}))(EventListItem);
 
 const EventsScreen = ({ events }: EventsScreenProps) => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -25,14 +48,7 @@ const EventsScreen = ({ events }: EventsScreenProps) => {
   }, []);
 
   const renderItem = ({ item }: { item: Event }) => (
-    <TouchableOpacity onPress={() => setSelectedEvent(item)}>
-      <View style={styles.eventItem}>
-        <Text style={styles.eventTitle}>{item.title}</Text>
-        <Text style={styles.eventTime}>
-          {item.startTime.toLocaleString()} - {item.endTime.toLocaleString()}
-        </Text>
-      </View>
-    </TouchableOpacity>
+    <EnhancedEventListItem event={item} onPress={setSelectedEvent} />
   );
 
   return (
@@ -107,25 +123,41 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 15,
   },
-  listContent: {
-    padding: 16,
-  },
   eventItem: {
     backgroundColor: '#FFFFFF',
     padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-    elevation: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
   },
   eventTitle: {
     fontSize: 17,
     fontWeight: '600',
     marginBottom: 4,
   },
+  detailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
   eventTime: {
     fontSize: 15,
     color: '#8E8E93',
+  },
+  userBadge: {
+    backgroundColor: '#E1E1E1',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  userBadgeText: {
+    fontSize: 12,
+    color: '#555',
+    fontWeight: '500',
+  },
+  listContent: {
+    paddingBottom: 20,
   },
   emptyState: {
     padding: 32,

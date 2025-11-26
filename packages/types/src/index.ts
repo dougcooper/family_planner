@@ -70,6 +70,7 @@ export interface Task {
 export interface Event {
   id: string;
   familyId: string;
+  userId?: string;
   title: string;
   startTime: Date;
   endTime: Date;

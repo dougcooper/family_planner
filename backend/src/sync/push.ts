@@ -110,6 +110,7 @@ export async function pushChanges(
             const endTime = new Date(eventRecord.end_time);
             const recurrenceRule = eventRecord.recurrence_rule;
             const isAllDay = eventRecord.is_all_day || false;
+            const userId = eventRecord.user_id;
             
             // If event has a recurrence rule, generate all instances
             if (recurrenceRule && parseRecurrenceRule(recurrenceRule)) {
@@ -119,6 +120,7 @@ export async function pushChanges(
               const instances = generateEventInstances(
                 {
                   familyId,
+                  userId,
                   title: eventRecord.title,
                   startTime,
                   endTime,
@@ -130,23 +132,33 @@ export async function pushChanges(
               );
               
               if (instances.length > 0) {
-                await db.insert(events).values(
-                  instances.map(instance => ({
+                // Try to match the first instance with the original event ID
+                // This prevents duplicates on the frontend which already has the event with this ID
+                const instancesWithIds = instances.map((instance) => {
+                  // Check if this instance matches the original start time (within a small margin for float math)
+                  const isOriginalInstance = Math.abs(instance.startTime.getTime() - startTime.getTime()) < 1000;
+                  
+                  return {
+                    id: isOriginalInstance ? eventRecord.id : undefined, // Use original ID if match, else let DB generate
                     familyId,
+                    userId: instance.userId,
                     title: instance.title,
                     startTime: instance.startTime,
                     endTime: instance.endTime,
                     recurrenceRule: instance.recurrenceRule,
                     recurrenceId,
                     isAllDay,
-                  }))
-                );
+                  };
+                });
+
+                await db.insert(events).values(instancesWithIds);
               }
             } else {
               // Non-recurring event - insert single instance
               await db.insert(events).values({
                 id: eventRecord.id,
                 familyId,
+                userId,
                 title: eventRecord.title,
                 startTime,
                 endTime,

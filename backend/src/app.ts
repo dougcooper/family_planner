@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
+import fastifyCron from 'fastify-cron';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { register } from './api/auth/register.js';
@@ -11,6 +12,7 @@ import { pullChanges, SyncPullQuery } from './sync/pull.js';
 import { pushChanges, SyncPushBody } from './sync/push.js';
 import { authenticate } from './middleware/auth.js';
 import { runMigrations } from './db/migrate.js';
+import { processRecurringEventsTopUp } from './services/recurring-events.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -29,6 +31,25 @@ app.register(fastifyStatic, {
   prefix: '/uploads/', // optional: default '/'
 });
 
+// Register cron jobs
+app.register(fastifyCron, {
+  jobs: [
+    {
+      cronTime: '0 2 * * *', // Run every day at 2:00 AM
+      onTick: async () => {
+        app.log.info('Running nightly recurring events top-up job...');
+        try {
+          const result = await processRecurringEventsTopUp();
+          app.log.info({ result }, 'Nightly top-up job completed');
+        } catch (err) {
+          app.log.error({ err }, 'Nightly top-up job failed');
+        }
+      },
+      start: true
+    }
+  ]
+});
+
 // CORS configuration for frontend
 await app.register(cors, {
   origin: [
@@ -41,6 +62,13 @@ await app.register(cors, {
 // Health check endpoint
 app.get('/health', async () => {
   return { status: 'ok', version: '1.0.0' };
+});
+
+// Maintenance endpoint to trigger recurring events top-up manually
+app.post('/jobs/recurring-top-up', async (_request, _reply) => {
+  // Ideally protect this with an admin secret
+  const result = await processRecurringEventsTopUp();
+  return result;
 });
 
 // Auth routes
@@ -59,10 +87,18 @@ const start = async () => {
   try {
     // Run database migrations
     await runMigrations();
+    await app.listen({ port: 3000, host: '0.0.0.0' });
+    
+    // Run once on startup after a short delay to ensure DB is ready
+    // This is useful for development/testing to ensure logic runs immediately
+    // but in production we rely on the cron job
+    if (process.env.NODE_ENV !== 'production') {
+      setTimeout(() => {
+        app.log.info('Running startup recurring events top-up check...');
+        processRecurringEventsTopUp().catch(err => app.log.error(err));
+      }, 5000);
+    }
 
-    const port = parseInt(process.env.PORT || '3000', 10);
-    await app.listen({ port, host: '0.0.0.0' });
-    console.log(`🚀 Backend server ready at http://localhost:${port}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

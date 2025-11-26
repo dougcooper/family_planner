@@ -83,6 +83,7 @@ export class Event extends Model implements IEvent {
   static table = 'events';
 
   @field('family_id') familyId!: string;
+  @field('user_id') userId?: string;
   @field('title') title!: string;
   @date('start_time') startTime!: Date;
   @date('end_time') endTime!: Date;
@@ -91,6 +92,8 @@ export class Event extends Model implements IEvent {
   @field('is_all_day') isAllDay!: boolean;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
+
+  @relation('users', 'user_id') user!: Relation<User>;
 }
 
 export class EventAttendee extends Model implements IEventAttendee {

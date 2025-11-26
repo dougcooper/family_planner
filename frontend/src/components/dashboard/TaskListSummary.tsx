@@ -1,36 +1,45 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
-import { Task } from '../../model/models';
+import { withObservables } from '@nozbe/watermelondb/react';
+import { Task, User } from '../../model/models';
 
 interface TaskListSummaryProps {
   tasks: Task[];
 }
 
+const getStatusStyle = (status: string) => {
+  switch (status) {
+    case 'TODO':
+      return { backgroundColor: '#E0E0E0' };
+    case 'PENDING_REVIEW':
+      return { backgroundColor: '#FFA726' };
+    case 'COMPLETED':
+      return { backgroundColor: '#66BB6A' };
+    default:
+      return { backgroundColor: '#E0E0E0' };
+  }
+};
+
+const TaskRow = ({ task, assignee }: { task: Task, assignee: User }) => (
+  <View style={styles.taskItem}>
+    <View style={[styles.statusDot, getStatusStyle(task.status)]} />
+    <View style={styles.taskContent}>
+      <Text style={styles.taskTitle}>{task.title}</Text>
+      {assignee && <Text style={styles.assigneeName}>{assignee.name}</Text>}
+    </View>
+    <Text style={styles.taskPoints}>{task.points} pts</Text>
+  </View>
+);
+
+const EnhancedTaskRow = withObservables(['task'], ({ task }: { task: Task }) => ({
+  task: task.observe(),
+  assignee: task.assignee.observe(),
+}))(TaskRow);
+
 export function TaskListSummary({ tasks }: TaskListSummaryProps) {
   const todoTasks = tasks.filter(t => t.status === 'TODO');
   const completedTasks = tasks.filter(t => t.status === 'COMPLETED');
   const pendingReview = tasks.filter(t => t.status === 'PENDING_REVIEW');
-
-  const renderTask = ({ item }: { item: Task }) => (
-    <View style={styles.taskItem}>
-      <View style={[styles.statusDot, getStatusStyle(item.status)]} />
-      <Text style={styles.taskTitle}>{item.title}</Text>
-      <Text style={styles.taskPoints}>{item.points} pts</Text>
-    </View>
-  );
-
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'TODO':
-        return { backgroundColor: '#E0E0E0' };
-      case 'PENDING_REVIEW':
-        return { backgroundColor: '#FFA726' };
-      case 'COMPLETED':
-        return { backgroundColor: '#66BB6A' };
-      default:
-        return { backgroundColor: '#E0E0E0' };
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -58,7 +67,7 @@ export function TaskListSummary({ tasks }: TaskListSummaryProps) {
       {tasks.length > 0 ? (
         <FlatList
           data={tasks.slice(0, 5)}
-          renderItem={renderTask}
+          renderItem={({ item }) => <EnhancedTaskRow task={item} />}
           keyExtractor={(item) => item.id}
           scrollEnabled={false}
         />
@@ -115,20 +124,32 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     marginRight: 12,
   },
-  taskTitle: {
+  taskContent: {
     flex: 1,
+  },
+  taskTitle: {
     fontSize: 14,
     color: '#333',
+    fontWeight: '500',
+  },
+  assigneeName: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 2,
   },
   taskPoints: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#4A90E2',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   emptyState: {
     padding: 24,

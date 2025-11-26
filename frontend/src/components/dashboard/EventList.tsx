@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
-import { Event } from '../../model/models';
+import { withObservables } from '@nozbe/watermelondb/react';
+import { Event, User } from '../../model/models';
 
 interface EventListProps {
   events: Event[];
 }
 
-export function EventList({ events }: EventListProps) {
+const EventRow = ({ event, user }: { event: Event, user: User | null }) => {
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', { 
       hour: 'numeric', 
@@ -23,21 +24,35 @@ export function EventList({ events }: EventListProps) {
     });
   };
 
-  const renderEvent = ({ item }: { item: Event }) => (
+  return (
     <View style={styles.eventCard}>
       <View style={styles.timeContainer}>
-        <Text style={styles.time}>{formatTime(item.startTime)}</Text>
-        <Text style={styles.date}>{formatDate(item.startTime)}</Text>
+        <Text style={styles.time}>{formatTime(event.startTime)}</Text>
+        <Text style={styles.date}>{formatDate(event.startTime)}</Text>
       </View>
       <View style={styles.eventInfo}>
-        <Text style={styles.eventTitle}>{item.title}</Text>
-        <Text style={styles.eventTime}>
-          {formatTime(item.startTime)} - {formatTime(item.endTime)}
-        </Text>
+        <Text style={styles.eventTitle}>{event.title}</Text>
+        <View style={styles.detailsRow}>
+          <Text style={styles.eventTime}>
+            {formatTime(event.startTime)} - {formatTime(event.endTime)}
+          </Text>
+          {user && (
+            <View style={styles.userBadge}>
+              <Text style={styles.userBadgeText}>{user.name}</Text>
+            </View>
+          )}
+        </View>
       </View>
     </View>
   );
+};
 
+const EnhancedEventRow = withObservables(['event'], ({ event }: { event: Event }) => ({
+  event: event.observe(),
+  user: event.user.observe(),
+}))(EventRow);
+
+export function EventList({ events }: EventListProps) {
   if (events.length === 0) {
     return (
       <View style={styles.container}>
@@ -54,7 +69,7 @@ export function EventList({ events }: EventListProps) {
       <Text style={styles.sectionTitle}>Today&apos;s Events</Text>
       <FlatList
         data={events}
-        renderItem={renderEvent}
+        renderItem={({ item }) => <EnhancedEventRow event={item} />}
         keyExtractor={(item) => item.id}
         scrollEnabled={false}
       />
@@ -106,9 +121,26 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 4,
   },
+  detailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
   eventTime: {
     fontSize: 14,
     color: '#666',
+  },
+  userBadge: {
+    backgroundColor: '#E1E1E1',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  userBadgeText: {
+    fontSize: 12,
+    color: '#555',
+    fontWeight: '500',
   },
   emptyState: {
     padding: 24,

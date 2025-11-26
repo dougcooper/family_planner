@@ -1,6 +1,8 @@
 import { db } from '../db/index.js';
 import { events } from '../db/schema.js';
-import { eq, and, gte, lte } from 'drizzle-orm';
+import { eq, and, gte, lte, desc, isNotNull } from 'drizzle-orm';
+import rrule from 'rrule';
+const { RRule, rrulestr } = rrule;
 
 /**
  * Recurring Events Service
@@ -29,6 +31,7 @@ export interface RecurrenceRule {
 
 export interface CreateRecurringEventParams {
   familyId: string;
+  userId?: string;
   title: string;
   startTime: Date;
   endTime: Date;
@@ -38,10 +41,11 @@ export interface CreateRecurringEventParams {
 export interface RecurringEventInstance {
   id: string;
   familyId: string;
+  userId?: string | null;
   title: string;
   startTime: Date;
   endTime: Date;
-  recurrenceRule?: string;
+  recurrenceRule?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,43 +57,45 @@ export interface RecurringEventInstance {
 export function parseRecurrenceRule(rrule: string): RecurrenceRule | null {
   if (!rrule || !rrule.trim()) return null;
 
-  const parts = rrule.trim().split(';');
-  const rule: Partial<RecurrenceRule> = {};
-
-  for (const part of parts) {
-    const [key, value] = part.split('=');
+  try {
+    // Use rrule library to parse string directly to avoid defaults
+    const options = RRule.parseString(rrule);
     
-    switch (key) {
-      case 'FREQ':
-        if (['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(value)) {
-          rule.frequency = value as RecurrenceRule['frequency'];
-        }
-        break;
-      case 'INTERVAL':
-        rule.interval = parseInt(value, 10);
-        break;
-      case 'COUNT':
-        rule.count = parseInt(value, 10);
-        break;
-      case 'UNTIL':
-        const untilDate = new Date(value);
-        if (!isNaN(untilDate.getTime())) {
-          rule.until = untilDate;
-        }
-        break;
-      case 'BYDAY':
-        rule.byDay = value.split(',');
-        break;
-      case 'BYMONTHDAY':
-        rule.byMonthDay = parseInt(value, 10);
-        break;
-      case 'BYMONTH':
-        rule.byMonth = parseInt(value, 10);
-        break;
-    }
-  }
+    if (options.freq === undefined || options.freq === null) return null;
 
-  return rule.frequency ? rule as RecurrenceRule : null;
+    const freqMap = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY', 'HOURLY', 'MINUTELY', 'SECONDLY'];
+    
+    const result: RecurrenceRule = {
+      frequency: freqMap[options.freq] as RecurrenceRule['frequency'],
+    };
+
+    if (options.interval) result.interval = options.interval;
+    if (options.count) result.count = options.count;
+    if (options.until) result.until = options.until;
+    
+    if (options.byweekday) {
+      // Handle array of Weekday objects or numbers (though parseString usually returns Weekday objects)
+      const days = Array.isArray(options.byweekday) ? options.byweekday : [options.byweekday];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      result.byDay = days.map((d: any) => {
+        const dayIndex = typeof d === 'number' ? d : d.weekday;
+        return ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'][dayIndex];
+      });
+    }
+
+    if (options.bymonthday) {
+      result.byMonthDay = Array.isArray(options.bymonthday) ? options.bymonthday[0] : options.bymonthday;
+    }
+
+    if (options.bymonth) {
+      result.byMonth = Array.isArray(options.bymonth) ? options.bymonth[0] : options.bymonth;
+    }
+
+    return result;
+  } catch (e) {
+    console.error('Error parsing recurrence rule:', e);
+    return null;
+  }
 }
 
 /**
@@ -106,6 +112,7 @@ export function generateEventInstances(
     if (baseEvent.startTime >= startDate && baseEvent.startTime <= endDate) {
       return [{
         familyId: baseEvent.familyId,
+        userId: baseEvent.userId,
         title: baseEvent.title,
         startTime: baseEvent.startTime,
         endTime: baseEvent.endTime,
@@ -115,107 +122,46 @@ export function generateEventInstances(
     return [];
   }
 
-  const rule = parseRecurrenceRule(baseEvent.recurrenceRule);
-  if (!rule) return [];
-
-  const instances: Array<Omit<RecurringEventInstance, 'id' | 'createdAt' | 'updatedAt'>> = [];
-  const eventDuration = baseEvent.endTime.getTime() - baseEvent.startTime.getTime();
-  
-  let currentDate = new Date(baseEvent.startTime);
-  const interval = rule.interval || 1;
-  let count = 0;
-  const maxCount = rule.count || maxInstances;
-  const untilDate = rule.until || endDate;
-  let iterations = 0;
-  const maxIterations = maxInstances * 10; // Safety limit for infinite loop prevention
-
-  while (count < maxCount && currentDate <= untilDate && currentDate <= endDate && iterations < maxIterations) {
-    iterations++;
-    if (currentDate >= startDate && shouldIncludeDate(currentDate, rule)) {
-      const instanceStartTime = new Date(currentDate);
-      const instanceEndTime = new Date(currentDate.getTime() + eventDuration);
-      
-      instances.push({
-        familyId: baseEvent.familyId,
-        title: baseEvent.title,
-        startTime: instanceStartTime,
-        endTime: instanceEndTime,
-        recurrenceRule: baseEvent.recurrenceRule,
-      });
-      count++;
-    }
-
-    // Advance to next occurrence
-    currentDate = getNextOccurrence(currentDate, rule, interval);
+  try {
+    // Parse the RRULE string
+    // Note: rrulestr expects standard iCalendar format.
+    // If our string is simplified, we might need to adjust it, but standard format is preferred.
+    // The frontend buildRecurrenceRule produces standard format.
     
-    // Safety check to prevent infinite loops
-    if (count >= maxInstances) break;
-  }
+    // We need to set the start date (dtstart) for the rule
+    const rule = rrulestr(baseEvent.recurrenceRule, {
+      dtstart: baseEvent.startTime
+    });
 
-  return instances;
+    // Get all occurrences between startDate and endDate
+    // We add a buffer to maxInstances to ensure we get enough candidates
+    const dates = rule.between(startDate, endDate, true, (date, i) => i < maxInstances);
+
+    const eventDuration = baseEvent.endTime.getTime() - baseEvent.startTime.getTime();
+
+    return dates.map(date => ({
+      familyId: baseEvent.familyId,
+      userId: baseEvent.userId,
+      title: baseEvent.title,
+      startTime: date,
+      endTime: new Date(date.getTime() + eventDuration),
+      recurrenceRule: baseEvent.recurrenceRule,
+    }));
+
+  } catch (error) {
+    console.error('Error generating event instances with rrule:', error);
+    return [];
+  }
 }
 
-/**
- * Check if a date should be included based on the recurrence rule
- */
-const DAY_MAP: { [key: string]: number } = {
-  'SU': 0, 'MO': 1, 'TU': 2, 'WE': 3, 'TH': 4, 'FR': 5, 'SA': 6
-};
-
-function shouldIncludeDate(date: Date, rule: RecurrenceRule): boolean {
-  // Check BYDAY for weekly recurrence
-  if (rule.frequency === 'WEEKLY' && rule.byDay && rule.byDay.length > 0) {
-    const dayOfWeek = date.getDay();
-    const matchesDay = rule.byDay.some(day => DAY_MAP[day] === dayOfWeek);
-    if (!matchesDay) return false;
-  }
-
-  // Check BYMONTHDAY for monthly recurrence
-  if (rule.frequency === 'MONTHLY' && rule.byMonthDay) {
-    if (date.getDate() !== rule.byMonthDay) return false;
-  }
-
-  // Check BYMONTH for yearly recurrence
-  if (rule.frequency === 'YEARLY' && rule.byMonth) {
-    if (date.getMonth() + 1 !== rule.byMonth) return false;
-  }
-
-  // Check BYMONTHDAY for yearly recurrence
-  if (rule.frequency === 'YEARLY' && rule.byMonthDay) {
-    if (date.getDate() !== rule.byMonthDay) return false;
-  }
-
-  return true;
-}
-
-/**
- * Get the next occurrence date based on the recurrence rule
- */
-function getNextOccurrence(date: Date, rule: RecurrenceRule, interval: number): Date {
-  const next = new Date(date);
-
-  switch (rule.frequency) {
-    case 'DAILY':
-      next.setDate(next.getDate() + interval);
-      break;
-    case 'WEEKLY':
-      next.setDate(next.getDate() + (7 * interval));
-      break;
-    case 'MONTHLY':
-      next.setMonth(next.getMonth() + interval);
-      break;
-    case 'YEARLY':
-      next.setFullYear(next.getFullYear() + interval);
-      break;
-  }
-
-  return next;
-}
+// Removed manual helper functions (shouldIncludeDate, getNextOccurrence) as we use rrule lib now
 
 /**
  * Create a recurring event and generate its instances for a given time range
  */
 export const DEFAULT_GENERATION_DAYS = 90; // Default to generate instances for next 3 months
+export const TOP_UP_THRESHOLD_DAYS = 180; // Check if we have less than 6 months of events
+export const TOP_UP_HORIZON_DAYS = 365; // Top up to 1 year
 
 export async function createRecurringEvent(
   params: CreateRecurringEventParams,
@@ -264,6 +210,96 @@ export async function createRecurringEvent(
     return {
       success: false,
       eventIds: [],
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Process recurring events top-up
+ * This function should be called periodically (e.g. nightly) to ensure
+ * infinite recurring events continue to be generated into the future.
+ */
+export async function processRecurringEventsTopUp(): Promise<{ success: boolean; processedCount: number; error?: string }> {
+  try {
+    const now = new Date();
+    const thresholdDate = new Date(now.getTime() + TOP_UP_THRESHOLD_DAYS * 24 * 60 * 60 * 1000);
+    const horizonDate = new Date(now.getTime() + TOP_UP_HORIZON_DAYS * 24 * 60 * 60 * 1000);
+    let processedCount = 0;
+
+    // 1. Get all distinct recurrenceIds
+    const distinctRecurrences = await db
+      .selectDistinct({ recurrenceId: events.recurrenceId })
+      .from(events)
+      .where(isNotNull(events.recurrenceId));
+
+    for (const { recurrenceId } of distinctRecurrences) {
+      if (!recurrenceId) continue;
+
+      // 2. Get the latest instance for this recurrenceId
+      const [latestInstance] = await db
+        .select()
+        .from(events)
+        .where(eq(events.recurrenceId, recurrenceId))
+        .orderBy(desc(events.startTime))
+        .limit(1);
+
+      if (!latestInstance) continue;
+
+      // 3. Check if we need to top up
+      if (latestInstance.startTime < thresholdDate) {
+        // 4. Check if the rule allows for more instances (infinite)
+        const rule = parseRecurrenceRule(latestInstance.recurrenceRule || '');
+        if (!rule) continue;
+
+        // Only top up infinite events (no COUNT and no UNTIL)
+        if (!rule.count && !rule.until) {
+          // Generate from just after the latest instance
+          const generationStartDate = new Date(latestInstance.startTime.getTime() + 1000);
+          
+          // Use the latest instance as the base for generation
+          // Note: This assumes the latest instance is "on grid" with the recurrence pattern.
+          // If the latest instance was moved (exception), this might shift future events.
+          // A more robust solution would be to find the original start event of the series.
+          const newInstances = generateEventInstances(
+            {
+              familyId: latestInstance.familyId,
+              userId: latestInstance.userId || undefined,
+              title: latestInstance.title,
+              startTime: latestInstance.startTime,
+              endTime: latestInstance.endTime,
+              recurrenceRule: latestInstance.recurrenceRule || undefined,
+            },
+            generationStartDate,
+            horizonDate,
+            365 // max instances to generate in this batch
+          );
+          
+          if (newInstances.length > 0) {
+             await db.insert(events).values(
+               newInstances.map(instance => ({
+                 familyId: instance.familyId,
+                 userId: instance.userId,
+                 title: instance.title,
+                 startTime: instance.startTime,
+                 endTime: instance.endTime,
+                 recurrenceRule: instance.recurrenceRule,
+                 recurrenceId: recurrenceId,
+                 isAllDay: latestInstance.isAllDay,
+               }))
+             );
+             processedCount++;
+          }
+        }
+      }
+    }
+
+    return { success: true, processedCount };
+  } catch (error) {
+    console.error('Error processing recurring events top-up:', error);
+    return {
+      success: false,
+      processedCount: 0,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   }

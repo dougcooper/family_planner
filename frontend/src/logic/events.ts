@@ -7,7 +7,8 @@ export interface CreateEventParams {
   startTime: Date;
   endTime: Date;
   familyId: string;
-  recurrenceRule?: string;
+  userId?: string;
+  recurrenceRule?: string | null;
   isAllDay?: boolean;
 }
 
@@ -78,6 +79,7 @@ export async function createEvent(database: Database, params: CreateEventParams)
       event.startTime = params.startTime;
       event.endTime = params.endTime;
       event.familyId = params.familyId;
+      if (params.userId) event.userId = params.userId;
       event.isAllDay = params.isAllDay || false;
       if (params.recurrenceRule) {
         event.recurrenceRule = params.recurrenceRule;
@@ -93,7 +95,8 @@ export async function updateEvent(database: Database, eventId: string, params: P
       if (params.title) e.title = params.title;
       if (params.startTime) e.startTime = params.startTime;
       if (params.endTime) e.endTime = params.endTime;
-      if (params.recurrenceRule !== undefined) e.recurrenceRule = params.recurrenceRule;
+      if (params.userId !== undefined) e.userId = params.userId;
+      if (params.recurrenceRule !== undefined) e.recurrenceRule = params.recurrenceRule as any;
       if (params.isAllDay !== undefined) e.isAllDay = params.isAllDay;
     });
   });

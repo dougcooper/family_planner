@@ -43,6 +43,11 @@
 - [X] T020 [US1] Create Dashboard Layout component in `frontend/src/components/dashboard/DashboardLayout.tsx`
 - [X] T021 [US1] Implement Today's Overview Widget in `frontend/src/components/dashboard/TodayWidget.tsx`
 - [X] T022 [US1] Implement Event List Component in `frontend/src/components/dashboard/EventList.tsx`
+- [X] T022b [US1] Implement Recurring Event Deletion UI in `frontend/src/components/events/EditEventModal.tsx`
+- [X] T022c [US1] Add User Association to Events (Schema + UI) in `backend/src/db/schema.ts` and `frontend/src/components/events/CreateEventModal.tsx`
+- [X] T022d [US1] Display User on Event List and Dashboard in `frontend/src/components/dashboard/EventList.tsx` and `frontend/app/events.tsx`
+- [X] T022e [US1] Enable Recurrence Editing in EditEventModal in `frontend/src/components/events/EditEventModal.tsx`
+- [X] T022f [US1] Implement Nightly Top-Up Logic for Recurring Events in `backend/src/services/recurring-events.ts`
 - [X] T023 [US1] Implement Task List Summary Component in `frontend/src/components/dashboard/TaskListSummary.tsx`
 - [X] T024 [US1] Implement Dinner Summary Component in `frontend/src/components/dashboard/DinnerSummary.tsx`
 

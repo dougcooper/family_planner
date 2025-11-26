@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Modal, ScrollView, Platform } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Database } from '@nozbe/watermelondb';
+import { Database, Q } from '@nozbe/watermelondb';
 import { createEvent, buildRecurrenceRule, type RecurrenceOptions } from '../../logic/events';
+import { User } from '../../model/models';
 
 interface CreateEventModalProps {
   visible: boolean;
@@ -40,6 +41,18 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
     return date;
   });
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(['MO', 'WE', 'FR']);
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | undefined>(undefined);
+
+  React.useEffect(() => {
+    if (visible) {
+      const fetchUsers = async () => {
+        const fetchedUsers = await database.get<User>('users').query(Q.where('family_id', familyId)).fetch();
+        setUsers(fetchedUsers);
+      };
+      fetchUsers();
+    }
+  }, [visible, database, familyId]);
   
   // Android specific state
   const [mode, setMode] = useState<'date' | 'time'>('date');
@@ -96,6 +109,7 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
         startTime,
         endTime,
         familyId,
+        userId: selectedUserId,
         recurrenceRule,
         isAllDay,
       };
@@ -178,6 +192,39 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
               onChangeText={setTitle}
               placeholder="Event title"
             />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>For Who?</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.userScroll}>
+              <TouchableOpacity
+                style={[
+                  styles.userChip,
+                  !selectedUserId && styles.userChipActive
+                ]}
+                onPress={() => setSelectedUserId(undefined)}
+              >
+                <Text style={[
+                  styles.userChipText,
+                  !selectedUserId && styles.userChipTextActive
+                ]}>Everyone</Text>
+              </TouchableOpacity>
+              {users.map(user => (
+                <TouchableOpacity
+                  key={user.id}
+                  style={[
+                    styles.userChip,
+                    selectedUserId === user.id && styles.userChipActive
+                  ]}
+                  onPress={() => setSelectedUserId(user.id)}
+                >
+                  <Text style={[
+                    styles.userChipText,
+                    selectedUserId === user.id && styles.userChipTextActive
+                  ]}>{user.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
 
           {/* All Day Toggle */}
@@ -681,6 +728,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginBottom: 12,
+  },
+  userScroll: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  userChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F2F2F7',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    marginRight: 8,
+  },
+  userChipActive: {
+    backgroundColor: '#4A90E2',
+    borderColor: '#4A90E2',
+  },
+  userChipText: {
+    fontSize: 15,
+    color: '#000000',
+    fontWeight: '500',
+  },
+  userChipTextActive: {
+    color: '#FFFFFF',
   },
   endTypeButton: {
     flex: 1,
