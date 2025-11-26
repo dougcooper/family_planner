@@ -15,10 +15,19 @@ export function EventList({ events }: EventListProps) {
     });
   };
 
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   const renderEvent = ({ item }: { item: Event }) => (
     <View style={styles.eventCard}>
       <View style={styles.timeContainer}>
         <Text style={styles.time}>{formatTime(item.startTime)}</Text>
+        <Text style={styles.date}>{formatDate(item.startTime)}</Text>
       </View>
       <View style={styles.eventInfo}>
         <Text style={styles.eventTitle}>{item.title}</Text>
@@ -82,6 +91,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#4A90E2',
+  },
+  date: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
   },
   eventInfo: {
     flex: 1,

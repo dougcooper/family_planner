@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
 interface DashboardLayoutProps {
@@ -6,11 +6,34 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    // Update immediately to ensure client-side hydration matches if needed, 
+    // but mostly to keep time fresh.
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000); // Update every second to keep time accurate
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const dateStr = now.toLocaleDateString(undefined, { 
+    weekday: 'long', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  const timeStr = now.toLocaleTimeString(undefined, { 
+    hour: 'numeric', 
+    minute: '2-digit' 
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Family Dashboard</Text>
-        <Text style={styles.subtitle}>Today&apos;s Overview</Text>
+        <Text style={styles.subtitle}>{dateStr} • {timeStr}</Text>
       </View>
       
       <ScrollView style={styles.content}>

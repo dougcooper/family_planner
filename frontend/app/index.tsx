@@ -12,6 +12,6 @@ export default function Index() {
     return unsubscribe;
   }, []);
 
-  return <DashboardContainer familyId={user?.familyId} />;
+  return <DashboardContainer familyId={user?.familyId} userId={user?.id} />;
 }
 

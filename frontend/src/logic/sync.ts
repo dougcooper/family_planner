@@ -4,57 +4,70 @@ import { authProvider } from './auth';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
+let isSyncing = false;
+
 export async function syncDatabase(): Promise<void> {
+  if (isSyncing) {
+    // eslint-disable-next-line no-console
+    console.log('Sync already in progress, skipping');
+    return;
+  }
+
   const token = authProvider.getToken();
   
   if (!token) {
     throw new Error('Not authenticated');
   }
 
-  await synchronize({
-    database,
-    pullChanges: async ({ lastPulledAt, schemaVersion }) => {
-      const response = await fetch(
-        `${API_URL}/sync/pull?last_pulled_at=${lastPulledAt || 0}&schema_version=${schemaVersion}`,
-        {
+  try {
+    isSyncing = true;
+    await synchronize({
+      database,
+      pullChanges: async ({ lastPulledAt, schemaVersion }) => {
+        const response = await fetch(
+          `${API_URL}/sync/pull?last_pulled_at=${lastPulledAt || 0}&schema_version=${schemaVersion}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Pull sync failed: ${response.status} ${errorText}`);
+        }
+
+        const { changes, timestamp } = await response.json();
+        
+        return {
+          changes,
+          timestamp,
+        };
+      },
+      pushChanges: async ({ changes, lastPulledAt }) => {
+        const response = await fetch(`${API_URL}/sync/push`, {
+          method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
+          body: JSON.stringify({
+            changes,
+            last_pulled_at: lastPulledAt,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Push sync failed: ${response.status} ${errorText}`);
         }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Pull sync failed: ${response.status} ${errorText}`);
-      }
-
-      const { changes, timestamp } = await response.json();
-      
-      return {
-        changes,
-        timestamp,
-      };
-    },
-    pushChanges: async ({ changes, lastPulledAt }) => {
-      const response = await fetch(`${API_URL}/sync/push`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          changes,
-          last_pulled_at: lastPulledAt,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Push sync failed: ${response.status} ${errorText}`);
-      }
-    },
-    // migrationsEnabledAtVersion: 1,
-  });
+      },
+      // migrationsEnabledAtVersion: 1,
+    });
+  } finally {
+    isSyncing = false;
+  }
 }
 
 // Auto-sync helper with error handling

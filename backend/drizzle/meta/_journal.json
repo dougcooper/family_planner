@@ -43,6 +43,13 @@
       "when": 1764032827359,
       "tag": "0005_adorable_silverclaw",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1764092975747,
+      "tag": "0006_salty_earthquake",
+      "breakpoints": true
     }
   ]
 }

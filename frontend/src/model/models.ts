@@ -147,6 +147,9 @@ export class GroceryItem extends Model implements IGroceryItem {
 
 export class ListItem extends Model implements IListItem {
   static table = 'list_items';
+  static associations = {
+    lists: { type: 'belongs_to', key: 'list_id' },
+  } as const;
 
   @field('list_id') listId!: string;
   @field('text') text!: string;
@@ -157,6 +160,9 @@ export class ListItem extends Model implements IListItem {
 
 export class List extends Model implements IList {
   static table = 'lists';
+  static associations = {
+    list_items: { type: 'has_many', foreignKey: 'list_id' },
+  } as const;
 
   @field('family_id') familyId!: string;
   @field('name') name!: string;

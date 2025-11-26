@@ -24,3 +24,21 @@ export const getStartOfWeek = (date: Date = new Date()): Date => {
   monday.setHours(0, 0, 0, 0);
   return monday;
 };
+
+/**
+ * Returns the start of the day (00:00:00) timestamp for a given date
+ */
+export const getStartOfDay = (date: Date = new Date()): number => {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  return start.getTime();
+};
+
+/**
+ * Returns the end of the day (23:59:59.999) timestamp for a given date
+ */
+export const getEndOfDay = (date: Date = new Date()): number => {
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+  return end.getTime();
+};
