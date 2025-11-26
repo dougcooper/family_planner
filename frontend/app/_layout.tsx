@@ -128,6 +128,7 @@ export default function RootLayout() {
       <Tabs.Screen
         name="settings"
         options={{
+          href: null,
           title: 'Settings',
           headerShown: false,
           tabBarIcon: ({ color }: { color: string }) => <SettingsIcon size={24} color={color} />,

@@ -262,9 +262,7 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleLogout = async () => {
-    await authProvider.logout();
-  };
+
 
   const renderUserItem = ({ item }: { item: User }) => (
     <View style={styles.userItem}>
@@ -343,9 +341,7 @@ export default function SettingsScreen() {
           </View>
 
           <View style={styles.section}>
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <Text style={styles.logoutButtonText}>Log Out</Text>
-            </TouchableOpacity>
+
             
             <TouchableOpacity 
               style={[styles.logoutButton, { marginTop: 12, backgroundColor: '#E0F2FE' }]} 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { UserMenu } from '../navigation/UserMenu';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -35,8 +36,11 @@ export function DashboardLayout({ children, scrollable = true }: DashboardLayout
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Family Dashboard</Text>
-        <Text style={styles.subtitle}>{dateStr} • {timeStr}</Text>
+        <View>
+          <Text style={styles.title}>Family Dashboard</Text>
+          <Text style={styles.subtitle}>{dateStr} • {timeStr}</Text>
+        </View>
+        <UserMenu />
       </View>
       
       <ContentWrapper style={styles.content}>
@@ -57,6 +61,9 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 3,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   title: {
     fontSize: 28,
