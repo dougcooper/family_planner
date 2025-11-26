@@ -17,12 +17,68 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
   const [showCompleted, setShowCompleted] = useState(true);
   const [assignModalVisible, setAssignModalVisible] = useState(false);
   const [selectedItemForAssign, setSelectedItemForAssign] = useState<ListItem | null>(null);
+  
+  // List Title Editing
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(list.name);
+
+  // Item Text Editing
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editedItemText, setEditedItemText] = useState('');
 
   useEffect(() => {
     loadItems();
     loadUsers();
+    setEditedTitle(list.name);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [list]);
+
+  const handleUpdateListTitle = async () => {
+    if (!editedTitle.trim() || editedTitle.trim() === list.name) {
+      setIsEditingTitle(false);
+      setEditedTitle(list.name);
+      return;
+    }
+
+    try {
+      await database.write(async () => {
+        await list.update(l => {
+          l.name = editedTitle.trim();
+        });
+      });
+      setIsEditingTitle(false);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error updating list title:', error);
+      alert('Failed to update list title');
+    }
+  };
+
+  const handleUpdateItemText = async (item: ListItem) => {
+    if (!editedItemText.trim()) {
+      setEditingItemId(null);
+      return;
+    }
+
+    try {
+      await database.write(async () => {
+        await item.update(i => {
+          i.text = editedItemText.trim();
+        });
+      });
+      setEditingItemId(null);
+      await loadItems();
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error updating item text:', error);
+      alert('Failed to update item text');
+    }
+  };
+
+  const startEditingItem = (item: ListItem) => {
+    setEditingItemId(item.id);
+    setEditedItemText(item.text);
+  };
 
   const loadUsers = async () => {
     try {
@@ -154,6 +210,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
 
   const renderItem = ({ item }: { item: ListItem }) => {
     const assignee = users.find(u => u.id === item.assigneeId);
+    const isEditing = editingItemId === item.id;
 
     return (
       <View style={styles.itemCard}>
@@ -167,9 +224,22 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
         </TouchableOpacity>
 
         <View style={styles.itemContent}>
-          <Text style={[styles.itemName, item.isChecked && styles.itemNameChecked]}>
-            {item.text}
-          </Text>
+          {isEditing ? (
+            <TextInput
+              style={styles.editInput}
+              value={editedItemText}
+              onChangeText={setEditedItemText}
+              onBlur={() => handleUpdateItemText(item)}
+              onSubmitEditing={() => handleUpdateItemText(item)}
+              autoFocus
+            />
+          ) : (
+            <TouchableOpacity onPress={() => startEditingItem(item)}>
+              <Text style={[styles.itemName, item.isChecked && styles.itemNameChecked]}>
+                {item.text}
+              </Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity 
             style={styles.assigneeButton}
             onPress={() => openAssignModal(item)}
@@ -214,7 +284,20 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
           </TouchableOpacity>
         )}
         <View style={styles.headerTopRow}>
-          <Text style={styles.headerTitle}>{list.name}</Text>
+          {isEditingTitle ? (
+            <TextInput
+              style={styles.headerTitleInput}
+              value={editedTitle}
+              onChangeText={setEditedTitle}
+              onBlur={handleUpdateListTitle}
+              onSubmitEditing={handleUpdateListTitle}
+              autoFocus
+            />
+          ) : (
+            <TouchableOpacity onPress={() => setIsEditingTitle(true)}>
+              <Text style={styles.headerTitle}>{list.name} ✎</Text>
+            </TouchableOpacity>
+          )}
           <View style={styles.toggleContainer}>
             <Text style={styles.toggleLabel}>Show Done</Text>
             <Switch value={showCompleted} onValueChange={setShowCompleted} />
@@ -362,6 +445,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1E293B',
     marginBottom: 8,
+  },
+  headerTitleInput: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1E293B',
+    borderBottomWidth: 1,
+    borderBottomColor: '#4A90E2',
+    paddingBottom: 4,
+    flex: 1,
+    marginRight: 16,
   },
   stats: {
     flexDirection: 'row',
@@ -575,5 +668,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  editInput: {
+    fontSize: 16,
+    color: '#1E293B',
+    padding: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#4A90E2',
   },
 });
