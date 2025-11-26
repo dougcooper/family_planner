@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { database } from '../model/database';
 import { Family } from '../model/models';
+import log from '../utils/logger';
 
 const AUTH_TOKEN_KEY = '@family_dashboard:auth_token';
 const USER_DATA_KEY = '@family_dashboard:user_data';
@@ -49,8 +50,7 @@ class AuthProvider {
         this.startKioskTimer();
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Auth initialization failed:', error);
+      log.error('Auth initialization failed:', error);
     }
   }
 
@@ -83,8 +83,7 @@ class AuthProvider {
         this.setKioskTimeout(timeout);
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to load family settings:', error);
+      log.error('Failed to load family settings:', error);
     }
   }
 

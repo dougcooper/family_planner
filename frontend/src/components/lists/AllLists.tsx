@@ -4,6 +4,7 @@ import { Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { List, GroceryItem, ListItem } from '../../model/models';
 import ListCard from './ListCard';
+import log from '../../utils/logger';
 
 const styles = StyleSheet.create({
   container: {
@@ -202,8 +203,7 @@ export function AllLists({ database, familyId, onSelectList, selectedListId }: A
         await createDefaultGroceryList();
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error checking grocery list:', error);
+      log.error('Error checking grocery list:', error);
     }
   };
 
@@ -239,8 +239,7 @@ export function AllLists({ database, familyId, onSelectList, selectedListId }: A
         }
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error creating default list:', error);
+      log.error('Error creating default list:', error);
     }
   };
 
@@ -259,8 +258,7 @@ export function AllLists({ database, familyId, onSelectList, selectedListId }: A
       setNewListName('');
       setIsModalVisible(false);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error creating list:', error);
+      log.error('Error creating list:', error);
       alert('Failed to create list');
     }
   };
@@ -271,8 +269,7 @@ export function AllLists({ database, familyId, onSelectList, selectedListId }: A
         await list.markAsDeleted();
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error deleting list:', error);
+      log.error('Error deleting list:', error);
       alert('Failed to delete list');
     }
   };
@@ -285,8 +282,7 @@ export function AllLists({ database, familyId, onSelectList, selectedListId }: A
         });
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error archiving list:', error);
+      log.error('Error archiving list:', error);
       alert('Failed to archive list');
     }
   };
@@ -299,8 +295,7 @@ export function AllLists({ database, familyId, onSelectList, selectedListId }: A
         });
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error unarchiving list:', error);
+      log.error('Error unarchiving list:', error);
       alert('Failed to unarchive list');
     }
   };

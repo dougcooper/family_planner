@@ -4,6 +4,7 @@ import { withObservables } from '@nozbe/watermelondb/react';
 import { Q } from '@nozbe/watermelondb';
 import { database } from '../../model/database';
 import { ListItem, User, List } from '../../model/models';
+import log from '../../utils/logger';
 
 interface ListSectionProps {
   list: List;
@@ -21,8 +22,7 @@ const ListSectionComponent = ({ list, todos }: ListSectionProps) => {
         });
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error toggling item:', error);
+      log.error('Error toggling item:', error);
     }
   };
 

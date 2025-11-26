@@ -5,6 +5,7 @@ import { withObservables } from '@nozbe/watermelondb/react';
 import { Reward, User } from '../../model/models';
 import { redeemReward } from '../../logic/rewards';
 import { RewardHistoryModal } from './RewardHistoryModal';
+import log from '../../utils/logger';
 
 interface RewardCatalogProps {
   database: Database;
@@ -72,8 +73,7 @@ const RewardCatalogComponent = ({ database, user, rewards, familyMembers }: Rewa
       
       setModalVisible(false);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error saving reward:', error);
+      log.error('Error saving reward:', error);
       alert('Failed to save reward');
     }
   };
@@ -85,8 +85,7 @@ const RewardCatalogComponent = ({ database, user, rewards, familyMembers }: Rewa
           await reward.markAsDeleted();
         });
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error deleting reward:', error);
+        log.error('Error deleting reward:', error);
         alert('Failed to delete reward');
       }
     };
@@ -123,8 +122,7 @@ const RewardCatalogComponent = ({ database, user, rewards, familyMembers }: Rewa
           alert(`Failed to redeem reward: ${result.error}`);
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error redeeming reward:', error);
+        log.error('Error redeeming reward:', error);
         alert('An error occurred while redeeming the reward');
       }
     };

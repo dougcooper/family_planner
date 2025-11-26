@@ -10,6 +10,7 @@ import { Toast } from '../src/components/common/Toast';
 import { syncDatabase } from '../src/logic/sync';
 import { MealLabelSettings } from '../src/components/settings/MealLabelSettings';
 import { getWeatherSettings, saveWeatherSettings, searchCity, CitySearchResult } from '../src/logic/weather';
+import log from '../src/utils/logger';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -83,37 +84,37 @@ export default function SettingsScreen() {
       const allUsers = await database.get<User>('users').query().fetch();
       setUsers(allUsers);
     } catch (e) {
-      console.error("Error loading users", e);
+      log.error("Error loading users", e);
     }
 
     const user = currentUser || authProvider.getState().user;
-    console.log('Loading data for user:', user);
+    log.info('Loading data for user:', user);
     
     if (user?.familyId) {
       try {
-        console.log('Looking for family:', user.familyId);
+        log.info('Looking for family:', user.familyId);
         const familyRecord = await database.get<Family>('families').find(user.familyId);
-        console.log('Found family locally:', familyRecord);
+        log.info('Found family locally:', familyRecord);
         setFamily(familyRecord);
         setTimeoutSeconds(familyRecord.kioskTimeoutSeconds.toString());
       } catch (e) {
-        console.log("Family not found locally, attempting sync...");
+        log.info("Family not found locally, attempting sync...");
         try {
           await syncDatabase();
           // Debug: check what families exist
           const allFamilies = await database.get<Family>('families').query().fetch();
-          console.log('All families in DB:', allFamilies.map((f: Family) => ({ id: f.id, name: f.name })));
+          log.info('All families in DB:', allFamilies.map((f: Family) => ({ id: f.id, name: f.name })));
 
           const familyRecord = await database.get<Family>('families').find(user.familyId);
-          console.log('Found family after sync:', familyRecord);
+          log.info('Found family after sync:', familyRecord);
           setFamily(familyRecord);
           setTimeoutSeconds(familyRecord.kioskTimeoutSeconds.toString());
         } catch (retryError) {
-          console.error("Error loading family after sync", retryError);
+          log.error("Error loading family after sync", retryError);
         }
       }
     } else {
-      console.warn('No familyId found on user');
+      log.warn('No familyId found on user');
     }
   };
 
@@ -163,7 +164,7 @@ export default function SettingsScreen() {
         showToast('Image uploaded successfully', 'success');
       }
     } catch (error) {
-      console.error('Error picking image:', error);
+      log.error('Error picking image:', error);
       showToast('Failed to upload image', 'error');
     }
   };
@@ -175,7 +176,7 @@ export default function SettingsScreen() {
       await loadData();
       showToast("Sync complete", 'success');
     } catch (e) {
-      console.error("Sync failed", e);
+      log.error("Sync failed", e);
       const errorMessage = e instanceof Error ? e.message : "Sync failed";
       showToast(errorMessage, 'error');
     }
@@ -204,7 +205,7 @@ export default function SettingsScreen() {
       authProvider.setKioskTimeout(seconds);
       showToast("Kiosk timeout updated.", 'success');
     } catch (error) {
-      console.error('Failed to update timeout:', error);
+      log.error('Failed to update timeout:', error);
       showToast('Failed to update timeout', 'error');
     }
   };
@@ -235,7 +236,7 @@ export default function SettingsScreen() {
       });
       showToast("Weather location updated.", 'success');
     } catch (error) {
-      console.error('Failed to update weather settings:', error);
+      log.error('Failed to update weather settings:', error);
       showToast('Failed to update weather settings', 'error');
     }
   };
@@ -266,7 +267,7 @@ export default function SettingsScreen() {
       loadData();
       showToast('Family member added successfully', 'success');
     } catch (error) {
-      console.error('Failed to add member:', error);
+      log.error('Failed to add member:', error);
       showToast('Failed to add member', 'error');
     }
   };
@@ -293,7 +294,7 @@ export default function SettingsScreen() {
               body: JSON.stringify({ url: editingMember.avatarUrl }),
             });
           } catch (e) {
-            console.error('Failed to delete old avatar', e);
+            log.error('Failed to delete old avatar', e);
             // Continue with update even if delete fails
           }
         }
@@ -312,7 +313,7 @@ export default function SettingsScreen() {
       loadData();
       showToast('Member updated successfully', 'success');
     } catch (error) {
-      console.error('Failed to update member:', error);
+      log.error('Failed to update member:', error);
       showToast('Failed to update member', 'error');
     }
   };
@@ -444,33 +445,33 @@ export default function SettingsScreen() {
               onPress={() => {
                 const performReset = async () => {
                   try {
-                    console.log("Starting nuclear reset...");
+                    log.info("Starting nuclear reset...");
                     
                     // 1. Try WatermelonDB reset
                     try {
                       await database.unsafeResetDatabase();
                     } catch (e) {
-                      console.warn("WatermelonDB reset failed", e);
+                      log.warn("WatermelonDB reset failed", e);
                     }
 
                     // 2. Nuke all IndexedDB databases
                     if (Platform.OS === 'web' && window.indexedDB && window.indexedDB.databases) {
                       try {
                         const dbs = await window.indexedDB.databases();
-                        console.log("Found databases:", dbs);
+                        log.info("Found databases:", dbs);
                         for (const db of dbs) {
                           if (db.name) {
-                            console.log(`Deleting IndexedDB: ${db.name}`);
+                            log.info(`Deleting IndexedDB: ${db.name}`);
                             const req = window.indexedDB.deleteDatabase(db.name);
                             await new Promise((resolve, reject) => {
                               req.onsuccess = () => resolve(true);
                               req.onerror = () => reject(req.error);
-                              req.onblocked = () => console.warn(`Delete blocked for ${db.name}`);
+                              req.onblocked = () => log.warn(`Delete blocked for ${db.name}`);
                             });
                           }
                         }
                       } catch (e) {
-                        console.error("Failed to list/delete databases", e);
+                        log.error("Failed to list/delete databases", e);
                         // Fallback for older browsers or if databases() is not supported
                         const knownDBs = ['watermelon', 'family_dashboard', 'family_planner_db', 'lokidb'];
                         for (const name of knownDBs) {
@@ -485,7 +486,7 @@ export default function SettingsScreen() {
                     }
 
                   } catch (e) {
-                    console.error("Reset failed", e);
+                    log.error("Reset failed", e);
                     showToast("Reset failed, check console", 'error');
                   } finally {
                     await authProvider.logout();

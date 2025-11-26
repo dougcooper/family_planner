@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, Alert } 
 import { Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { MealLabel } from '../../model/models';
+import log from '../../utils/logger';
 
 interface MealLabelSettingsProps {
   database: Database;
@@ -32,8 +33,7 @@ function MealLabelSettingsComponent({ database, familyId, mealLabels }: MealLabe
       setNewLabelName('');
       setIsAdding(false);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error adding meal label:', error);
+      log.error('Error adding meal label:', error);
       Alert.alert('Error', 'Failed to add meal label');
     }
   };
@@ -53,8 +53,7 @@ function MealLabelSettingsComponent({ database, familyId, mealLabels }: MealLabe
                 await label.markAsDeleted();
               });
             } catch (error) {
-              // eslint-disable-next-line no-console
-              console.error('Error deleting label:', error);
+              log.error('Error deleting label:', error);
               Alert.alert('Error', 'Failed to delete label');
             }
           },
@@ -88,8 +87,7 @@ function MealLabelSettingsComponent({ database, familyId, mealLabels }: MealLabe
         });
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error moving label:', error);
+      log.error('Error moving label:', error);
     }
   };
 

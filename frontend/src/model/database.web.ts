@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { schema } from './schema';
 import migrations from './migrations';
 import { Family, User, Notification, Task, Event, EventAttendee, MealPlan, GroceryItem, Reward, RewardClaim, List, ListItem, Recipe, MealLabel } from './models';
+import log from '../utils/logger';
 
 // Use UUIDs for all IDs to match backend requirements
 setGenerator(() => {
@@ -19,8 +20,7 @@ const adapter = new LokiJSAdapter({
   useIncrementalIndexedDB: true,
   dbName: 'family_dashboard', // Ensure consistent DB name for persistence
   onSetUpError: (error: Error) => {
-    // eslint-disable-next-line no-console
-    console.error('Database setup error:', error);
+    log.error('Database setup error:', error);
   },
   extraLokiOptions: {
     autosave: true,

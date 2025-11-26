@@ -27,7 +27,7 @@ export default function RootLayout() {
       setIsAuthenticated(state.isAuthenticated);
       if (state.isAuthenticated) {
         // Initial sync
-        syncDatabase().catch(console.error);
+        syncDatabase();
         // Setup periodic sync (every 1 minute)
         if (!cleanupSync) {
           cleanupSync = setupPeriodicSync(60000);

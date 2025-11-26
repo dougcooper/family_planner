@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
 import { Notification } from '../../model/models';
+import log from '../../utils/logger';
 
 interface NotificationCenterProps {
   database: Database;
@@ -37,8 +38,7 @@ export function NotificationCenter({ database, userId }: NotificationCenterProps
       
       setNotifications(filtered);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error loading notifications:', error);
+      log.error('Error loading notifications:', error);
     } finally {
       setLoading(false);
     }
@@ -56,8 +56,7 @@ export function NotificationCenter({ database, userId }: NotificationCenterProps
 
       await loadNotifications();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error marking notification as read:', error);
+      log.error('Error marking notification as read:', error);
     }
   };
 
@@ -76,8 +75,7 @@ export function NotificationCenter({ database, userId }: NotificationCenterProps
 
       await loadNotifications();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error marking all as read:', error);
+      log.error('Error marking all as read:', error);
     }
   };
 
@@ -89,8 +87,7 @@ export function NotificationCenter({ database, userId }: NotificationCenterProps
 
       await loadNotifications();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error deleting notification:', error);
+      log.error('Error deleting notification:', error);
     }
   };
 

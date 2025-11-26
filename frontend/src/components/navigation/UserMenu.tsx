@@ -6,6 +6,7 @@ import { authProvider } from '../../logic/auth';
 import { User } from '../../model/models';
 import { database } from '../../model/database';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import log from '../../utils/logger';
 
 export const UserMenu = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -19,8 +20,7 @@ export const UserMenu = () => {
         const userRecord = await database.get<User>('users').find(userId);
         setUser(userRecord);
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.log('Could not load user details', e);
+        log.info('Could not load user details', e);
       }
     };
 

@@ -4,6 +4,7 @@ import { Database } from '@nozbe/watermelondb';
 import { Recipe } from '../../model/models';
 import { bulkAddToGroceryList } from '../../logic/meals';
 import { Toast } from '../common/Toast';
+import log from '../../utils/logger';
 
 interface RecipeDetailProps {
   recipe: Recipe | null;
@@ -40,8 +41,7 @@ export function RecipeDetail({ recipe, visible, onClose, database, familyId }: R
         showToast('Failed to add items to grocery list.', 'error');
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error adding ingredients:', error);
+      log.error('Error adding ingredients:', error);
       showToast('An error occurred while adding ingredients.', 'error');
     }
   };

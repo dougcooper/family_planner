@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList, Alert, Platf
 import { Database, Q } from '@nozbe/watermelondb';
 import { RewardClaim, User, Reward } from '../../model/models';
 import { unclaimReward } from '../../logic/rewards';
+import log from '../../utils/logger';
 
 interface RewardHistoryModalProps {
   visible: boolean;
@@ -79,8 +80,7 @@ export const RewardHistoryModal = ({
           }
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error unclaiming reward:', error);
+        log.error('Error unclaiming reward:', error);
         if (Platform.OS === 'web') {
           alert('An error occurred while unclaiming the reward');
         } else {

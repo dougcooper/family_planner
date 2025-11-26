@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Modal, ScrollView 
 import { Database } from '@nozbe/watermelondb';
 import { User } from '../../model/models';
 import { createTask } from '../../logic/task';
+import log from '../../utils/logger';
 
 interface CreateTaskModalProps {
   visible: boolean;
@@ -49,8 +50,7 @@ export function CreateTaskModal({ visible, onClose, database, currentUserId, fam
       setAssigneeId('');
       onClose();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to create task:', error);
+      log.error('Failed to create task:', error);
       alert('Failed to create task');
     }
   };

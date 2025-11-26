@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Switch, Modal } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
 import { ListItem, List, User } from '../../model/models';
+import log from '../../utils/logger';
 
 interface GenericListProps {
   database: Database;
@@ -48,8 +49,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
       });
       setIsEditingTitle(false);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error updating list title:', error);
+      log.error('Error updating list title:', error);
       alert('Failed to update list title');
     }
   };
@@ -69,8 +69,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
       setEditingItemId(null);
       await loadItems();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error updating item text:', error);
+      log.error('Error updating item text:', error);
       alert('Failed to update item text');
     }
   };
@@ -85,8 +84,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
       const allUsers = await database.get<User>('users').query().fetch();
       setUsers(allUsers);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error loading users:', error);
+      log.error('Error loading users:', error);
     }
   };
 
@@ -103,8 +101,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
       
       setItems(listItems);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error loading list items:', error);
+      log.error('Error loading list items:', error);
     } finally {
       setLoading(false);
     }
@@ -125,8 +122,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
       setNewItemName('');
       await loadItems();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error adding list item:', error);
+      log.error('Error adding list item:', error);
       alert('Failed to add item');
     }
   };
@@ -141,8 +137,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
 
       await loadItems();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error toggling item:', error);
+      log.error('Error toggling item:', error);
       alert('Failed to update item');
     }
   };
@@ -155,8 +150,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
 
       await loadItems();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error deleting item:', error);
+      log.error('Error deleting item:', error);
       alert('Failed to delete item');
     }
   };
@@ -177,8 +171,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
 
       await loadItems();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error clearing completed items:', error);
+      log.error('Error clearing completed items:', error);
       alert('Failed to clear completed items');
     }
   };
@@ -197,8 +190,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
       setSelectedItemForAssign(null);
       await loadItems();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error assigning user:', error);
+      log.error('Error assigning user:', error);
       alert('Failed to assign user');
     }
   };

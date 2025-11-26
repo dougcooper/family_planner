@@ -4,6 +4,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { Database, Q } from '@nozbe/watermelondb';
 import { Event, User } from '../../model/models';
 import { updateEvent, deleteEvent, deleteRecurringEvent, buildRecurrenceRule, type RecurrenceOptions } from '../../logic/events';
+import log from '../../utils/logger';
 
 interface EditEventModalProps {
   visible: boolean;
@@ -148,8 +149,7 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
       });
       onClose();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to update event:', error);
+      log.error('Failed to update event:', error);
       alert('Failed to update event');
     }
   };
@@ -190,8 +190,7 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
           await deleteEvent(database, event.id);
           onClose();
         } catch (error) {
-          // eslint-disable-next-line no-console
-          console.error('Failed to delete event:', error);
+          log.error('Failed to delete event:', error);
           alert('Failed to delete event');
         }
       }
@@ -209,8 +208,7 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
                 await deleteEvent(database, event.id);
                 onClose();
               } catch (error) {
-                // eslint-disable-next-line no-console
-                console.error('Failed to delete event:', error);
+                log.error('Failed to delete event:', error);
                 alert('Failed to delete event');
               }
             }
@@ -227,8 +225,7 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
       onClose();
       setDeleteMode(false);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to delete event:', error);
+      log.error('Failed to delete event:', error);
       alert('Failed to delete event');
     }
   };

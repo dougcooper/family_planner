@@ -1,5 +1,6 @@
 import { Database, Q } from '@nozbe/watermelondb';
 import { ListItem, List, MealPlan, MealLabel } from '../model/models';
+import log from '../utils/logger';
 
 /**
  * Meal-to-grocery-list logic
@@ -49,8 +50,7 @@ export async function addMealToGroceryList(
           ingredients = recipe.ingredients;
         }
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn('Failed to fetch recipe for meal, falling back to description parsing', e);
+        log.warn('Failed to fetch recipe for meal, falling back to description parsing', e);
       }
     }
 
@@ -118,8 +118,7 @@ export async function addMealToGroceryList(
       itemsAdded,
     };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error adding meal to grocery list:', error);
+    log.error('Error adding meal to grocery list:', error);
     return {
       success: false,
       itemsAdded: 0,
@@ -189,8 +188,7 @@ export async function bulkAddToGroceryList(
       itemsAdded,
     };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error bulk adding to grocery list:', error);
+    log.error('Error bulk adding to grocery list:', error);
     return {
       success: false,
       itemsAdded: 0,
@@ -218,7 +216,6 @@ export async function ensureDefaultMealLabels(database: Database, familyId: stri
       });
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error ensuring default meal labels:', error);
+    log.error('Error ensuring default meal labels:', error);
   }
 }

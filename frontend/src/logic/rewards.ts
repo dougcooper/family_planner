@@ -1,5 +1,6 @@
 import { Database } from '@nozbe/watermelondb';
 import { Reward, User, RewardClaim } from '../model/models';
+import log from '../utils/logger';
 
 /**
  * Reward redemption logic - handles point deduction and reward claiming
@@ -49,8 +50,7 @@ export async function redeemReward(
       claimId,
     };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error redeeming reward:', error);
+    log.error('Error redeeming reward:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -104,8 +104,7 @@ export async function unclaimReward(
       success: true,
     };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error unclaiming reward:', error);
+    log.error('Error unclaiming reward:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -121,8 +120,7 @@ export async function getUserPointsBalance(
     const user = await database.get<User>('users').find(userId);
     return user.pointsBalance;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error getting user points balance:', error);
+    log.error('Error getting user points balance:', error);
     return 0;
   }
 }
@@ -137,8 +135,7 @@ export async function canAffordReward(
     const reward = await database.get<Reward>('rewards').find(rewardId);
     return user.pointsBalance >= reward.cost;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error checking if user can afford reward:', error);
+    log.error('Error checking if user can afford reward:', error);
     return false;
   }
 }

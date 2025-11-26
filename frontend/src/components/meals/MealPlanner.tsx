@@ -8,6 +8,7 @@ import { ensureDefaultMealLabels } from '../../logic/meals';
 import { getStartOfWeek, formatDateToYYYYMMDD } from '../../logic/date';
 import { RecipeManager } from './RecipeManager';
 import { RecipeDetail } from './RecipeDetail';
+import log from '../../utils/logger';
 
 interface MealPlannerProps {
   database: Database;
@@ -85,8 +86,7 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
 
       setWeekDays(days);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error loading week meals:', error);
+      log.error('Error loading week meals:', error);
     } finally {
       setLoading(false);
     }
@@ -104,8 +104,7 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
       setManagingSlot(prev => prev ? { ...prev, meals: updatedMeals } : null);
       await loadWeekMeals();
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error("Error refreshing slot", e);
+      log.error("Error refreshing slot", e);
     }
   };
 
@@ -130,8 +129,7 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
       setIsAddingNote(false);
       await refreshSlot();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error adding note:', error);
+      log.error('Error adding note:', error);
       Alert.alert('Error', 'Failed to add note');
     }
   };
@@ -151,8 +149,7 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
       setRecipeManagerVisible(false);
       await refreshSlot();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error adding recipe:', error);
+      log.error('Error adding recipe:', error);
       Alert.alert('Error', 'Failed to add recipe');
     }
   };
@@ -164,8 +161,7 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
       });
       await refreshSlot();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error deleting item:', error);
+      log.error('Error deleting item:', error);
       Alert.alert('Error', 'Failed to delete item');
     }
   };
@@ -176,8 +172,7 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
         const recipe = await meal.recipe.fetch();
         setViewingRecipe(recipe);
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching recipe details:', error);
+        log.error('Error fetching recipe details:', error);
         Alert.alert('Error', 'Failed to load recipe details');
       }
     }

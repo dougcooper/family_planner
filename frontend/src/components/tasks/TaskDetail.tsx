@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert,
 import { Task, User } from '../../model/models';
 import { Database } from '@nozbe/watermelondb';
 import { markTaskPendingReview, resetTask, approveTask, deleteTask } from '../../logic/task';
+import log from '../../utils/logger';
 
 interface TaskDetailProps {
   task: Task;
@@ -61,8 +62,7 @@ export function TaskDetail({ task, database, currentUserId, currentUserRole, onC
       await markTaskPendingReview(database, task.id);
       onClose();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error marking task complete:', error);
+      log.error('Error marking task complete:', error);
       alert(error instanceof Error ? error.message : 'Failed to mark task complete');
     }
   };
@@ -71,8 +71,7 @@ export function TaskDetail({ task, database, currentUserId, currentUserRole, onC
     try {
       await resetTask(database, task.id);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error resetting task:', error);
+      log.error('Error resetting task:', error);
       alert(error instanceof Error ? error.message : 'Failed to reset task');
     }
   };
@@ -82,8 +81,7 @@ export function TaskDetail({ task, database, currentUserId, currentUserRole, onC
       await approveTask(database, task.id);
       onClose();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error approving task:', error);
+      log.error('Error approving task:', error);
       alert(error instanceof Error ? error.message : 'Failed to approve task');
     }
   };
@@ -94,8 +92,7 @@ export function TaskDetail({ task, database, currentUserId, currentUserRole, onC
         deleteTask(database, task.id)
           .then(() => onClose())
           .catch((error) => {
-            // eslint-disable-next-line no-console
-            console.error('Error deleting task:', error);
+            log.error('Error deleting task:', error);
             alert('Failed to delete task');
           });
       }
@@ -113,8 +110,7 @@ export function TaskDetail({ task, database, currentUserId, currentUserRole, onC
                 await deleteTask(database, task.id);
                 onClose();
               } catch (error) {
-                // eslint-disable-next-line no-console
-                console.error('Error deleting task:', error);
+                log.error('Error deleting task:', error);
                 alert('Failed to delete task');
               }
             },

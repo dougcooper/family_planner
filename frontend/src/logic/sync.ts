@@ -1,70 +1,67 @@
 import { synchronize } from '@nozbe/watermelondb/sync';
 import { database } from '../model/database';
 import { authProvider } from './auth';
+import log from '../utils/logger';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
 let isSyncing = false;
 
-export async function syncDatabase(): Promise<void> {
+export async function syncDatabase() {
   if (isSyncing) {
-    // eslint-disable-next-line no-console
-    console.log('Sync already in progress, skipping');
+    log.info('Sync already in progress, skipping');
     return;
   }
 
-  const token = authProvider.getToken();
-  
-  if (!token) {
-    throw new Error('Not authenticated');
-  }
-
+  isSyncing = true;
   try {
-    isSyncing = true;
     await synchronize({
       database,
-      pullChanges: async ({ lastPulledAt, schemaVersion }) => {
-        const response = await fetch(
-          `${API_URL}/sync/pull?last_pulled_at=${lastPulledAt || 0}&schema_version=${schemaVersion}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Pull sync failed: ${response.status} ${errorText}`);
+      pullChanges: async ({ lastPulledAt, schemaVersion, migration }) => {
+        log.info('Pulling changes...', { lastPulledAt, schemaVersion, migration });
+        const token = await authProvider.getToken();
+        if (!token) {
+          throw new Error('No auth token available');
         }
 
-        const { changes, timestamp } = await response.json();
-        
-        return {
-          changes,
-          timestamp,
-        };
-      },
-      pushChanges: async ({ changes, lastPulledAt }) => {
-        const response = await fetch(`${API_URL}/sync/push`, {
-          method: 'POST',
+        const response = await fetch(`${API_URL}/api/sync/pull?last_pulled_at=${lastPulledAt || 0}&schema_version=${schemaVersion}&migration=${JSON.stringify(migration)}`, {
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            changes,
-            last_pulled_at: lastPulledAt,
-          }),
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Push sync failed: ${response.status} ${errorText}`);
+          throw new Error(await response.text());
+        }
+
+        const { changes, timestamp } = await response.json();
+        return { changes, timestamp };
+      },
+      pushChanges: async ({ changes, lastPulledAt }) => {
+        log.info('Pushing changes...', { changes, lastPulledAt });
+        const token = await authProvider.getToken();
+        if (!token) {
+          throw new Error('No auth token available');
+        }
+
+        const response = await fetch(`${API_URL}/api/sync/push?last_pulled_at=${lastPulledAt || 0}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(changes),
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
         }
       },
-      // migrationsEnabledAtVersion: 1,
+      migrationsEnabledAtVersion: 1,
     });
+    log.info('Sync finished successfully');
+  } catch (error) {
+    log.error('Sync failed:', error);
   } finally {
     isSyncing = false;
   }
@@ -75,8 +72,7 @@ export async function autoSync(): Promise<void> {
   try {
     await syncDatabase();
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Auto-sync failed:', error);
+    log.error('Auto-sync failed:', error);
     // Don't throw - let the app continue with local data
   }
 }

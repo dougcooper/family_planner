@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ScrollVi
 import { Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Recipe } from '../../model/models';
+import log from '../../utils/logger';
 
 interface RecipeManagerProps {
   database: Database;
@@ -67,8 +68,7 @@ function RecipeManagerComponent({ database, familyId, recipes, onSelectRecipe, o
       });
       resetForm();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error saving recipe:', error);
+      log.error('Error saving recipe:', error);
       alert('Failed to save recipe');
     }
   };
@@ -80,8 +80,7 @@ function RecipeManagerComponent({ database, familyId, recipes, onSelectRecipe, o
           await recipe.markAsDeleted();
         });
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error deleting recipe:', error);
+        log.error('Error deleting recipe:', error);
         if (Platform.OS === 'web') {
           alert('Failed to delete recipe');
         } else {

@@ -4,6 +4,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { Database, Q } from '@nozbe/watermelondb';
 import { createEvent, buildRecurrenceRule, type RecurrenceOptions } from '../../logic/events';
 import { User } from '../../model/models';
+import log from '../../utils/logger';
 
 interface CreateEventModalProps {
   visible: boolean;
@@ -133,8 +134,7 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
       setSelectedDays(['MO', 'WE', 'FR']);
       onClose();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to create event:', error);
+      log.error('Failed to create event:', error);
       alert('Failed to create event');
     }
   };
