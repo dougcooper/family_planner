@@ -140,6 +140,7 @@ export const lists = pgTable('lists', {
   familyId: uuid('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }).notNull(),
   type: listTypeEnum('type').notNull().default('OTHER'),
+  isArchived: boolean('is_archived').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

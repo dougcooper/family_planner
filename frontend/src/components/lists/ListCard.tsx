@@ -9,9 +9,11 @@ interface ListCardProps {
   items: ListItem[];
   onPress: () => void;
   onDelete: () => void;
+  onArchive: () => void;
+  onUnarchive: () => void;
 }
 
-const ListCard = ({ list, items, onPress, onDelete }: ListCardProps) => {
+const ListCard = ({ list, items, onPress, onDelete, onArchive, onUnarchive }: ListCardProps) => {
   const totalCount = items.length;
   const completedCount = items.filter(i => i.isChecked).length;
   const progress = totalCount > 0 ? completedCount / totalCount : 0;
@@ -37,19 +39,60 @@ const ListCard = ({ list, items, onPress, onDelete }: ListCardProps) => {
     }
   };
 
+  const handleArchive = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Are you sure you want to archive "${list.name}"?`)) {
+        onArchive();
+      }
+    } else {
+      Alert.alert(
+        'Archive List',
+        `Are you sure you want to archive "${list.name}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Archive', 
+            onPress: onArchive 
+          },
+        ]
+      );
+    }
+  };
+
   return (
     <View style={styles.card}>
       <TouchableOpacity style={styles.mainContent} onPress={onPress}>
         <View style={styles.header}>
           <Text style={styles.title}>{list.name}</Text>
           {list.type !== 'GROCERY' && (
-            <TouchableOpacity 
-              onPress={handleDelete}
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              style={styles.headerDeleteButton}
-            >
-               <Text style={styles.deleteText}>✕</Text>
-            </TouchableOpacity>
+            <View style={styles.actions}>
+              {!list.isArchived ? (
+                <TouchableOpacity 
+                  onPress={handleArchive}
+                  hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                  style={styles.actionButton}
+                >
+                  <Text style={styles.actionText}>Archive</Text>
+                </TouchableOpacity>
+              ) : (
+                <>
+                  <TouchableOpacity 
+                    onPress={onUnarchive}
+                    hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                    style={styles.actionButton}
+                  >
+                    <Text style={styles.actionText}>Unarchive</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={handleDelete}
+                    hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                    style={styles.headerDeleteButton}
+                  >
+                    <Text style={[styles.actionText, styles.deleteText]}>Delete</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
           )}
         </View>
         
@@ -97,10 +140,21 @@ const styles = StyleSheet.create({
     padding: 5,
     marginLeft: 10,
   },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    padding: 5,
+    marginLeft: 10,
+  },
+  actionText: {
+    fontSize: 14,
+    color: '#4A90E2',
+    fontWeight: '600',
+  },
   deleteText: {
-    fontSize: 18,
-    color: '#999',
-    fontWeight: 'bold',
+    color: '#EF4444',
   },
   stats: {
     marginBottom: 8,

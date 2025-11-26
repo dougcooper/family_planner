@@ -194,6 +194,7 @@ export class List extends Model implements IList {
   @field('family_id') familyId!: string;
   @field('name') name!: string;
   @field('type') type!: ListType;
+  @field('is_archived') isArchived!: boolean;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
 

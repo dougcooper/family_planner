@@ -5,161 +5,6 @@ import { withObservables } from '@nozbe/watermelondb/react';
 import { List, GroceryItem, ListItem } from '../../model/models';
 import ListCard from './ListCard';
 
-interface AllListsProps {
-  database: Database;
-  familyId: string;
-  lists: List[];
-  onSelectList: (list: List) => void;
-}
-
-function AllListsComponent({ database, familyId, lists, onSelectList }: AllListsProps) {
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [newListName, setNewListName] = useState('');
-
-  useEffect(() => {
-    checkAndCreateGroceryList();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lists]);
-
-  const checkAndCreateGroceryList = async () => {
-    const hasGroceryList = lists.some(l => l.type === 'GROCERY');
-    if (!hasGroceryList) {
-      await createDefaultGroceryList();
-    }
-  };
-
-  const createDefaultGroceryList = async () => {
-    try {
-      await database.write(async () => {
-        // Double check inside write block to avoid race conditions
-        const existing = await database.get<List>('lists').query(
-          Q.where('family_id', familyId),
-          Q.where('type', 'GROCERY')
-        ).fetch();
-        
-        if (existing.length > 0) return;
-
-        const newList = await database.get<List>('lists').create((list) => {
-          list.familyId = familyId;
-          list.name = 'Grocery List';
-          list.type = 'GROCERY';
-        });
-
-        // Migrate existing grocery items
-        const oldItems = await database
-          .get<GroceryItem>('grocery_items')
-          .query(Q.where('family_id', familyId))
-          .fetch();
-        
-        for (const oldItem of oldItems) {
-          await database.get<ListItem>('list_items').create((newItem) => {
-            newItem.listId = newList.id;
-            newItem.text = oldItem.name;
-            newItem.isChecked = oldItem.isChecked;
-          });
-        }
-      });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error creating default list:', error);
-    }
-  };
-
-  const handleCreateList = async () => {
-    if (!newListName.trim()) return;
-
-    try {
-      await database.write(async () => {
-        await database.get<List>('lists').create((list) => {
-          list.familyId = familyId;
-          list.name = newListName.trim();
-          list.type = 'TODO';
-        });
-      });
-
-      setNewListName('');
-      setIsModalVisible(false);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error creating list:', error);
-      alert('Failed to create list');
-    }
-  };
-
-  const handleDeleteList = async (list: List) => {
-    try {
-      await database.write(async () => {
-        await list.markAsDeleted();
-      });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error deleting list:', error);
-      alert('Failed to delete list');
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Lists</Text>
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={() => setIsModalVisible(true)}
-        >
-          <Text style={styles.createButtonText}>+ New List</Text>
-        </TouchableOpacity>
-      </View>
-
-      <FlatList
-        data={lists}
-        renderItem={({ item }) => (
-          <ListCard
-            list={item}
-            onPress={() => onSelectList(item)}
-            onDelete={() => handleDeleteList(item)}
-          />
-        )}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-      />
-
-      <Modal
-        visible={isModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Create New List</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="List Name"
-              value={newListName}
-              onChangeText={setNewListName}
-              autoFocus
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setIsModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton]}
-                onPress={handleCreateList}
-              >
-                <Text style={styles.saveButtonText}>Create</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -292,6 +137,237 @@ const styles = StyleSheet.create({
   },
 });
 
-export const AllLists = withObservables(['familyId'], ({ database, familyId }: AllListsProps) => ({
-  lists: database.get<List>('lists').query(Q.where('family_id', familyId)).observe(),
-}))(AllListsComponent);
+interface FilteredListsProps {
+  lists: List[];
+  onSelectList: (list: List) => void;
+  onDeleteList: (list: List) => void;
+  onArchiveList: (list: List) => void;
+  onUnarchiveList: (list: List) => void;
+}
+
+const FilteredListsComponent = ({ lists, onSelectList, onDeleteList, onArchiveList, onUnarchiveList }: FilteredListsProps) => {
+  return (
+    <FlatList
+      data={lists}
+      renderItem={({ item }) => (
+        <ListCard
+          list={item}
+          onPress={() => onSelectList(item)}
+          onDelete={() => onDeleteList(item)}
+          onArchive={() => onArchiveList(item)}
+          onUnarchive={() => onUnarchiveList(item)}
+        />
+      )}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={styles.listContainer}
+    />
+  );
+};
+
+const FilteredLists = withObservables(['familyId', 'viewArchived'], ({ database, familyId, viewArchived }: { database: Database, familyId: string, viewArchived: boolean }) => ({
+  lists: database.get<List>('lists').query(
+    Q.where('family_id', familyId),
+    Q.where('is_archived', viewArchived)
+  ).observe(),
+}))(FilteredListsComponent);
+
+interface AllListsProps {
+  database: Database;
+  familyId: string;
+  onSelectList: (list: List) => void;
+}
+
+export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [newListName, setNewListName] = useState('');
+  const [viewArchived, setViewArchived] = useState(false);
+
+  useEffect(() => {
+    checkAndCreateGroceryList();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const checkAndCreateGroceryList = async () => {
+    try {
+      const existing = await database.get<List>('lists').query(
+        Q.where('family_id', familyId),
+        Q.where('type', 'GROCERY')
+      ).fetch();
+      
+      if (existing.length === 0) {
+        await createDefaultGroceryList();
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error checking grocery list:', error);
+    }
+  };
+
+  const createDefaultGroceryList = async () => {
+    try {
+      await database.write(async () => {
+        // Double check inside write block to avoid race conditions
+        const existing = await database.get<List>('lists').query(
+          Q.where('family_id', familyId),
+          Q.where('type', 'GROCERY')
+        ).fetch();
+        
+        if (existing.length > 0) return;
+
+        const newList = await database.get<List>('lists').create((list) => {
+          list.familyId = familyId;
+          list.name = 'Grocery List';
+          list.type = 'GROCERY';
+        });
+
+        // Migrate existing grocery items
+        const oldItems = await database
+          .get<GroceryItem>('grocery_items')
+          .query(Q.where('family_id', familyId))
+          .fetch();
+        
+        for (const oldItem of oldItems) {
+          await database.get<ListItem>('list_items').create((newItem) => {
+            newItem.listId = newList.id;
+            newItem.text = oldItem.name;
+            newItem.isChecked = oldItem.isChecked;
+          });
+        }
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error creating default list:', error);
+    }
+  };
+
+  const handleCreateList = async () => {
+    if (!newListName.trim()) return;
+
+    try {
+      await database.write(async () => {
+        await database.get<List>('lists').create((list) => {
+          list.familyId = familyId;
+          list.name = newListName.trim();
+          list.type = 'TODO';
+        });
+      });
+
+      setNewListName('');
+      setIsModalVisible(false);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error creating list:', error);
+      alert('Failed to create list');
+    }
+  };
+
+  const handleDeleteList = async (list: List) => {
+    try {
+      await database.write(async () => {
+        await list.markAsDeleted();
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error deleting list:', error);
+      alert('Failed to delete list');
+    }
+  };
+
+  const handleArchiveList = async (list: List) => {
+    try {
+      await database.write(async () => {
+        await list.update(l => {
+            l.isArchived = true;
+        });
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error archiving list:', error);
+      alert('Failed to archive list');
+    }
+  };
+
+  const handleUnarchiveList = async (list: List) => {
+    try {
+      await database.write(async () => {
+        await list.update(l => {
+            l.isArchived = false;
+        });
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error unarchiving list:', error);
+      alert('Failed to unarchive list');
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>{viewArchived ? 'Archived Lists' : 'My Lists'}</Text>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <TouchableOpacity
+            style={[styles.createButton, { backgroundColor: viewArchived ? '#4A90E2' : '#E2E8F0' }]}
+            onPress={() => setViewArchived(!viewArchived)}
+          >
+            <Text style={[styles.createButtonText, { color: viewArchived ? '#FFFFFF' : '#475569' }]}>
+              {viewArchived ? 'View Active' : 'View Archived'}
+            </Text>
+          </TouchableOpacity>
+          {!viewArchived && (
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={() => setIsModalVisible(true)}
+            >
+              <Text style={styles.createButtonText}>+ New List</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      <FilteredLists
+        database={database}
+        familyId={familyId}
+        viewArchived={viewArchived}
+        onSelectList={onSelectList}
+        onDeleteList={handleDeleteList}
+        onArchiveList={handleArchiveList}
+        onUnarchiveList={handleUnarchiveList}
+      />
+
+      <Modal
+        visible={isModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Create New List</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="List Name"
+              value={newListName}
+              onChangeText={setNewListName}
+              autoFocus
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setIsModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={handleCreateList}
+              >
+                <Text style={styles.saveButtonText}>Create</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}

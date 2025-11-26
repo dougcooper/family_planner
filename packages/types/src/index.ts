@@ -132,6 +132,7 @@ export interface List {
   familyId: string;
   name: string;
   type: ListType;
+  isArchived: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

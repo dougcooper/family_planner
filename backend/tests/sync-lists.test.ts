@@ -37,6 +37,7 @@ vi.mock('../src/db/schema.js', () => ({
   lists: { id: 'id', familyId: 'familyId', updatedAt: 'updatedAt' },
   listItems: { id: 'id', listId: 'listId', text: 'text', isChecked: 'isChecked', createdAt: 'createdAt', updatedAt: 'updatedAt' },
   recipes: { familyId: 'familyId', updatedAt: 'updatedAt' },
+  mealLabels: { familyId: 'familyId', updatedAt: 'updatedAt' },
 }));
 
 vi.mock('drizzle-orm', () => ({
@@ -76,7 +77,8 @@ describe('Sync Lists', () => {
       .mockResolvedValueOnce([]) // rewardClaims
       .mockResolvedValueOnce([{ id: 'list-1', name: 'My List', createdAt: new Date(), updatedAt: new Date() }]) // lists
       .mockResolvedValueOnce([{ id: 'item-1', listId: 'list-1', text: 'Item 1', createdAt: new Date(), updatedAt: new Date() }]) // listItems
-      .mockResolvedValueOnce([]); // recipes
+      .mockResolvedValueOnce([]) // recipes
+      .mockResolvedValueOnce([]); // mealLabels
 
     // @ts-expect-error - Mocking request/reply objects partially
     await pullChanges(req, reply);

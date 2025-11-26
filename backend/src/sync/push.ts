@@ -393,6 +393,7 @@ export async function pushChanges(
             const update: any = { updatedAt: new Date() };
             if ('name' in record) update.name = record.name;
             if ('type' in record) update.type = record.type;
+            if ('is_archived' in record) update.isArchived = record.is_archived;
             await db.update(lists).set(update).where(eq(lists.id, record.id));
             break;
           }
