@@ -80,6 +80,7 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
   return (
     <DashboardLayout>
       <View style={styles.container}>
+        <Text style={styles.pageTitle}>Events</Text>
         <FamilyAssignmentSummary
           users={users}
           counts={eventCounts}
@@ -88,7 +89,6 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
           onUserPress={handleUserPress}
         />
         <View style={styles.headerContainer}>
-          <Text style={styles.header}>Events</Text>
           {currentUser?.role === 'PARENT' && (
             <TouchableOpacity onPress={() => setIsCreateModalVisible(true)} style={styles.addButton}>
               <Text style={styles.addButtonText}>+ New Event</Text>
@@ -131,9 +131,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 16,
+  },
   headerContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     padding: 16,
     backgroundColor: '#FFFFFF',
