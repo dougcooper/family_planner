@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../db/index.js';
-import { users, notifications, tasks, events, mealPlans, groceryItems, rewards, rewardClaims, families, lists, listItems, recipes } from '../db/schema.js';
+import { users, notifications, tasks, events, mealPlans, groceryItems, rewards, rewardClaims, families, lists, listItems, recipes, mealLabels } from '../db/schema.js';
 import { eq, inArray } from 'drizzle-orm';
 import { generateEventInstances, parseRecurrenceRule, DEFAULT_GENERATION_DAYS } from '../services/recurring-events.js';
 import { randomUUID } from 'crypto';
@@ -177,6 +177,10 @@ export async function pushChanges(
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               mealType: (record as any).meal_type,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              mealLabelId: (record as any).meal_label_id,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              recipeId: (record as any).recipe_id,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               date: (record as any).date,
             });
             break;
@@ -238,6 +242,19 @@ export async function pushChanges(
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               ...(record as any),
               familyId,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              prepTime: (record as any).prep_time,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              cookTime: (record as any).cook_time,
+            });
+            break;
+          case 'meal_labels':
+            await db.insert(mealLabels).values({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...(record as any),
+              familyId,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              sortOrder: (record as any).sort_order,
             });
             break;
         }
@@ -337,6 +354,8 @@ export async function pushChanges(
             const update: any = { updatedAt: new Date() };
             if ('date' in record) update.date = record.date;
             if ('meal_type' in record) update.mealType = record.meal_type;
+            if ('meal_label_id' in record) update.mealLabelId = record.meal_label_id;
+            if ('recipe_id' in record) update.recipeId = record.recipe_id;
             if ('description' in record) update.description = record.description;
             await db.update(mealPlans).set(update).where(eq(mealPlans.id, record.id));
             break;
@@ -394,6 +413,14 @@ export async function pushChanges(
             await db.update(recipes).set(update).where(eq(recipes.id, record.id));
             break;
           }
+          case 'meal_labels': {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const update: any = { updatedAt: new Date() };
+            if ('name' in record) update.name = record.name;
+            if ('sort_order' in record) update.sortOrder = record.sort_order;
+            await db.update(mealLabels).set(update).where(eq(mealLabels.id, record.id));
+            break;
+          }
         }
       }
 
@@ -435,6 +462,9 @@ export async function pushChanges(
             break;
           case 'recipes':
             await db.delete(recipes).where(inArray(recipes.id, tableChanges.deleted));
+            break;
+          case 'meal_labels':
+            await db.delete(mealLabels).where(inArray(mealLabels.id, tableChanges.deleted));
             break;
         }
       }

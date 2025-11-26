@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal,
 import { Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { MealPlan, Recipe, MealLabel } from '../../model/models';
-import { addMealToGroceryList, ensureDefaultMealLabels } from '../../logic/meals';
+import { ensureDefaultMealLabels } from '../../logic/meals';
 import { getStartOfWeek, formatDateToYYYYMMDD } from '../../logic/date';
 import { RecipeManager } from './RecipeManager';
 import { RecipeDetail } from './RecipeDetail';
@@ -16,19 +16,19 @@ interface MealPlannerProps {
 
 interface DayMeals {
   date: string;
-  meals: Record<string, MealPlan>; // Map labelId -> MealPlan
+  meals: Record<string, MealPlan[]>; // Map labelId -> MealPlan[]
 }
 
 function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerProps) {
   const [weekDays, setWeekDays] = useState<DayMeals[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editModalVisible, setEditModalVisible] = useState(false);
   const [recipeManagerVisible, setRecipeManagerVisible] = useState(false);
-  const [selectingRecipeForMeal, setSelectingRecipeForMeal] = useState(false);
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
-  const [editingMeal, setEditingMeal] = useState<{ date: string; labelId: string; labelName: string } | null>(null);
-  const [mealDescription, setMealDescription] = useState('');
+  
+  // Slot Management State
+  const [managingSlot, setManagingSlot] = useState<{ date: string; labelId: string; labelName: string; meals: MealPlan[] } | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const [isAddingNote, setIsAddingNote] = useState(false);
 
   useEffect(() => {
     ensureDefaultMealLabels(database, familyId);
@@ -60,10 +60,18 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
           )
           .fetch();
 
-        const mealsMap: Record<string, MealPlan> = {};
+        const mealsMap: Record<string, MealPlan[]> = {};
+        // Initialize arrays for all labels
+        mealLabels.forEach(label => {
+          mealsMap[label.id] = [];
+        });
+
         for (const meal of dayMeals) {
           if (meal.mealLabelId) {
-            mealsMap[meal.mealLabelId] = meal;
+            if (!mealsMap[meal.mealLabelId]) {
+              mealsMap[meal.mealLabelId] = [];
+            }
+            mealsMap[meal.mealLabelId].push(meal);
           }
         }
 
@@ -79,105 +87,81 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
     }
   };
 
-  const handleEditMeal = async (date: string, label: MealLabel, existing?: MealPlan) => {
-    setEditingMeal({ date, labelId: label.id, labelName: label.name });
-    setMealDescription(existing?.description || '');
-    
-    if (existing?.recipeId) {
-      try {
-        const recipe = await existing.recipe.fetch();
-        setSelectedRecipe(recipe);
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching recipe:', e);
-        setSelectedRecipe(null);
-      }
-    } else {
-      setSelectedRecipe(null);
+  const refreshSlot = async () => {
+    if (!managingSlot) return;
+    try {
+      const updatedMeals = await database.get<MealPlan>('meal_plans').query(
+        Q.where('family_id', familyId),
+        Q.where('date', managingSlot.date),
+        Q.where('meal_label_id', managingSlot.labelId),
+        Q.sortBy('created_at', Q.asc)
+      ).fetch();
+      setManagingSlot(prev => prev ? { ...prev, meals: updatedMeals } : null);
+      await loadWeekMeals();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("Error refreshing slot", e);
     }
-
-    setEditModalVisible(true);
   };
 
-  const handleSaveMeal = async () => {
-    if (!editingMeal || !mealDescription.trim()) return;
+  const handleManageSlot = (date: string, label: MealLabel, meals: MealPlan[]) => {
+    setManagingSlot({ date, labelId: label.id, labelName: label.name, meals });
+    setIsAddingNote(false);
+    setNoteText('');
+  };
 
+  const handleAddNote = async () => {
+    if (!managingSlot || !noteText.trim()) return;
     try {
-      const existing = await database
-        .get<MealPlan>('meal_plans')
-        .query(
-          Q.where('family_id', familyId),
-          Q.where('date', editingMeal.date),
-          Q.where('meal_label_id', editingMeal.labelId),
-          Q.sortBy('updated_at', Q.desc)
-        )
-        .fetch();
-
       await database.write(async () => {
-        if (existing.length > 0) {
-          // Update the most recent existing meal
-          await existing[0].update((meal) => {
-            meal.description = mealDescription.trim();
-            meal.recipeId = selectedRecipe?.id;
-          });
-          
-          // Clean up duplicates if any
-          if (existing.length > 1) {
-            for (let i = 1; i < existing.length; i++) {
-              await existing[i].markAsDeleted();
-            }
-          }
-        } else {
-          // Create new meal
-          await database.get<MealPlan>('meal_plans').create((meal) => {
-            meal.familyId = familyId;
-            meal.date = editingMeal.date;
-            meal.mealLabelId = editingMeal.labelId;
-            meal.description = mealDescription.trim();
-            meal.recipeId = selectedRecipe?.id;
-          });
-        }
+        await database.get<MealPlan>('meal_plans').create((meal) => {
+          meal.familyId = familyId;
+          meal.date = managingSlot.date;
+          meal.mealLabelId = managingSlot.labelId;
+          meal.description = noteText.trim();
+        });
       });
-
-      setEditModalVisible(false);
-      setEditingMeal(null);
-      setMealDescription('');
-      setSelectedRecipe(null);
-      await loadWeekMeals();
+      setNoteText('');
+      setIsAddingNote(false);
+      await refreshSlot();
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Error saving meal:', error);
-      alert('Failed to save meal');
+      console.error('Error adding note:', error);
+      Alert.alert('Error', 'Failed to add note');
     }
   };
 
-  const handleDeleteMeal = async (meal: MealPlan) => {
-    const deleteAction = async () => {
-      try {
-        await database.write(async () => {
-          await meal.markAsDeleted();
+  const handleAddRecipe = async (recipe: Recipe) => {
+    if (!managingSlot) return;
+    try {
+      await database.write(async () => {
+        await database.get<MealPlan>('meal_plans').create((meal) => {
+          meal.familyId = familyId;
+          meal.date = managingSlot.date;
+          meal.mealLabelId = managingSlot.labelId;
+          meal.description = recipe.name; // Use recipe name as description fallback/display
+          meal.recipeId = recipe.id;
         });
-        await loadWeekMeals();
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error deleting meal:', error);
-        alert('Failed to delete meal');
-      }
-    };
+      });
+      setRecipeManagerVisible(false);
+      await refreshSlot();
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error adding recipe:', error);
+      Alert.alert('Error', 'Failed to add recipe');
+    }
+  };
 
-    if (Platform.OS === 'web') {
-      if (confirm(`Delete "${meal.description}"?`)) {
-        await deleteAction();
-      }
-    } else {
-      Alert.alert(
-        'Delete Meal',
-        `Delete "${meal.description}"?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete', style: 'destructive', onPress: deleteAction }
-        ]
-      );
+  const handleDeleteItem = async (meal: MealPlan) => {
+    try {
+      await database.write(async () => {
+        await meal.markAsDeleted();
+      });
+      await refreshSlot();
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error deleting item:', error);
+      Alert.alert('Error', 'Failed to delete item');
     }
   };
 
@@ -189,23 +173,8 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error fetching recipe details:', error);
-        alert('Failed to load recipe details');
+        Alert.alert('Error', 'Failed to load recipe details');
       }
-    }
-  };
-
-  const handleAddToGroceryList = async (meal: MealPlan) => {
-    try {
-      const result = await addMealToGroceryList(database, familyId, meal);
-      if (result.success) {
-        alert(`Added ${result.itemsAdded} item(s) to grocery list!`);
-      } else {
-        alert(`Failed to add to grocery list: ${result.error}`);
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error adding meal to grocery list:', error);
-      alert('Failed to add to grocery list');
     }
   };
 
@@ -219,47 +188,29 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const renderMealSlot = (day: DayMeals, label: MealLabel, meal?: MealPlan) => {
+  const renderMealSlot = (day: DayMeals, label: MealLabel, meals: MealPlan[] = []) => {
     return (
       <View key={`${day.date}-${label.id}`} style={styles.mealSlot}>
-        {meal ? (
-          <View style={styles.mealCard}>
-            <Text style={styles.mealText} numberOfLines={2}>
-              {meal.recipeId ? '📖 ' : ''}{meal.description}
-            </Text>
-            <View style={styles.mealActions}>
-              {meal.recipeId && (
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => handleViewRecipe(meal)}
-                >
-                  <Text style={styles.iconButtonText}>📖</Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => handleEditMeal(day.date, label, meal)}
-              >
-                <Text style={styles.iconButtonText}>✏️</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => handleAddToGroceryList(meal)}
-              >
-                <Text style={styles.iconButtonText}>🛒</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => handleDeleteMeal(meal)}
-              >
-                <Text style={styles.iconButtonText}>🗑️</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+        {meals.length > 0 ? (
+          <TouchableOpacity 
+            style={styles.mealCard}
+            onPress={() => handleManageSlot(day.date, label, meals)}
+          >
+            {meals.map((meal) => (
+              <View key={meal.id} style={styles.mealItemRow}>
+                <Text style={styles.mealText} numberOfLines={1}>
+                  {meal.recipeId ? '📖 ' : '📝 '}{meal.description}
+                </Text>
+              </View>
+            ))}
+            {meals.length > 3 && (
+              <Text style={styles.moreText}>+ {meals.length - 3} more</Text>
+            )}
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={styles.emptyMealSlot}
-            onPress={() => handleEditMeal(day.date, label)}
+            onPress={() => handleManageSlot(day.date, label, [])}
           >
             <Text style={styles.emptyMealText}>+ Add</Text>
           </TouchableOpacity>
@@ -276,25 +227,13 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
     );
   }
 
-  const handleRecipeSelect = (recipe: Recipe) => {
-    setSelectedRecipe(recipe);
-    setMealDescription(recipe.name);
-    setSelectingRecipeForMeal(false);
-    setRecipeManagerVisible(false);
-  };
-
-  const openRecipeManager = (forSelection = false) => {
-    setSelectingRecipeForMeal(forSelection);
-    setRecipeManagerVisible(true);
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Weekly Meal Plan</Text>
         <TouchableOpacity 
           style={styles.recipeButton}
-          onPress={() => openRecipeManager(false)}
+          onPress={() => setRecipeManagerVisible(true)}
         >
           <Text style={styles.recipeButtonText}>Manage Recipes</Text>
         </TouchableOpacity>
@@ -331,68 +270,88 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
         </View>
       </ScrollView>
 
-      {/* Edit Meal Modal */}
+      {/* Manage Slot Modal */}
       <Modal
-        visible={editModalVisible}
+        visible={!!managingSlot && !recipeManagerVisible}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setEditModalVisible(false)}
+        onRequestClose={() => setManagingSlot(null)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {editingMeal ? `Edit ${editingMeal.labelName}` : 'Edit Meal'}
-            </Text>
-
-            {selectedRecipe ? (
-              <View style={styles.selectedRecipeContainer}>
-                <View style={styles.selectedRecipeInfo}>
-                  <Text style={styles.selectedRecipeLabel}>Recipe:</Text>
-                  <Text style={styles.selectedRecipeName}>{selectedRecipe.name}</Text>
-                </View>
-                <TouchableOpacity onPress={() => setSelectedRecipe(null)} style={styles.clearRecipeButton}>
-                  <Text style={styles.clearRecipeText}>✕</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity 
-                style={styles.selectRecipeButton}
-                onPress={() => {
-                  setEditModalVisible(false);
-                  openRecipeManager(true);
-                }}
-              >
-                <Text style={styles.selectRecipeButtonText}>Select from Recipes</Text>
-              </TouchableOpacity>
-            )}
-            
-            <TextInput
-              style={styles.modalInput}
-              value={mealDescription}
-              onChangeText={setMealDescription}
-              placeholder="What's for this meal?"
-              multiline
-              numberOfLines={3}
-            />
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={handleSaveMeal}
-              >
-                <Text style={styles.modalButtonText}>Save</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSecondary]}
-                onPress={() => {
-                  setEditModalVisible(false);
-                  setEditingMeal(null);
-                  setMealDescription('');
-                }}
-              >
-                <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {managingSlot ? `${managingSlot.labelName} (${getDateDisplay(managingSlot.date)})` : 'Manage Meal'}
+              </Text>
+              <TouchableOpacity onPress={() => setManagingSlot(null)}>
+                <Text style={styles.closeButton}>✕</Text>
               </TouchableOpacity>
             </View>
+
+            <ScrollView style={styles.slotItemsList}>
+              {managingSlot?.meals.map((meal) => (
+                <View key={meal.id} style={styles.slotItem}>
+                  <TouchableOpacity 
+                    style={styles.slotItemContent}
+                    onPress={() => meal.recipeId && handleViewRecipe(meal)}
+                  >
+                    <Text style={styles.slotItemIcon}>{meal.recipeId ? '📖' : '📝'}</Text>
+                    <Text style={[styles.slotItemText, meal.recipeId && styles.linkText]}>
+                      {meal.description}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.deleteItemButton}
+                    onPress={() => handleDeleteItem(meal)}
+                  >
+                    <Text style={styles.deleteItemText}>🗑️</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+              {managingSlot?.meals.length === 0 && (
+                <Text style={styles.emptySlotText}>No items yet.</Text>
+              )}
+            </ScrollView>
+
+            {isAddingNote ? (
+              <View style={styles.addNoteContainer}>
+                <TextInput
+                  style={styles.modalInput}
+                  value={noteText}
+                  onChangeText={setNoteText}
+                  placeholder="Enter note..."
+                  autoFocus
+                />
+                <View style={styles.addNoteActions}>
+                  <TouchableOpacity style={styles.saveNoteButton} onPress={handleAddNote}>
+                    <Text style={styles.saveNoteButtonText}>Save</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.cancelNoteButton} 
+                    onPress={() => setIsAddingNote(false)}
+                  >
+                    <Text style={styles.cancelNoteButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => setRecipeManagerVisible(true)}
+                >
+                  <Text style={styles.actionButtonIcon}>📖</Text>
+                  <Text style={styles.actionButtonText}>Add Recipe</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => setIsAddingNote(true)}
+                >
+                  <Text style={styles.actionButtonIcon}>📝</Text>
+                  <Text style={styles.actionButtonText}>Add Note</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -407,16 +366,8 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
           <RecipeManager 
             database={database} 
             familyId={familyId}
-            onClose={() => {
-              setRecipeManagerVisible(false);
-              if (selectingRecipeForMeal) {
-                setEditModalVisible(true);
-              }
-            }}
-            onSelectRecipe={selectingRecipeForMeal ? (recipe: Recipe) => {
-              handleRecipeSelect(recipe);
-              setEditModalVisible(true);
-            } : undefined}
+            onClose={() => setRecipeManagerVisible(false)}
+            onSelectRecipe={managingSlot ? handleAddRecipe : undefined}
           />
         </View>
       </Modal>
@@ -426,6 +377,8 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
         recipe={viewingRecipe}
         visible={!!viewingRecipe}
         onClose={() => setViewingRecipe(null)}
+        database={database}
+        familyId={familyId}
       />
     </View>
   );
@@ -686,5 +639,116 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#15803D',
     fontWeight: 'bold',
+  },
+  mealItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  moreText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    paddingBottom: 12,
+  },
+  closeButton: {
+    fontSize: 24,
+    color: '#64748B',
+    padding: 4,
+  },
+  slotItemsList: {
+    maxHeight: 300,
+    marginBottom: 24,
+  },
+  slotItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  slotItemContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  slotItemIcon: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  slotItemText: {
+    fontSize: 16,
+    color: '#334155',
+    flex: 1,
+  },
+  linkText: {
+    color: '#0284C7',
+    fontWeight: '500',
+  },
+  deleteItemButton: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  deleteItemText: {
+    fontSize: 18,
+  },
+  emptySlotText: {
+    textAlign: 'center',
+    color: '#94A3B8',
+    fontStyle: 'italic',
+    padding: 20,
+  },
+  addNoteContainer: {
+    marginTop: 8,
+  },
+  addNoteActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  saveNoteButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  saveNoteButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  cancelNoteButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  cancelNoteButtonText: {
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  actionButtonIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  actionButtonText: {
+    color: '#334155',
+    fontWeight: '600',
   },
 });

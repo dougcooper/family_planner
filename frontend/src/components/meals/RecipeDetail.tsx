@@ -1,15 +1,50 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import { Database } from '@nozbe/watermelondb';
 import { Recipe } from '../../model/models';
+import { bulkAddToGroceryList } from '../../logic/meals';
+import { Toast } from '../common/Toast';
 
 interface RecipeDetailProps {
   recipe: Recipe | null;
   visible: boolean;
   onClose: () => void;
+  database: Database;
+  familyId: string;
 }
 
-export function RecipeDetail({ recipe, visible, onClose }: RecipeDetailProps) {
+export function RecipeDetail({ recipe, visible, onClose, database, familyId }: RecipeDetailProps) {
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
   if (!recipe) return null;
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+  };
+
+  const handleAddToGroceryList = async () => {
+    if (!recipe.ingredients || recipe.ingredients.length === 0) {
+      showToast('This recipe has no ingredients to add.', 'error');
+      return;
+    }
+
+    try {
+      const result = await bulkAddToGroceryList(database, familyId, recipe.ingredients);
+      if (result.success) {
+        showToast(`Added ${result.itemsAdded} items to grocery list.`, 'success');
+      } else {
+        showToast('Failed to add items to grocery list.', 'error');
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error adding ingredients:', error);
+      showToast('An error occurred while adding ingredients.', 'error');
+    }
+  };
 
   return (
     <Modal
@@ -32,7 +67,13 @@ export function RecipeDetail({ recipe, visible, onClose }: RecipeDetailProps) {
               <Text style={styles.description}>{recipe.description}</Text>
             ) : null}
 
-            <Text style={styles.sectionTitle}>Ingredients</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Ingredients</Text>
+              <TouchableOpacity style={styles.addButton} onPress={handleAddToGroceryList}>
+                <Text style={styles.addButtonText}>+ Add to List</Text>
+              </TouchableOpacity>
+            </View>
+
             <View style={styles.ingredientsList}>
               {recipe.ingredients.map((ingredient, index) => (
                 <Text key={index} style={styles.ingredient}>• {ingredient}</Text>
@@ -51,6 +92,12 @@ export function RecipeDetail({ recipe, visible, onClose }: RecipeDetailProps) {
           </ScrollView>
         </View>
       </View>
+      <Toast 
+        visible={toastVisible} 
+        message={toastMessage} 
+        type={toastType} 
+        onHide={() => setToastVisible(false)} 
+      />
     </Modal>
   );
 }
@@ -112,12 +159,30 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    marginTop: 8,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1E293B',
     marginBottom: 12,
     marginTop: 8,
+  },
+  addButton: {
+    backgroundColor: '#E0F2FE',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  addButtonText: {
+    color: '#0284C7',
+    fontWeight: '600',
+    fontSize: 14,
   },
   ingredientsList: {
     marginBottom: 24,
