@@ -40,7 +40,7 @@ export function TaskDetail({ task, database, currentUserId, currentUserRole, onC
 
   const isAssignedToCurrentUser = task.assigneeId === currentUserId;
   const canEdit = currentUserRole === 'PARENT' || (isAssignedToCurrentUser && task.status === 'TODO');
-  const canMarkComplete = isAssignedToCurrentUser && task.status === 'TODO';
+  const canMarkComplete = (isAssignedToCurrentUser || currentUserRole === 'PARENT') && task.status === 'TODO';
 
   const handleSave = async () => {
     await database.write(async () => {

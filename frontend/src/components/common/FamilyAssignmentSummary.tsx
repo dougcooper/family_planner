@@ -7,33 +7,39 @@ interface FamilyAssignmentSummaryProps {
   counts: Record<string, number>;
   title?: string;
   onUserPress?: (user: User) => void;
+  selectedUserIds?: string[];
 }
 
-export const FamilyAssignmentSummary = ({ users, counts, title = 'Assignments', onUserPress }: FamilyAssignmentSummaryProps) => {
+export const FamilyAssignmentSummary = ({ users, counts, title = 'Assignments', onUserPress, selectedUserIds = [] }: FamilyAssignmentSummaryProps) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollView}>
-        {users.map(user => (
-          <TouchableOpacity 
-            key={user.id} 
-            style={styles.userItem}
-            onPress={() => onUserPress?.(user)}
-            disabled={!onUserPress}
-          >
-            <View style={styles.avatarContainer}>
-              {user.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-              ) : (
-                <Text style={styles.avatarEmoji}>👤</Text>
-              )}
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{counts[user.id] || 0}</Text>
+        {users.map(user => {
+          const isSelected = selectedUserIds.includes(user.id);
+          return (
+            <TouchableOpacity 
+              key={user.id} 
+              style={styles.userItem}
+              onPress={() => onUserPress?.(user)}
+              disabled={!onUserPress}
+            >
+              <View style={[styles.avatarContainer, isSelected && styles.avatarSelected]}>
+                {user.avatarUrl ? (
+                  <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+                ) : (
+                  <Text style={styles.avatarEmoji}>👤</Text>
+                )}
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{counts[user.id] || 0}</Text>
+                </View>
               </View>
-            </View>
-            <Text style={styles.userName} numberOfLines={1}>{user.name}</Text>
-          </TouchableOpacity>
-        ))}
+              <Text style={[styles.userName, isSelected && styles.userNameSelected]} numberOfLines={1}>
+                {user.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -64,6 +70,13 @@ const styles = StyleSheet.create({
   avatarContainer: {
     position: 'relative',
     marginBottom: 4,
+    padding: 2,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  avatarSelected: {
+    borderColor: '#007AFF',
   },
   avatar: {
     width: 40,
@@ -104,5 +117,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#333',
     textAlign: 'center',
+  },
+  userNameSelected: {
+    color: '#007AFF',
+    fontWeight: '600',
   },
 });

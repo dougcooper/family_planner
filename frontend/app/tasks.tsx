@@ -54,6 +54,7 @@ interface TasksScreenProps {
 
 const TasksScreen = ({ tasks, users }: TasksScreenProps) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [currentUser, setCurrentUser] = useState(authProvider.getState().user);
   const [showCompleted, setShowCompleted] = useState(false);
@@ -65,9 +66,21 @@ const TasksScreen = ({ tasks, users }: TasksScreenProps) => {
     return unsubscribe;
   }, []);
 
-  const filteredTasks = tasks.filter(task => 
-    showCompleted ? true : task.status !== 'COMPLETED'
-  );
+  const handleUserPress = (user: User) => {
+    setSelectedUserIds(prev => {
+      if (prev.includes(user.id)) {
+        return prev.filter(id => id !== user.id);
+      } else {
+        return [...prev, user.id];
+      }
+    });
+  };
+
+  const filteredTasks = tasks.filter(task => {
+    const matchesStatus = showCompleted ? true : task.status !== 'COMPLETED';
+    const matchesUser = selectedUserIds.length === 0 || selectedUserIds.includes(task.assigneeId);
+    return matchesStatus && matchesUser;
+  });
 
   const taskCounts = tasks.reduce((acc, task) => {
     if (task.status !== 'COMPLETED') {
@@ -84,7 +97,13 @@ const TasksScreen = ({ tasks, users }: TasksScreenProps) => {
   return (
     <DashboardLayout>
       <View style={styles.container}>
-        <FamilyAssignmentSummary users={users} counts={taskCounts} title="Task Assignments" />
+        <FamilyAssignmentSummary 
+          users={users} 
+          counts={taskCounts} 
+          title="Task Assignments" 
+          onUserPress={handleUserPress}
+          selectedUserIds={selectedUserIds}
+        />
         <View style={styles.headerContainer}>
           <Text style={styles.header}>All Tasks</Text>
           <View style={styles.headerControls}>
