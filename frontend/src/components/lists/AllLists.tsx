@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { List, GroceryItem, ListItem } from '../../model/models';
+import { List, GroceryItem, ListItem, User } from '../../model/models';
 import ListCard from './ListCard';
 import { ListAssignmentSummary } from './ListAssignmentSummary';
+import { UserTodosModal } from './UserTodosModal';
 
 const styles = StyleSheet.create({
   container: {
@@ -182,6 +183,7 @@ export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [viewArchived, setViewArchived] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
     checkAndCreateGroceryList();
@@ -304,7 +306,7 @@ export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
 
   return (
     <View style={styles.container}>
-      <ListAssignmentSummary familyId={familyId} />
+      <ListAssignmentSummary familyId={familyId} onUserPress={setSelectedUser} />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{viewArchived ? 'Archived Lists' : 'My Lists'}</Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -370,6 +372,12 @@ export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
           </View>
         </View>
       </Modal>
+
+      <UserTodosModal
+        visible={!!selectedUser}
+        user={selectedUser}
+        onClose={() => setSelectedUser(null)}
+      />
     </View>
   );
 }

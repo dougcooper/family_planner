@@ -1,20 +1,26 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { User } from '../../model/models';
 
 interface FamilyAssignmentSummaryProps {
   users: User[];
   counts: Record<string, number>;
   title?: string;
+  onUserPress?: (user: User) => void;
 }
 
-export const FamilyAssignmentSummary = ({ users, counts, title = 'Assignments' }: FamilyAssignmentSummaryProps) => {
+export const FamilyAssignmentSummary = ({ users, counts, title = 'Assignments', onUserPress }: FamilyAssignmentSummaryProps) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollView}>
         {users.map(user => (
-          <View key={user.id} style={styles.userItem}>
+          <TouchableOpacity 
+            key={user.id} 
+            style={styles.userItem}
+            onPress={() => onUserPress?.(user)}
+            disabled={!onUserPress}
+          >
             <View style={styles.avatarContainer}>
               {user.avatarUrl ? (
                 <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
@@ -26,7 +32,7 @@ export const FamilyAssignmentSummary = ({ users, counts, title = 'Assignments' }
               </View>
             </View>
             <Text style={styles.userName} numberOfLines={1}>{user.name}</Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </View>

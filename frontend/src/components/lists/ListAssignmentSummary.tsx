@@ -8,9 +8,10 @@ import { FamilyAssignmentSummary } from '../common/FamilyAssignmentSummary';
 interface ListAssignmentSummaryProps {
   listItems: ListItem[];
   users: User[];
+  onUserPress?: (user: User) => void;
 }
 
-const ListAssignmentSummaryComponent = ({ listItems, users }: ListAssignmentSummaryProps) => {
+const ListAssignmentSummaryComponent = ({ listItems, users, onUserPress }: ListAssignmentSummaryProps) => {
   const counts = listItems.reduce((acc, item) => {
     if (!item.isChecked && item.assigneeId) {
       acc[item.assigneeId] = (acc[item.assigneeId] || 0) + 1;
@@ -18,7 +19,7 @@ const ListAssignmentSummaryComponent = ({ listItems, users }: ListAssignmentSumm
     return acc;
   }, {} as Record<string, number>);
 
-  return <FamilyAssignmentSummary users={users} counts={counts} title="List Assignments" />;
+  return <FamilyAssignmentSummary users={users} counts={counts} title="List Assignments" onUserPress={onUserPress} />;
 };
 
 export const ListAssignmentSummary = withObservables(['familyId'], ({ familyId }: { familyId: string }) => ({
