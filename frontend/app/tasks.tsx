@@ -223,6 +223,7 @@ const styles = StyleSheet.create({
 
 const enhance = withObservables([], () => ({
   tasks: database.collections.get<Task>('tasks').query(
+    Q.sortBy('status', Q.desc),
     Q.sortBy('created_at', Q.desc)
   ),
 }));

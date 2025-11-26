@@ -24,18 +24,14 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
     try {
       const listItems = await database
         .get<ListItem>('list_items')
-        .query(Q.where('list_id', list.id))
+        .query(
+          Q.where('list_id', list.id),
+          Q.sortBy('is_checked', Q.asc),
+          Q.sortBy('created_at', Q.desc)
+        )
         .fetch();
       
-      // Sort: unchecked items first, then by creation date
-      const sorted = listItems.sort((a, b) => {
-        if (a.isChecked !== b.isChecked) {
-          return a.isChecked ? 1 : -1;
-        }
-        return b.createdAt.getTime() - a.createdAt.getTime();
-      });
-      
-      setItems(sorted);
+      setItems(listItems);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error loading list items:', error);

@@ -74,6 +74,7 @@ const enhance = withObservables(['familyId', 'userId'], ({ familyId }: Dashboard
 
   return {
     tasks: database.collections.get<Task>('tasks').query(
+      Q.sortBy('status', Q.desc),
       Q.sortBy('created_at', Q.desc)
     ),
     events: database.collections.get<Event>('events').query(
