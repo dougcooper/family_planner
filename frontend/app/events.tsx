@@ -41,6 +41,7 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [currentUser, setCurrentUser] = useState(authProvider.getState().user);
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const unsubscribe = authProvider.subscribe((state) => {
@@ -49,12 +50,28 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
     return unsubscribe;
   }, []);
 
+  const handleUserPress = (user: User) => {
+    const userId = user.id;
+    const newSelected = new Set(selectedUserIds);
+    if (newSelected.has(userId)) {
+      newSelected.delete(userId);
+    } else {
+      newSelected.add(userId);
+    }
+    setSelectedUserIds(newSelected);
+  };
+
   const eventCounts = events.reduce((acc, event) => {
     if (event.userId) {
       acc[event.userId] = (acc[event.userId] || 0) + 1;
     }
     return acc;
   }, {} as Record<string, number>);
+
+  const filteredEvents = events.filter(event => {
+    if (selectedUserIds.size === 0) return true;
+    return event.userId && selectedUserIds.has(event.userId);
+  });
 
   const renderItem = ({ item }: { item: Event }) => (
     <EnhancedEventListItem event={item} onPress={setSelectedEvent} />
@@ -63,7 +80,13 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
   return (
     <DashboardLayout>
       <View style={styles.container}>
-        <FamilyAssignmentSummary users={users} counts={eventCounts} title="Event Assignments" />
+        <FamilyAssignmentSummary
+          users={users}
+          counts={eventCounts}
+          title="Event Assignments"
+          selectedUserIds={Array.from(selectedUserIds)}
+          onUserPress={handleUserPress}
+        />
         <View style={styles.headerContainer}>
           <Text style={styles.header}>Events</Text>
           {currentUser?.role === 'PARENT' && (
@@ -73,7 +96,7 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
           )}
         </View>
         <FlatList
-          data={events}
+          data={filteredEvents}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
