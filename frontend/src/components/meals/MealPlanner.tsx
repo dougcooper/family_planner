@@ -30,6 +30,7 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
   const [loading, setLoading] = useState(true);
   const [recipeManagerVisible, setRecipeManagerVisible] = useState(false);
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
+  const [recipeToEdit, setRecipeToEdit] = useState<Recipe | null>(null);
   
   // Slot Management State
   const [managingSlot, setManagingSlot] = useState<{ date: string; labelId: string; labelName: string; meals: MealPlan[] } | null>(null);
@@ -450,8 +451,12 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
           <RecipeManager 
             database={database} 
             familyId={familyId}
-            onClose={() => setRecipeManagerVisible(false)}
+            onClose={() => {
+              setRecipeManagerVisible(false);
+              setRecipeToEdit(null);
+            }}
             onSelectRecipe={managingSlot ? handleAddRecipe : undefined}
+            initialRecipeToEdit={recipeToEdit}
           />
         </View>
       </Modal>
@@ -461,6 +466,13 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
         recipe={viewingRecipe}
         visible={!!viewingRecipe}
         onClose={() => setViewingRecipe(null)}
+        onEdit={() => {
+          if (viewingRecipe) {
+            setRecipeToEdit(viewingRecipe);
+            setViewingRecipe(null);
+            setRecipeManagerVisible(true);
+          }
+        }}
         database={database}
         familyId={familyId}
       />

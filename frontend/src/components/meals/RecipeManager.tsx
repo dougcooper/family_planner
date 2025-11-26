@@ -11,9 +11,10 @@ interface RecipeManagerProps {
   recipes: Recipe[];
   onSelectRecipe?: (recipe: Recipe) => void;
   onClose: () => void;
+  initialRecipeToEdit?: Recipe | null;
 }
 
-function RecipeManagerComponent({ database, familyId, recipes, onSelectRecipe, onClose }: RecipeManagerProps) {
+function RecipeManagerComponent({ database, familyId, recipes, onSelectRecipe, onClose, initialRecipeToEdit }: RecipeManagerProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,6 +44,12 @@ function RecipeManagerComponent({ database, familyId, recipes, onSelectRecipe, o
     setInstructions(recipe.instructions || '');
     setIsEditing(true);
   };
+
+  React.useEffect(() => {
+    if (initialRecipeToEdit) {
+      handleEdit(initialRecipeToEdit);
+    }
+  }, [initialRecipeToEdit]);
 
   const handleSave = async () => {
     if (!name.trim()) return;

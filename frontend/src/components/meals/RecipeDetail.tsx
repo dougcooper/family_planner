@@ -10,11 +10,12 @@ interface RecipeDetailProps {
   recipe: Recipe | null;
   visible: boolean;
   onClose: () => void;
+  onEdit?: () => void;
   database: Database;
   familyId: string;
 }
 
-export function RecipeDetail({ recipe, visible, onClose, database, familyId }: RecipeDetailProps) {
+export function RecipeDetail({ recipe, visible, onClose, onEdit, database, familyId }: RecipeDetailProps) {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
@@ -57,9 +58,16 @@ export function RecipeDetail({ recipe, visible, onClose, database, familyId }: R
         <View style={styles.modalContent}>
           <View style={styles.header}>
             <Text style={styles.title}>{recipe.name}</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
+            <View style={styles.headerButtons}>
+              {onEdit && (
+                <TouchableOpacity onPress={onEdit} style={styles.editButton}>
+                  <Text style={styles.editButtonText}>Edit</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <ScrollView style={styles.scrollContent}>
@@ -134,6 +142,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
     backgroundColor: '#F8FAFC',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  editButton: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  editButtonText: {
+    color: '#475569',
+    fontWeight: '600',
+    fontSize: 14,
   },
   title: {
     fontSize: 20,
