@@ -5,6 +5,7 @@ import { MealPlan, Recipe } from '../../model/models';
 import { addMealToGroceryList } from '../../logic/meals';
 import { getStartOfWeek, formatDateToYYYYMMDD } from '../../logic/date';
 import { RecipeManager } from './RecipeManager';
+import { RecipeDetail } from './RecipeDetail';
 
 interface MealPlannerProps {
   database: Database;
@@ -25,6 +26,7 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
   const [recipeManagerVisible, setRecipeManagerVisible] = useState(false);
   const [selectingRecipeForMeal, setSelectingRecipeForMeal] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const [editingMeal, setEditingMeal] = useState<{ date: string; mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' } | null>(null);
   const [mealDescription, setMealDescription] = useState('');
 
@@ -176,6 +178,19 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
     }
   };
 
+  const handleViewRecipe = async (meal: MealPlan) => {
+    if (meal.recipeId) {
+      try {
+        const recipe = await meal.recipe.fetch();
+        setViewingRecipe(recipe);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching recipe details:', error);
+        alert('Failed to load recipe details');
+      }
+    }
+  };
+
   const handleAddToGroceryList = async (meal: MealPlan) => {
     try {
       const result = await addMealToGroceryList(database, familyId, meal.description);
@@ -219,6 +234,14 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
               {meal.recipeId ? '📖 ' : ''}{meal.description}
             </Text>
             <View style={styles.mealActions}>
+              {meal.recipeId && (
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => handleViewRecipe(meal)}
+                >
+                  <Text style={styles.iconButtonText}>📖</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
                 style={styles.iconButton}
                 onPress={() => handleEditMeal(day.date, mealType, meal)}
@@ -407,6 +430,13 @@ export function MealPlanner({ database, familyId }: MealPlannerProps) {
           />
         </View>
       </Modal>
+
+      {/* Recipe Detail View */}
+      <RecipeDetail
+        recipe={viewingRecipe}
+        visible={!!viewingRecipe}
+        onClose={() => setViewingRecipe(null)}
+      />
     </View>
   );
 }
