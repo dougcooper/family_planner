@@ -3,9 +3,10 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
+  scrollable?: boolean;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function DashboardLayout({ children, scrollable = true }: DashboardLayoutProps) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -29,6 +30,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     minute: '2-digit' 
   });
 
+  const ContentWrapper = scrollable ? ScrollView : View;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -36,9 +39,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <Text style={styles.subtitle}>{dateStr} • {timeStr}</Text>
       </View>
       
-      <ScrollView style={styles.content}>
+      <ContentWrapper style={styles.content}>
         {children}
-      </ScrollView>
+      </ContentWrapper>
     </View>
   );
 }

@@ -269,6 +269,7 @@ export function GenericList({ database, list, onBack }: GenericListProps) {
           )}
 
           <FlatList
+            style={{ flex: 1 }}
             data={filteredItems}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}

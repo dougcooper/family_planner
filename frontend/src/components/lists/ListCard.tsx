@@ -11,9 +11,10 @@ interface ListCardProps {
   onDelete: () => void;
   onArchive: () => void;
   onUnarchive: () => void;
+  isSelected?: boolean;
 }
 
-const ListCard = ({ list, items, onPress, onDelete, onArchive, onUnarchive }: ListCardProps) => {
+const ListCard = ({ list, items, onPress, onDelete, onArchive, onUnarchive, isSelected }: ListCardProps) => {
   const totalCount = items.length;
   const completedCount = items.filter(i => i.isChecked).length;
   const progress = totalCount > 0 ? completedCount / totalCount : 0;
@@ -60,7 +61,7 @@ const ListCard = ({ list, items, onPress, onDelete, onArchive, onUnarchive }: Li
   };
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, isSelected && styles.selectedCard]}>
       <TouchableOpacity style={styles.mainContent} onPress={onPress}>
         <View style={styles.header}>
           <Text style={styles.title}>{list.name}</Text>
@@ -120,6 +121,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  selectedCard: {
+    backgroundColor: '#E0F2FE',
+    borderColor: '#3B82F6',
+    borderWidth: 1,
   },
   mainContent: {
     padding: 15,

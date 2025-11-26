@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { List, GroceryItem, ListItem, User } from '../../model/models';
+import { List, GroceryItem, ListItem } from '../../model/models';
 import ListCard from './ListCard';
-import { ListAssignmentSummary } from './ListAssignmentSummary';
-import { UserTodosModal } from './UserTodosModal';
 
 const styles = StyleSheet.create({
   container: {
@@ -145,11 +143,13 @@ interface FilteredListsProps {
   onDeleteList: (list: List) => void;
   onArchiveList: (list: List) => void;
   onUnarchiveList: (list: List) => void;
+  selectedListId?: string;
 }
 
-const FilteredListsComponent = ({ lists, onSelectList, onDeleteList, onArchiveList, onUnarchiveList }: FilteredListsProps) => {
+const FilteredListsComponent = ({ lists, onSelectList, onDeleteList, onArchiveList, onUnarchiveList, selectedListId }: FilteredListsProps) => {
   return (
     <FlatList
+      style={{ flex: 1 }}
       data={lists}
       renderItem={({ item }) => (
         <ListCard
@@ -158,6 +158,7 @@ const FilteredListsComponent = ({ lists, onSelectList, onDeleteList, onArchiveLi
           onDelete={() => onDeleteList(item)}
           onArchive={() => onArchiveList(item)}
           onUnarchive={() => onUnarchiveList(item)}
+          isSelected={item.id === selectedListId}
         />
       )}
       keyExtractor={(item) => item.id}
@@ -177,13 +178,13 @@ interface AllListsProps {
   database: Database;
   familyId: string;
   onSelectList: (list: List) => void;
+  selectedListId?: string;
 }
 
-export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
+export function AllLists({ database, familyId, onSelectList, selectedListId }: AllListsProps) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [viewArchived, setViewArchived] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
     checkAndCreateGroceryList();
@@ -306,7 +307,6 @@ export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
 
   return (
     <View style={styles.container}>
-      <ListAssignmentSummary familyId={familyId} onUserPress={setSelectedUser} />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{viewArchived ? 'Archived Lists' : 'My Lists'}</Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -337,6 +337,7 @@ export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
         onDeleteList={handleDeleteList}
         onArchiveList={handleArchiveList}
         onUnarchiveList={handleUnarchiveList}
+        selectedListId={selectedListId}
       />
 
       <Modal
@@ -372,12 +373,6 @@ export function AllLists({ database, familyId, onSelectList }: AllListsProps) {
           </View>
         </View>
       </Modal>
-
-      <UserTodosModal
-        visible={!!selectedUser}
-        user={selectedUser}
-        onClose={() => setSelectedUser(null)}
-      />
     </View>
   );
 }
