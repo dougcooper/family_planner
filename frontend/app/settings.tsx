@@ -223,6 +223,27 @@ export default function SettingsScreen() {
     }
 
     try {
+      // Check if avatar changed and delete old one
+      if (editingMember.avatarUrl && editMemberAvatar !== editingMember.avatarUrl) {
+        // Only delete if it's a file on our server (contains /uploads/)
+        if (editingMember.avatarUrl.includes('/uploads/')) {
+          try {
+            const token = authProvider.getToken();
+            await fetch(`${API_URL}/upload`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ url: editingMember.avatarUrl }),
+            });
+          } catch (e) {
+            console.error('Failed to delete old avatar', e);
+            // Continue with update even if delete fails
+          }
+        }
+      }
+
       await database.write(async () => {
         await editingMember.update((user: User) => {
           user.name = editMemberName;
@@ -502,6 +523,23 @@ export default function SettingsScreen() {
               </View>
 
               <View style={styles.modalContent}>
+                <Text style={styles.label}>Profile Picture</Text>
+                <View style={styles.avatarUploadContainer}>
+                  {editMemberAvatar ? (
+                    <Image source={{ uri: editMemberAvatar }} style={styles.avatarPreview} />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <Text style={styles.avatarPlaceholderText}>?</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity 
+                    style={styles.uploadButton} 
+                    onPress={() => handlePickImage(setEditMemberAvatar)}
+                  >
+                    <Text style={styles.uploadButtonText}>{editMemberAvatar ? 'Change Photo' : 'Upload Photo'}</Text>
+                  </TouchableOpacity>
+                </View>
+
                 <Text style={styles.label}>Name</Text>
                 <TextInput
                   style={styles.input}
@@ -523,23 +561,6 @@ export default function SettingsScreen() {
                     onPress={() => setEditMemberRole('CHILD')}
                   >
                     <Text style={[styles.roleText, editMemberRole === 'CHILD' && styles.roleTextSelected]}>Child</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <Text style={styles.label}>Profile Picture</Text>
-                <View style={styles.avatarUploadContainer}>
-                  {editMemberAvatar ? (
-                    <Image source={{ uri: editMemberAvatar }} style={styles.avatarPreview} />
-                  ) : (
-                    <View style={styles.avatarPlaceholder}>
-                      <Text style={styles.avatarPlaceholderText}>?</Text>
-                    </View>
-                  )}
-                  <TouchableOpacity 
-                    style={styles.uploadButton} 
-                    onPress={() => handlePickImage(setEditMemberAvatar)}
-                  >
-                    <Text style={styles.uploadButtonText}>{editMemberAvatar ? 'Change Photo' : 'Upload Photo'}</Text>
                   </TouchableOpacity>
                 </View>
 

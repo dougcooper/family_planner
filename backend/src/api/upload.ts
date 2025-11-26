@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { pipeline } from 'stream';
 import util from 'util';
 import { createWriteStream } from 'fs';
+import { unlink } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
@@ -32,4 +33,35 @@ export const uploadFile = async (req: FastifyRequest, reply: FastifyReply) => {
   const url = `${protocol}://${host}/uploads/${filename}`;
 
   return { url };
+};
+
+export const deleteFile = async (req: FastifyRequest, reply: FastifyReply) => {
+  const { url } = req.body as { url: string };
+  
+  if (!url) {
+    return reply.status(400).send({ error: 'No url provided' });
+  }
+
+  try {
+    // Extract filename from URL
+    // URL format: http://host:port/uploads/filename.ext
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split('/');
+    const filename = pathParts[pathParts.length - 1];
+
+    if (!filename) {
+      return reply.status(400).send({ error: 'Invalid url' });
+    }
+
+    // Basic security check to prevent directory traversal
+    const safeFilename = filename.replace(/^.*[\\\/]/, '');
+    const filepath = join(UPLOADS_DIR, safeFilename);
+
+    await unlink(filepath);
+    return { success: true };
+  } catch (error) {
+    req.log.error(error);
+    // If file doesn't exist, we can consider it "deleted" or return 404.
+    return { success: true, message: 'File deleted or not found' };
+  }
 };

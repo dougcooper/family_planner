@@ -7,7 +7,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { register } from './api/auth/register.js';
 import { login } from './api/auth/login.js';
-import { uploadFile } from './api/upload.js';
+import { uploadFile, deleteFile } from './api/upload.js';
 import { pullChanges, SyncPullQuery } from './sync/pull.js';
 import { pushChanges, SyncPushBody } from './sync/push.js';
 import { authenticate } from './middleware/auth.js';
@@ -77,6 +77,7 @@ app.post('/auth/login', login);
 
 // Upload route (protected)
 app.post('/upload', { preHandler: authenticate }, uploadFile);
+app.delete('/upload', { preHandler: authenticate }, deleteFile);
 
 // Sync routes (protected)
 app.get<{ Querystring: SyncPullQuery }>('/sync/pull', { preHandler: authenticate }, pullChanges);
