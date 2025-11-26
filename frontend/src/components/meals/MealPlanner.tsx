@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createElement, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Alert, Platform } from 'react-native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { MealPlan, Recipe, MealLabel } from '../../model/models';
@@ -20,6 +21,9 @@ interface DayMeals {
 }
 
 function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerProps) {
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => getStartOfWeek());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const dateInputRef = useRef<any>(null);
   const [weekDays, setWeekDays] = useState<DayMeals[]>([]);
   const [loading, setLoading] = useState(true);
   const [recipeManagerVisible, setRecipeManagerVisible] = useState(false);
@@ -37,11 +41,11 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
   useEffect(() => {
     loadWeekMeals();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mealLabels]); // Reload when labels change
+  }, [mealLabels, currentWeekStart]); // Reload when labels or date changes
 
   const loadWeekMeals = async () => {
     try {
-      const startOfWeek = getStartOfWeek();
+      const startOfWeek = currentWeekStart;
       const days: DayMeals[] = [];
 
       // Generate 7 days starting from Monday
@@ -178,6 +182,35 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
     }
   };
 
+  const handlePreviousWeek = () => {
+    const newDate = new Date(currentWeekStart);
+    newDate.setDate(newDate.getDate() - 7);
+    setCurrentWeekStart(newDate);
+  };
+
+  const handleNextWeek = () => {
+    const newDate = new Date(currentWeekStart);
+    newDate.setDate(newDate.getDate() + 7);
+    setCurrentWeekStart(newDate);
+  };
+
+  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setCurrentWeekStart(getStartOfWeek(selectedDate));
+    }
+  };
+
+  const getWeekRangeDisplay = () => {
+    const endOfWeek = new Date(currentWeekStart);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+    
+    const startStr = currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const endStr = endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    
+    return `${startStr} - ${endStr}`;
+  };
+
   const getDayName = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00');
     return date.toLocaleDateString('en-US', { weekday: 'short' });
@@ -238,6 +271,60 @@ function MealPlannerComponent({ database, familyId, mealLabels }: MealPlannerPro
           <Text style={styles.recipeButtonText}>Manage Recipes</Text>
         </TouchableOpacity>
       </View>
+
+      <View style={styles.navigationContainer}>
+        <TouchableOpacity onPress={handlePreviousWeek} style={styles.navButton}>
+          <Text style={styles.navButtonText}>← Prev</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          onPress={() => {
+            if (Platform.OS === 'web') {
+              dateInputRef.current?.showPicker();
+            } else {
+              setShowDatePicker(true);
+            }
+          }}
+          style={styles.dateDisplay}
+        >
+          <Text style={styles.dateDisplayText}>{getWeekRangeDisplay()}</Text>
+          {Platform.OS === 'web' && createElement('input', {
+            type: 'date',
+            ref: dateInputRef,
+            value: formatDateToYYYYMMDD(currentWeekStart),
+            onChange: (e: any) => {
+              const date = new Date(e.target.value);
+              if (!isNaN(date.getTime())) {
+                setCurrentWeekStart(getStartOfWeek(date));
+              }
+            },
+            style: {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 0,
+              height: 0,
+              opacity: 0,
+              border: 'none',
+              padding: 0,
+              margin: 0,
+            }
+          })}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={handleNextWeek} style={styles.navButton}>
+          <Text style={styles.navButtonText}>Next →</Text>
+        </TouchableOpacity>
+      </View>
+
+      {showDatePicker && Platform.OS !== 'web' && (
+        <DateTimePicker
+          value={currentWeekStart}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleDateChange}
+        />
+      )}
 
       <ScrollView style={styles.content}>
         <View style={styles.weekGrid}>
@@ -750,5 +837,34 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: '#334155',
     fontWeight: '600',
+  },
+  navigationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  navButton: {
+    padding: 8,
+  },
+  navButtonText: {
+    fontSize: 16,
+    color: '#3B82F6',
+    fontWeight: '600',
+  },
+  dateDisplay: {
+    padding: 8,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 8,
+    position: 'relative',
+  },
+  dateDisplayText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
   },
 });
