@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../db/index.js';
 import { users, notifications, tasks, events, mealPlans, groceryItems, rewards, rewardClaims, families, lists, listItems, recipes, mealLabels } from '../db/schema.js';
 import { eq, gt, and } from 'drizzle-orm';
+import { logger } from '../logger.js';
 
 export interface SyncPullQuery {
   last_pulled_at?: string;
@@ -221,7 +222,7 @@ export async function pullChanges(
 
     // Format response for WatermelonDB
     if (mealPlanChanges.length > 0) {
-      console.log('Pulling meal plans:', JSON.stringify(mealPlanChanges, null, 2));
+      logger.info({ mealPlanChanges }, 'Pulling meal plans');
     }
 
     const changes = {

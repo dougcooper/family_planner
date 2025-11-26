@@ -1,6 +1,7 @@
 import { db } from '../db';
 import { tasks, users } from '../db/schema';
 import { eq } from 'drizzle-orm';
+import { logger } from '../logger.js';
 
 /**
  * Point awarding service - handles parent approval and point distribution
@@ -73,7 +74,7 @@ export async function approveTaskAndAwardPoints(
       pointsAwarded: task.points 
     };
   } catch (error) {
-    console.error('Error approving task and awarding points:', error);
+    logger.error({ err: error }, 'Error approving task and awarding points');
     return { 
       success: false, 
       pointsAwarded: 0, 
@@ -127,7 +128,7 @@ export async function rejectTaskCompletion(
 
     return { success: true };
   } catch (error) {
-    console.error('Error rejecting task:', error);
+    logger.error({ err: error }, 'Error rejecting task');
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 

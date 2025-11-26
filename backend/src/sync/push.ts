@@ -4,6 +4,7 @@ import { users, notifications, tasks, events, mealPlans, groceryItems, rewards, 
 import { eq, inArray } from 'drizzle-orm';
 import { generateEventInstances, parseRecurrenceRule, DEFAULT_GENERATION_DAYS } from '../services/recurring-events.js';
 import { randomUUID } from 'crypto';
+import { logger } from '../logger.js';
 
 interface ChangeRecord {
   id: string;
@@ -169,7 +170,7 @@ export async function pushChanges(
             break;
           }
           case 'meal_plans':
-            console.log('Pushing meal plan:', JSON.stringify(record, null, 2));
+            logger.info({ record }, 'Pushing meal plan');
             await db.insert(mealPlans).values({
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               ...(record as any),

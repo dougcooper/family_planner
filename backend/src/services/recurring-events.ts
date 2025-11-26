@@ -2,6 +2,7 @@ import { db } from '../db/index.js';
 import { events } from '../db/schema.js';
 import { eq, and, gte, lte, desc, isNotNull } from 'drizzle-orm';
 import rrule from 'rrule';
+import { logger } from '../logger.js';
 const { RRule, rrulestr } = rrule;
 
 /**
@@ -93,7 +94,7 @@ export function parseRecurrenceRule(rrule: string): RecurrenceRule | null {
 
     return result;
   } catch (e) {
-    console.error('Error parsing recurrence rule:', e);
+    logger.error({ err: e }, 'Error parsing recurrence rule');
     return null;
   }
 }
@@ -149,7 +150,7 @@ export function generateEventInstances(
     }));
 
   } catch (error) {
-    console.error('Error generating event instances with rrule:', error);
+    logger.error({ err: error }, 'Error generating event instances with rrule');
     return [];
   }
 }
@@ -206,7 +207,7 @@ export async function createRecurringEvent(
       eventIds: insertedEvents.map(e => e.id),
     };
   } catch (error) {
-    console.error('Error creating recurring event:', error);
+    logger.error({ err: error }, 'Error creating recurring event');
     return {
       success: false,
       eventIds: [],
@@ -296,7 +297,7 @@ export async function processRecurringEventsTopUp(): Promise<{ success: boolean;
 
     return { success: true, processedCount };
   } catch (error) {
-    console.error('Error processing recurring events top-up:', error);
+    logger.error({ err: error }, 'Error processing recurring events top-up');
     return {
       success: false,
       processedCount: 0,
@@ -350,7 +351,7 @@ export async function updateRecurringEvent(
       updatedCount: result.length,
     };
   } catch (error) {
-    console.error('Error updating recurring event:', error);
+    logger.error({ err: error }, 'Error updating recurring event');
     return {
       success: false,
       updatedCount: 0,
@@ -399,7 +400,7 @@ export async function deleteRecurringEvent(
       deletedCount: result.length,
     };
   } catch (error) {
-    console.error('Error deleting recurring event:', error);
+    logger.error({ err: error }, 'Error deleting recurring event');
     return {
       success: false,
       deletedCount: 0,
@@ -430,7 +431,7 @@ export async function getEventInstances(
 
     return eventInstances;
   } catch (error) {
-    console.error('Error getting event instances:', error);
+    logger.error({ err: error }, 'Error getting event instances');
     return [];
   }
 }

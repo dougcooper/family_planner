@@ -1,6 +1,7 @@
 import { db } from '../db';
 import { users, notifications } from '../db/schema';
 import { eq, and, lte } from 'drizzle-orm';
+import { logger } from '../logger.js';
 
 /**
  * Email digest service - sends daily/weekly notification summaries
@@ -79,7 +80,7 @@ export async function generateEmailDigests(
 
     return digests;
   } catch (error) {
-    console.error('Error generating email digests:', error);
+    logger.error({ err: error }, 'Error generating email digests');
     return [];
   }
 }
@@ -219,13 +220,11 @@ export async function sendDigestEmail(
     */
 
     // For now, just log the email (development mode)
-    console.log('Would send email to:', toEmail);
-    console.log('Subject:', subject);
-    console.log('HTML preview:', html.substring(0, 200) + '...');
+    logger.info({ toEmail, subject, htmlPreview: html.substring(0, 200) + '...' }, 'Would send email');
 
     return { success: true };
   } catch (error) {
-    console.error('Error sending digest email:', error);
+    logger.error({ err: error }, 'Error sending digest email');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

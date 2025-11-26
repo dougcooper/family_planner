@@ -1,4 +1,5 @@
 import webpush from 'web-push';
+import { logger } from '../logger.js';
 
 // VAPID keys - should be stored in environment variables
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
@@ -40,7 +41,7 @@ export async function sendPushNotification(
       JSON.stringify(payload)
     );
   } catch (error) {
-    console.error('Push notification failed:', error);
+    logger.error({ err: error }, 'Push notification failed');
     throw error;
   }
 }
