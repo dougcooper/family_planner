@@ -29,6 +29,7 @@ export const users = pgTable('users', {
   pointsBalance: integer('points_balance').notNull().default(0),
   emailFrequency: emailFrequencyEnum('email_frequency').notNull().default('DAILY'),
   avatarUrl: varchar('avatar_url', { length: 500 }),
+  color: varchar('color', { length: 7 }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

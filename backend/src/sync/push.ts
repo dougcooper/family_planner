@@ -31,6 +31,10 @@ export async function pushChanges(
     const { userId, familyId } = request.user;
     const { changes } = request.body;
 
+    if (!changes) {
+      return reply.status(400).send({ error: 'Missing changes object' });
+    }
+
     // Process each table's changes
     for (const [tableName, tableChanges] of Object.entries(changes)) {
       // Handle created records

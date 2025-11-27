@@ -3,6 +3,17 @@ import { schemaMigrations, createTable, addColumns } from '@nozbe/watermelondb/S
 export default schemaMigrations({
   migrations: [
     {
+      toVersion: 9,
+      steps: [
+        addColumns({
+          table: 'users',
+          columns: [
+            { name: 'color', type: 'string', isOptional: true },
+          ],
+        }),
+      ],
+    },
+    {
       toVersion: 8,
       steps: [
         addColumns({
@@ -118,6 +129,10 @@ export default schemaMigrations({
           ],
         }),
       ],
+    },
+    {
+      toVersion: 2,
+      steps: [],
     },
   ],
 });

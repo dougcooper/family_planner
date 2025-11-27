@@ -44,6 +44,7 @@ export class User extends Model implements IUser {
   @field('points_balance') pointsBalance!: number;
   @field('email_frequency') emailFrequency!: EmailFrequency;
   @field('avatar_url') avatarUrl?: string;
+  @field('color') color?: string;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
   // Optional passwordHash from interface, not stored in frontend DB

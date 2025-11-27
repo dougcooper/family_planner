@@ -1,6 +1,7 @@
 import { Tabs, Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Home, CheckSquare, Utensils, List, Gift, Settings, Calendar } from 'lucide-react-native';
 import { authProvider } from '../src/logic/auth';
 import { syncDatabase, setupPeriodicSync } from '../src/logic/sync';
@@ -72,80 +73,86 @@ export default function RootLayout() {
   }
 
   if (!isAuthenticated) {
-    return <Slot />;
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Slot />
+      </GestureHandlerRootView>
+    );
   }
 
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: '#4A90E2' }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Dashboard',
-          headerShown: false,
-          tabBarIcon: ({ color }: { color: string }) => <HomeIcon size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="tasks"
-        options={{
-          title: 'Tasks',
-          headerShown: false,
-          tabBarIcon: ({ color }: { color: string }) => <CheckSquareIcon size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="events"
-        options={{
-          title: 'Events',
-          headerShown: false,
-          tabBarIcon: ({ color }: { color: string }) => <CalendarIcon size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="meals"
-        options={{
-          title: 'Meals',
-          headerShown: false,
-          tabBarIcon: ({ color }: { color: string }) => <UtensilsIcon size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="lists"
-        options={{
-          title: 'Lists',
-          headerShown: false,
-          tabBarIcon: ({ color }: { color: string }) => <ListIcon size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="rewards"
-        options={{
-          title: 'Rewards',
-          headerShown: false,
-          tabBarIcon: ({ color }: { color: string }) => <GiftIcon size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          href: null,
-          title: 'Settings',
-          headerShown: false,
-          tabBarIcon: ({ color }: { color: string }) => <SettingsIcon size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="login"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="register"
-        options={{
-          href: null,
-        }}
-      />
-    </Tabs>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Tabs screenOptions={{ tabBarActiveTintColor: '#4A90E2' }}>
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Dashboard',
+            headerShown: false,
+            tabBarIcon: ({ color }: { color: string }) => <HomeIcon size={24} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="tasks"
+          options={{
+            title: 'Tasks',
+            headerShown: false,
+            tabBarIcon: ({ color }: { color: string }) => <CheckSquareIcon size={24} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="events"
+          options={{
+            title: 'Events',
+            headerShown: false,
+            tabBarIcon: ({ color }: { color: string }) => <CalendarIcon size={24} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="meals"
+          options={{
+            title: 'Meals',
+            headerShown: false,
+            tabBarIcon: ({ color }: { color: string }) => <UtensilsIcon size={24} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="lists"
+          options={{
+            title: 'Lists',
+            headerShown: false,
+            tabBarIcon: ({ color }: { color: string }) => <ListIcon size={24} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="rewards"
+          options={{
+            title: 'Rewards',
+            headerShown: false,
+            tabBarIcon: ({ color }: { color: string }) => <GiftIcon size={24} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            href: null,
+            title: 'Settings',
+            headerShown: false,
+            tabBarIcon: ({ color }: { color: string }) => <SettingsIcon size={24} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="login"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="register"
+          options={{
+            href: null,
+          }}
+        />
+      </Tabs>
+    </GestureHandlerRootView>
   );
 }

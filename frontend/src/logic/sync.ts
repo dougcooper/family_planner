@@ -24,7 +24,7 @@ export async function syncDatabase() {
           throw new Error('No auth token available');
         }
 
-        const response = await fetch(`${API_URL}/api/sync/pull?last_pulled_at=${lastPulledAt || 0}&schema_version=${schemaVersion}&migration=${JSON.stringify(migration)}`, {
+        const response = await fetch(`${API_URL}/sync/pull?last_pulled_at=${lastPulledAt || 0}&schema_version=${schemaVersion}&migration=${JSON.stringify(migration)}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -44,13 +44,13 @@ export async function syncDatabase() {
           throw new Error('No auth token available');
         }
 
-        const response = await fetch(`${API_URL}/api/sync/push?last_pulled_at=${lastPulledAt || 0}`, {
+        const response = await fetch(`${API_URL}/sync/push?last_pulled_at=${lastPulledAt || 0}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify(changes),
+          body: JSON.stringify({ changes, last_pulled_at: lastPulledAt }),
         });
 
         if (!response.ok) {

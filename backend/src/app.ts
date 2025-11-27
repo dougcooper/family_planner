@@ -22,6 +22,14 @@ const app = Fastify({
   },
 });
 
+// CORS configuration for frontend
+await app.register(cors, {
+  origin: true, // Allow all origins (reflects request origin)
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+});
+
 // Register multipart support
 app.register(multipart);
 
@@ -48,15 +56,6 @@ app.register(fastifyCron, {
       start: true
     }
   ]
-});
-
-// CORS configuration for frontend
-await app.register(cors, {
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:8080',
-    'http://localhost:8081'
-  ],
-  credentials: true,
 });
 
 // Health check endpoint

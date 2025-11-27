@@ -14,6 +14,13 @@ import log from '../src/utils/logger';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
+const USER_COLORS = [
+  '#EF5350', '#EC407A', '#AB47BC', '#7E57C2', '#5C6BC0',
+  '#42A5F5', '#29B6F6', '#26C6DA', '#26A69A', '#66BB6A',
+  '#9CCC65', '#D4E157', '#FFEE58', '#FFCA28', '#FFA726',
+  '#FF7043', '#8D6E63', '#BDBDBD', '#78909C'
+];
+
 export default function SettingsScreen() {
   const [currentUser, setCurrentUser] = useState(authProvider.getState().user);
   const [users, setUsers] = useState<User[]>([]);
@@ -24,12 +31,14 @@ export default function SettingsScreen() {
   const [newMemberRole, setNewMemberRole] = useState<'PARENT' | 'CHILD'>('CHILD');
   const [newMemberPin, setNewMemberPin] = useState('');
   const [newMemberAvatar, setNewMemberAvatar] = useState('');
+  const [newMemberColor, setNewMemberColor] = useState(USER_COLORS[0]);
 
   // Edit Member State
   const [editingMember, setEditingMember] = useState<User | null>(null);
   const [editMemberName, setEditMemberName] = useState('');
   const [editMemberRole, setEditMemberRole] = useState<'PARENT' | 'CHILD'>('CHILD');
   const [editMemberAvatar, setEditMemberAvatar] = useState('');
+  const [editMemberColor, setEditMemberColor] = useState(USER_COLORS[0]);
   const [isEditMemberModalVisible, setIsEditMemberModalVisible] = useState(false);
   
   // Weather Settings
@@ -257,12 +266,14 @@ export default function SettingsScreen() {
           user.pointsBalance = 0;
           user.emailFrequency = 'WEEKLY';
           user.avatarUrl = newMemberAvatar;
+          user.color = newMemberColor;
         });
       });
       
       setNewMemberName('');
       setNewMemberPin('');
       setNewMemberAvatar('');
+      setNewMemberColor(USER_COLORS[0]);
       setIsAddMemberModalVisible(false);
       loadData();
       showToast('Family member added successfully', 'success');
@@ -305,6 +316,7 @@ export default function SettingsScreen() {
           user.name = editMemberName;
           user.role = editMemberRole;
           user.avatarUrl = editMemberAvatar;
+          user.color = editMemberColor;
         });
       });
       
@@ -324,9 +336,17 @@ export default function SettingsScreen() {
     <View style={styles.userItem}>
       <View style={styles.userInfo}>
         {item.avatarUrl ? (
-          <Image source={{ uri: item.avatarUrl }} style={styles.userAvatar} />
+          <View style={{ 
+            padding: 2, 
+            borderRadius: 24, 
+            borderWidth: 2, 
+            borderColor: item.color || 'transparent',
+            marginRight: 12 
+          }}>
+            <Image source={{ uri: item.avatarUrl }} style={[styles.userAvatar, { marginRight: 0 }]} />
+          </View>
         ) : (
-          <View style={styles.userAvatarPlaceholder}>
+          <View style={[styles.userAvatarPlaceholder, { backgroundColor: item.color || '#E2E8F0' }]}>
             <Text style={styles.userAvatarPlaceholderText}>{item.name.charAt(0).toUpperCase()}</Text>
           </View>
         )}
@@ -341,6 +361,7 @@ export default function SettingsScreen() {
           setEditMemberName(item.name);
           setEditMemberRole(item.role);
           setEditMemberAvatar(item.avatarUrl || '');
+          setEditMemberColor(item.color || USER_COLORS[0]);
           setIsEditMemberModalVisible(true);
         }}>
           <Text style={styles.editButton}>Edit</Text>
@@ -587,6 +608,21 @@ export default function SettingsScreen() {
                   </TouchableOpacity>
                 </View>
 
+                <Text style={styles.label}>Color</Text>
+                <View style={styles.colorPickerContainer}>
+                  {USER_COLORS.map(color => (
+                    <TouchableOpacity
+                      key={color}
+                      style={[
+                        styles.colorOption,
+                        { backgroundColor: color },
+                        newMemberColor === color && styles.colorOptionSelected
+                      ]}
+                      onPress={() => setNewMemberColor(color)}
+                    />
+                  ))}
+                </View>
+
                 <TouchableOpacity style={styles.createButton} onPress={handleAddMember}>
                   <Text style={styles.createButtonText}>Add Member</Text>
                 </TouchableOpacity>
@@ -648,6 +684,21 @@ export default function SettingsScreen() {
                   >
                     <Text style={[styles.roleText, editMemberRole === 'CHILD' && styles.roleTextSelected]}>Child</Text>
                   </TouchableOpacity>
+                </View>
+
+                <Text style={styles.label}>Color</Text>
+                <View style={styles.colorPickerContainer}>
+                  {USER_COLORS.map(color => (
+                    <TouchableOpacity
+                      key={color}
+                      style={[
+                        styles.colorOption,
+                        { backgroundColor: color },
+                        editMemberColor === color && styles.colorOptionSelected
+                      ]}
+                      onPress={() => setEditMemberColor(color)}
+                    />
+                  ))}
                 </View>
 
                 <TouchableOpacity style={styles.createButton} onPress={handleUpdateMember}>
@@ -882,6 +933,21 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     marginRight: 16,
+  },
+  colorPickerContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  colorOption: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+  },
+  colorOptionSelected: {
+    borderWidth: 3,
+    borderColor: '#333',
   },
   searchResults: {
     marginTop: 8,

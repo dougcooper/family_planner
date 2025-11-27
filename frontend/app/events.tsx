@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { database } from '../src/model/database';
 import { Event, User } from '../src/model/models';
@@ -7,6 +7,7 @@ import { DashboardLayout } from '../src/components/dashboard/DashboardLayout';
 import { CreateEventModal } from '../src/components/events/CreateEventModal';
 import { EditEventModal } from '../src/components/events/EditEventModal';
 import { FamilyAssignmentSummary } from '../src/components/common/FamilyAssignmentSummary';
+import { CalendarView } from '../src/components/events/CalendarView';
 import { authProvider } from '../src/logic/auth';
 
 interface EventsScreenProps {
@@ -14,34 +15,12 @@ interface EventsScreenProps {
   users: User[];
 }
 
-const EventListItem = ({ event, user, onPress }: { event: Event, user: User | null, onPress: (event: Event) => void }) => (
-  <TouchableOpacity onPress={() => onPress(event)}>
-    <View style={styles.eventItem}>
-      <Text style={styles.eventTitle}>{event.title}</Text>
-      <View style={styles.detailsRow}>
-        <Text style={styles.eventTime}>
-          {event.startTime.toLocaleString()} - {event.endTime.toLocaleString()}
-        </Text>
-        {user && (
-          <View style={styles.userBadge}>
-            <Text style={styles.userBadgeText}>{user.name}</Text>
-          </View>
-        )}
-      </View>
-    </View>
-  </TouchableOpacity>
-);
-
-const EnhancedEventListItem = withObservables(['event'], ({ event }: { event: Event }) => ({
-  event: event.observe(),
-  user: event.user.observe(),
-}))(EventListItem);
-
 const EventsScreen = ({ events, users }: EventsScreenProps) => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [currentUser, setCurrentUser] = useState(authProvider.getState().user);
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [initialDate, setInitialDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     const unsubscribe = authProvider.subscribe((state) => {
@@ -73,9 +52,10 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
     return event.userId && selectedUserIds.has(event.userId);
   });
 
-  const renderItem = ({ item }: { item: Event }) => (
-    <EnhancedEventListItem event={item} onPress={setSelectedEvent} />
-  );
+  const handleEmptySlotPress = (date: Date) => {
+    setInitialDate(date);
+    setIsCreateModalVisible(true);
+  };
 
   return (
     <DashboardLayout>
@@ -90,22 +70,26 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
         />
         <View style={styles.headerContainer}>
           {currentUser?.role === 'PARENT' && (
-            <TouchableOpacity onPress={() => setIsCreateModalVisible(true)} style={styles.addButton}>
+            <TouchableOpacity 
+              onPress={() => {
+                setInitialDate(undefined);
+                setIsCreateModalVisible(true);
+              }} 
+              style={styles.addButton}
+            >
               <Text style={styles.addButtonText}>+ New Event</Text>
             </TouchableOpacity>
           )}
         </View>
-        <FlatList
-          data={filteredEvents}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No events scheduled</Text>
-            </View>
-          }
-        />
+        <View style={styles.calendarWrapper}>
+          <CalendarView
+            events={filteredEvents}
+            users={users}
+            onEventPress={setSelectedEvent}
+            onEmptySlotPress={handleEmptySlotPress}
+          />
+        </View>
+        
         {currentUser && (
           <>
             <CreateEventModal
@@ -113,13 +97,16 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
               onClose={() => setIsCreateModalVisible(false)}
               database={database}
               familyId={currentUser.familyId}
+              initialDate={initialDate}
             />
-            <EditEventModal
-              visible={!!selectedEvent}
-              onClose={() => setSelectedEvent(null)}
-              database={database}
-              event={selectedEvent}
-            />
+            {selectedEvent && (
+              <EditEventModal
+                visible={!!selectedEvent}
+                event={selectedEvent}
+                onClose={() => setSelectedEvent(null)}
+                database={database}
+              />
+            )}
           </>
         )}
       </View>
@@ -162,49 +149,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 15,
   },
-  eventItem: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
-  },
-  eventTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  detailsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  eventTime: {
-    fontSize: 15,
-    color: '#8E8E93',
-  },
-  userBadge: {
-    backgroundColor: '#E1E1E1',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-  userBadgeText: {
-    fontSize: 12,
-    color: '#555',
-    fontWeight: '500',
-  },
-  listContent: {
-    paddingBottom: 20,
-  },
-  emptyState: {
-    padding: 32,
-    alignItems: 'center',
-  },
-  emptyStateText: {
-    fontSize: 17,
-    color: '#8E8E93',
+  calendarWrapper: {
+    flex: 1,
+    minHeight: 400,
   },
 });
 

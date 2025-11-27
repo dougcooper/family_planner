@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Modal, ScrollView, Platform } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Database, Q } from '@nozbe/watermelondb';
+import { Database } from '@nozbe/watermelondb';
 import { createEvent, buildRecurrenceRule, type RecurrenceOptions } from '../../logic/events';
 import { User } from '../../model/models';
 import log from '../../utils/logger';
@@ -11,6 +11,7 @@ interface CreateEventModalProps {
   onClose: () => void;
   database: Database;
   familyId: string;
+  initialDate?: Date;
 }
 
 type RecurrenceEndType = 'never' | 'on_date' | 'after_count';
@@ -27,7 +28,7 @@ const DAYS_OF_WEEK: { key: DayOfWeek; label: string }[] = [
   { key: 'SA', label: 'Sa' },
 ];
 
-export function CreateEventModal({ visible, onClose, database, familyId }: CreateEventModalProps) {
+export function CreateEventModal({ visible, onClose, database, familyId, initialDate }: CreateEventModalProps) {
   const [title, setTitle] = useState('');
   const [startTime, setStartTime] = useState(new Date());
   const [endTime, setEndTime] = useState(() => new Date(Date.now() + 3600000));
@@ -47,14 +48,23 @@ export function CreateEventModal({ visible, onClose, database, familyId }: Creat
 
   React.useEffect(() => {
     if (visible) {
+      if (initialDate) {
+        setStartTime(initialDate);
+        setEndTime(new Date(initialDate.getTime() + 3600000));
+      } else {
+        const now = new Date();
+        setStartTime(now);
+        setEndTime(new Date(now.getTime() + 3600000));
+      }
+
       const fetchUsers = async () => {
-        const fetchedUsers = await database.get<User>('users').query(Q.where('family_id', familyId)).fetch();
-        setUsers(fetchedUsers);
+        const allUsers = await database.collections.get<User>('users').query().fetch();
+        setUsers(allUsers);
       };
       fetchUsers();
     }
-  }, [visible, database, familyId]);
-  
+  }, [visible, database, initialDate]);
+
   // Android specific state
   const [mode, setMode] = useState<'date' | 'time'>('date');
   const [show, setShow] = useState(false);
