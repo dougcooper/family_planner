@@ -76,12 +76,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const kitEvents = useMemo(() => {
     return events.map(event => {
       const isAllDay = event.isAllDay;
+      const resourceId = event.userId;
+      
       const start = isAllDay 
-        ? { date: dayjs(event.startTime).format('YYYY-MM-DD') }
-        : { dateTime: event.startTime.toISOString() };
+        ? { date: dayjs(event.startTime).format('YYYY-MM-DD'), resourceId }
+        : { dateTime: event.startTime.toISOString(), resourceId };
       const end = isAllDay
-        ? { date: dayjs(event.endTime).format('YYYY-MM-DD') }
-        : { dateTime: event.endTime.toISOString() };
+        ? { date: dayjs(event.endTime).format('YYYY-MM-DD'), resourceId }
+        : { dateTime: event.endTime.toISOString(), resourceId };
 
       const color = getUserColor(event.userId);
 
@@ -92,18 +94,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         title: event.title,
         color,
         userColor: color,
-        resourceId: event.userId,
+        resourceId,
       };
     });
   }, [events, getUserColor]);
 
-  const resources = useMemo(() => {
-    return users.map(user => ({
-      id: user.id,
-      title: user.name,
-      color: getUserColor(user.id),
-    }));
-  }, [users, getUserColor]);
+
 
   const handleViewChange = (mode: CalendarViewMode) => {
     setViewMode(mode);
@@ -120,7 +116,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         newDate = date.subtract(1, 'week');
         break;
       case 'day':
-      case 'resource':
         newDate = date.subtract(1, 'day');
         break;
       default:
@@ -140,7 +135,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         newDate = date.add(1, 'week');
         break;
       case 'day':
-      case 'resource':
         newDate = date.add(1, 'day');
         break;
       default:
@@ -222,13 +216,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   };
 
   const renderCalendar = () => {
-    if (viewMode === 'day' || viewMode === 'week' || viewMode === 'resource') {
+    if (viewMode === 'day' || viewMode === 'week') {
       return (
         <TimelineCalendar
           key={viewMode}
           ref={calendarRef}
           events={kitEvents}
-          resources={viewMode === 'resource' ? resources : undefined}
           allowDragToCreate
           allowDragToEdit
           onDragCreateEventEnd={handleDragCreateEnd}
