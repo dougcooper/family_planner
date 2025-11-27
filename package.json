@@ -45,7 +45,9 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "react-native-big-calendar@4.19.0": "patches/react-native-big-calendar@4.19.0.patch"
+      "react-native-big-calendar@4.19.0": "patches/react-native-big-calendar@4.19.0.patch",
+      "@howljs/calendar-kit@2.5.6": "patches/@howljs+calendar-kit+2.5.6.patch",
+      "react-native-gesture-handler@2.28.0": "patches/react-native-gesture-handler@2.28.0.patch"
     }
   }
 }

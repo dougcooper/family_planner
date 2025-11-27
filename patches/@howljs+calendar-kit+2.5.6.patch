@@ -1,0 +1,78 @@
+diff --git a/lib/commonjs/components/DraggingEvent.js b/lib/commonjs/components/DraggingEvent.js
+index 1234567..89abcde 100644
+--- a/lib/commonjs/components/DraggingEvent.js
++++ b/lib/commonjs/components/DraggingEvent.js
+@@ -86,7 +86,7 @@ exports.DraggingEvent = ({
+     const columnIndex = Math.floor(xWithoutHourWidth / eventWidth);
+     return (0, _utils.clampValues)(columnIndex, 0, totalResources - 1);
+   }, [totalResources, hourWidth]);
+-  const internalDayIndex = (0, _reactNativeReanimated.useSharedValue)(getDayIndex(dragStartUnix.value));
++  const internalDayIndex = (0, _reactNativeReanimated.useSharedValue)(0);
+   (0, _reactNativeReanimated.useAnimatedReaction)(() => dragStartUnix.value, dayUnix => {
+     if (dayUnix !== -1) {
+       const dayIndex = getDayIndex(dayUnix);
+diff --git a/lib/commonjs/hooks/usePinchToZoom.js b/lib/commonjs/hooks/usePinchToZoom.js
+index 1234567..89abcde 100644
+--- a/lib/commonjs/hooks/usePinchToZoom.js
++++ b/lib/commonjs/hooks/usePinchToZoom.js
+@@ -23,7 +23,7 @@ const usePinchToZoom = () => {
+     offsetY,
+     allowPinchToZoom
+   } = (0, _CalendarProvider.useCalendar)();
+-  const startOffsetY = (0, _reactNativeReanimated.useSharedValue)(offsetY.value);
++  const startOffsetY = (0, _reactNativeReanimated.useSharedValue)(0);
+   const pinchGestureRef = (0, _react.useRef)(undefined);
+   const startScale = (0, _reactNativeReanimated.useSharedValue)(1);
+   const lastScale = (0, _reactNativeReanimated.useSharedValue)(1);
+diff --git a/lib/module/components/DraggingEvent.js b/lib/module/components/DraggingEvent.js
+index 1234567..89abcde 100644
+--- a/lib/module/components/DraggingEvent.js
++++ b/lib/module/components/DraggingEvent.js
+@@ -80,7 +80,7 @@ export const DraggingEvent = ({
+     const columnIndex = Math.floor(xWithoutHourWidth / eventWidth);
+     return clampValues(columnIndex, 0, totalResources - 1);
+   }, [totalResources, hourWidth]);
+-  const internalDayIndex = useSharedValue(getDayIndex(dragStartUnix.value));
++  const internalDayIndex = useSharedValue(0);
+   useAnimatedReaction(() => dragStartUnix.value, dayUnix => {
+     if (dayUnix !== -1) {
+       const dayIndex = getDayIndex(dayUnix);
+diff --git a/lib/module/hooks/usePinchToZoom.js b/lib/module/hooks/usePinchToZoom.js
+index 1234567..89abcde 100644
+--- a/lib/module/hooks/usePinchToZoom.js
++++ b/lib/module/hooks/usePinchToZoom.js
+@@ -17,7 +17,7 @@ const usePinchToZoom = () => {
+     offsetY,
+     allowPinchToZoom
+   } = useCalendar();
+-  const startOffsetY = useSharedValue(offsetY.value);
++  const startOffsetY = useSharedValue(0);
+   const pinchGestureRef = useRef(undefined);
+   const startScale = useSharedValue(1);
+   const lastScale = useSharedValue(1);
+diff --git a/src/components/DraggingEvent.tsx b/src/components/DraggingEvent.tsx
+index 1234567..89abcde 100644
+--- a/src/components/DraggingEvent.tsx
++++ b/src/components/DraggingEvent.tsx
+@@ -120,7 +120,7 @@ export const DraggingEvent: FC<DraggingEventProps> = ({
+     return clampValues(columnIndex, 0, totalResources - 1);
+   }, [totalResources, hourWidth]);
+ 
+-  const internalDayIndex = useSharedValue(getDayIndex(dragStartUnix.value));
++  const internalDayIndex = useSharedValue(0);
+ 
+   useAnimatedReaction(
+     () => dragStartUnix.value,
+diff --git a/src/hooks/usePinchToZoom.tsx b/src/hooks/usePinchToZoom.tsx
+index 1234567..89abcde 100644
+--- a/src/hooks/usePinchToZoom.tsx
++++ b/src/hooks/usePinchToZoom.tsx
+@@ -25,7 +25,7 @@ const usePinchToZoom = () => {
+     allowPinchToZoom,
+   } = useCalendar();
+ 
+-  const startOffsetY = useSharedValue(offsetY.value);
++  const startOffsetY = useSharedValue(0);
+   const pinchGestureRef = useRef<GestureType | undefined>(undefined);
+   const startScale = useSharedValue(1);
+   const lastScale = useSharedValue(1);

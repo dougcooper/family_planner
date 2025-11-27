@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import dayjs from 'dayjs';
 
-export type CalendarViewMode = 'month' | 'week' | 'day' | 'agenda';
+export type CalendarViewMode = 'month' | 'week' | 'day' | 'agenda' | 'resource';
 
 interface CalendarHeaderProps {
   currentDate: Date;
@@ -58,7 +58,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
       </View>
 
       <View style={styles.viewSelector}>
-        {(['month', 'week', 'day', 'agenda'] as CalendarViewMode[]).map((mode) => (
+        {(['month', 'week', 'day', 'agenda', 'resource'] as CalendarViewMode[]).map((mode) => (
           <TouchableOpacity
             key={mode}
             style={[

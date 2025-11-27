@@ -1,0 +1,45 @@
+diff --git a/lib/commonjs/web/utils.js b/lib/commonjs/web/utils.js
+index 38a68f31d95dfc3c412c284da88d53391400e6a6..cd9dc363fe7c5754e45bac476afc6284847ef080 100644
+--- a/lib/commonjs/web/utils.js
++++ b/lib/commonjs/web/utils.js
+@@ -227,7 +227,9 @@ function isRNSVGElement(viewRef) {
+ function isRNSVGNode(node) {
+   // If `ref` has `rngh` field, it means that component comes from Gesture Handler. This is a special case for
+   // `Text` component, which is present in `RNSVGElements` set, yet we don't want to treat it as SVG.
+-  if (node.ref?.rngh) {
++  // React 19 compatibility
++  const ref = node.props?.ref;
++  if (ref?.rngh) {
+     return false;
+   }
+   return Object.getPrototypeOf(node?.type)?.name === 'WebShape' || RNSVGElements.has(node?.type?.displayName);
+diff --git a/lib/module/web/utils.js b/lib/module/web/utils.js
+index e9ae2507cc2d5a0a02f75d970fefea87fb7d1dcc..df5e170f3e6a57b52b2799c3ff648e9eba35f57d 100644
+--- a/lib/module/web/utils.js
++++ b/lib/module/web/utils.js
+@@ -215,7 +215,9 @@ export function isRNSVGElement(viewRef) {
+ export function isRNSVGNode(node) {
+   // If `ref` has `rngh` field, it means that component comes from Gesture Handler. This is a special case for
+   // `Text` component, which is present in `RNSVGElements` set, yet we don't want to treat it as SVG.
+-  if (node.ref?.rngh) {
++  // React 19 compatibility
++  const ref = node.props?.ref;
++  if (ref?.rngh) {
+     return false;
+   }
+   return Object.getPrototypeOf(node?.type)?.name === 'WebShape' || RNSVGElements.has(node?.type?.displayName);
+diff --git a/src/web/utils.ts b/src/web/utils.ts
+index 2825eff75e67becf696d4653f66c38c95ffa9d6a..f9fb477323048b094e0fad18f7d340a417b5e94c 100644
+--- a/src/web/utils.ts
++++ b/src/web/utils.ts
+@@ -282,7 +282,9 @@ export function isRNSVGElement(viewRef: SVGRef | GestureHandlerRef) {
+ export function isRNSVGNode(node: any) {
+   // If `ref` has `rngh` field, it means that component comes from Gesture Handler. This is a special case for
+   // `Text` component, which is present in `RNSVGElements` set, yet we don't want to treat it as SVG.
+-  if (node.ref?.rngh) {
++  // React 19 compatibility
++  const ref = node.props?.ref;
++  if (ref?.rngh) {
+     return false;
+   }
+ 

@@ -72,3 +72,24 @@
   - Check color contrast and accessibility.
   - Verify "Split View" behavior on different screen sizes.
 
+## Phase 5: Modern Calendar Kit Integration (New)
+
+- [x] **Install & Setup**
+  - Action: Install `@howljs/calendar-kit`.
+  - Validation: App builds successfully.
+
+- [x] **Implement Day/Week View with Calendar Kit**
+  - Action: Update `CalendarView` to use `CalendarKit` for Day and Week views.
+  - Action: Configure drag and drop support.
+  - Action: Configure `allowOverlap={false}` (or equivalent) to prevent overlapping events.
+  - Validation: Day/Week views render with Calendar Kit and support drag/drop.
+
+- [x] **Implement Resource View**
+  - Action: Add "Resource" option to `CalendarHeader`.
+  - Action: Implement Resource view using `CalendarKit` (resources = users).
+  - Validation: Can switch to Resource view and see events grouped by user.
+
+- [x] **Maintain Legacy Views**
+  - Action: Ensure Month and Agenda views continue to use `react-native-big-calendar`.
+  - Validation: All 4+ views (Day, Week, Month, Agenda, Resource) work correctly.
+

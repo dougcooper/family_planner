@@ -34,6 +34,20 @@ jest.mock('lucide-react-native', () => {
     ChevronRight: () => <Text>Right</Text>,
   };
 });
+
+jest.mock('@howljs/calendar-kit', () => {
+  const { View, Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: any) => (
+      <View testID="mock-timeline-calendar">
+        <Text>{props.viewMode || (props.numberOfDays === 7 ? 'week' : 'day')}</Text>
+        <Text>{props.initialDate}</Text>
+        {props.resources && <Text>Has Resources</Text>}
+      </View>
+    ),
+  };
+});
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 describe('CalendarView', () => {
@@ -85,7 +99,8 @@ describe('CalendarView', () => {
     );
 
     fireEvent.press(getByText('Agenda'));
-    expect(getByTestId('mock-agenda-view')).toBeTruthy();
+    expect(getByTestId('mock-big-calendar')).toBeTruthy();
+    expect(getByText('schedule')).toBeTruthy();
   });
 
   it('navigates to next month', () => {
@@ -126,5 +141,50 @@ describe('CalendarView', () => {
 
     const prevMonthDate = dayjs().subtract(1, 'month').format('MMMM YYYY');
     expect(getByText(prevMonthDate)).toBeTruthy();
+  });
+
+  it('switches to day view', () => {
+    const { getByText, getByTestId } = render(
+      <CalendarView
+        events={mockEvents}
+        users={mockUsers}
+        onEventPress={mockOnEventPress}
+        onEmptySlotPress={mockOnEmptySlotPress}
+      />
+    );
+
+    fireEvent.press(getByText('Day'));
+    expect(getByTestId('mock-timeline-calendar')).toBeTruthy();
+    expect(getByText('day')).toBeTruthy();
+  });
+
+  it('switches to week view', () => {
+    const { getByText, getByTestId } = render(
+      <CalendarView
+        events={mockEvents}
+        users={mockUsers}
+        onEventPress={mockOnEventPress}
+        onEmptySlotPress={mockOnEmptySlotPress}
+      />
+    );
+
+    fireEvent.press(getByText('Week'));
+    expect(getByTestId('mock-timeline-calendar')).toBeTruthy();
+    expect(getByText('week')).toBeTruthy();
+  });
+
+  it('switches to resource view', () => {
+    const { getByText, getByTestId } = render(
+      <CalendarView
+        events={mockEvents}
+        users={mockUsers}
+        onEventPress={mockOnEventPress}
+        onEmptySlotPress={mockOnEmptySlotPress}
+      />
+    );
+
+    fireEvent.press(getByText('Resource'));
+    expect(getByTestId('mock-timeline-calendar')).toBeTruthy();
+    expect(getByText('Has Resources')).toBeTruthy();
   });
 });

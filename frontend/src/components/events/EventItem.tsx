@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { Event } from '../../model/models';
 import dayjs from 'dayjs';
 
@@ -22,22 +23,29 @@ export const EventItem: React.FC<EventItemProps> = ({
   const endTime = dayjs(event.endTime).format('h:mm A');
 
   return (
-    <TouchableOpacity 
-      style={[style, styles.container, { borderLeftColor: color }]} 
-      onPress={onPress}
-    >
-      <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={1}>{event.title}</Text>
-        {!isAllDay && (
-          <Text style={styles.time}>{startTime} - {endTime}</Text>
-        )}
-      </View>
-    </TouchableOpacity>
+    <Animated.View style={[style, styles.wrapper]}>
+      <TouchableOpacity 
+        style={[styles.container, { borderLeftColor: color }]} 
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <View style={styles.content}>
+          <Text style={styles.title} numberOfLines={1}>{event.title}</Text>
+          {!isAllDay && (
+            <Text style={styles.time}>{startTime} - {endTime}</Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    overflow: 'hidden',
+  },
   container: {
+    flex: 1,
     backgroundColor: '#f9f9f9',
     borderLeftWidth: 4,
     padding: 4,

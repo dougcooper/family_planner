@@ -13,7 +13,7 @@ const config = {
       info: "blueBright",
       warn: "yellowBright",
       error: "redBright",
-    },
+    } as const,
   },
 };
 
