@@ -5,7 +5,6 @@ import dayjs from 'dayjs';
 import { Event, User } from '../../model/models';
 import { CalendarHeader, CalendarViewMode } from './CalendarHeader';
 import { EventItem } from './EventItem';
-import { AgendaView } from './AgendaView';
 
 interface CalendarViewProps {
   events: Event[];
@@ -172,77 +171,68 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </View>
         ))}
       </View>
-      {viewMode === 'agenda' ? (
-        <AgendaView 
-          events={events}
-          users={users}
-          currentDate={currentDate}
-          onEventPress={onEventPress}
-        />
-      ) : (
-        <View style={styles.calendarContainer}>
-          <Calendar
-            events={calendarEvents}
-            height={viewMode === 'month' ? 400 : 600} 
-            mode={viewMode as 'month' | 'week' | 'day' | 'schedule' | '3days'}
-            date={currentDate}
-            onPressEvent={(event) => onEventPress(event.originalEvent)}
-            onPressCell={handleCellPress}
-            swipeEnabled={true}
-            ampm={true}
-            showAllDayEventCell={true}
-            eventCellStyle={(_event) => {
-              if (viewMode === 'month') {
-                return { backgroundColor: 'transparent', padding: 0, margin: 0, height: 10, width: 10 };
-              }
-              return { backgroundColor: 'transparent' }; // We handle background in EventItem
-            }}
-            renderEvent={(event, touchableOpacityProps) => {
-               if (viewMode === 'month') {
-                 return (
-                   <View style={{ 
-                     width: 6, 
-                     height: 6, 
-                     borderRadius: 3, 
-                     backgroundColor: getUserColor(event.originalEvent.userId),
-                     margin: 1 
-                   }} />
-                 );
-               }
+      <View style={styles.calendarContainer}>
+        <Calendar
+          events={calendarEvents}
+          height={viewMode === 'month' ? 600 : 600} 
+          mode={viewMode === 'agenda' ? 'schedule' : viewMode as 'month' | 'week' | 'day' | 'schedule' | '3days'}
+          date={currentDate}
+          onPressEvent={(event) => onEventPress(event.originalEvent)}
+          onPressCell={handleCellPress}
+          swipeEnabled={true}
+          ampm={true}
+          showAllDayEventCell={true}
+          eventCellStyle={(_event) => {
+            if (viewMode === 'month') {
+              return { backgroundColor: 'transparent', padding: 0, margin: 0, height: 10, width: 10 };
+            }
+            return { backgroundColor: 'transparent' }; // We handle background in EventItem
+          }}
+          renderEvent={(event, touchableOpacityProps) => {
+             if (viewMode === 'month') {
                return (
-                 <EventItem 
-                   event={event.originalEvent} 
-                   color={getUserColor(event.originalEvent.userId)}
-                   onPress={() => onEventPress(event.originalEvent)}
-                   isAllDay={event.allDay}
-                   style={touchableOpacityProps.style}
-                 />
+                 <View style={{ 
+                   width: 6, 
+                   height: 6, 
+                   borderRadius: 3, 
+                   backgroundColor: getUserColor(event.originalEvent.userId),
+                   margin: 1 
+                 }} />
                );
-            }}
-          />
-          {viewMode === 'month' && (
-            <View style={styles.dayListContainer}>
-              <Text style={styles.dayListHeader}>
-                {dayjs(selectedDate).format('dddd, MMMM D')}
-              </Text>
-              <FlatList
-                data={selectedDayEvents}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <View style={styles.dayListItem}>
-                    <EventItem 
-                      event={item} 
-                      color={getUserColor(item.userId)}
-                      onPress={() => onEventPress(item)}
-                    />
-                  </View>
-                )}
-                ListEmptyComponent={<Text style={styles.emptyText}>No events</Text>}
-              />
-            </View>
-          )}
-        </View>
-      )}
+             }
+             return (
+               <EventItem 
+                 event={event.originalEvent} 
+                 color={getUserColor(event.originalEvent.userId)}
+                 onPress={() => onEventPress(event.originalEvent)}
+                 isAllDay={event.allDay}
+                 style={touchableOpacityProps.style}
+               />
+             );
+          }}
+        />
+        {viewMode === 'month' && (
+          <View style={styles.dayListContainer}>
+            <Text style={styles.dayListHeader}>
+              {dayjs(selectedDate).format('dddd, MMMM D')}
+            </Text>
+            <FlatList
+              data={selectedDayEvents}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.dayListItem}>
+                  <EventItem 
+                    event={item} 
+                    color={getUserColor(item.userId)}
+                    onPress={() => onEventPress(item)}
+                  />
+                </View>
+              )}
+              ListEmptyComponent={<Text style={styles.emptyText}>No events</Text>}
+            />
+          </View>
+        )}
+      </View>
     </View>
   );
 };
@@ -260,6 +250,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
     padding: 10,
+    backgroundColor: 'white',
   },
   dayListHeader: {
     fontSize: 16,
