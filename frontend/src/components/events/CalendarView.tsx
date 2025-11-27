@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { View, StyleSheet, Text, Dimensions } from 'react-native';
 import { Calendar } from 'react-native-big-calendar';
 import TimelineCalendar, { PackedEvent, CalendarKitHandle, OnCreateEventResponse, OnEventResponse } from '@howljs/calendar-kit';
@@ -61,6 +61,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     });
   }, [events]);
 
+  const getUserColor = useCallback((userId?: string) => {
+    if (!userId) return '#2196F3';
+    if (userColorMap[userId]) return userColorMap[userId];
+    
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+      hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % USER_COLORS.length;
+    return USER_COLORS[index];
+  }, [userColorMap]);
+
   const kitEvents = useMemo(() => {
     return events.map(event => {
       const isAllDay = event.isAllDay;
@@ -71,7 +83,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         ? { date: dayjs(event.endTime).format('YYYY-MM-DD') }
         : { dateTime: event.endTime.toISOString() };
 
-      const color = userColorMap[event.userId || ''] || '#ccc';
+      const color = getUserColor(event.userId);
 
       return {
         id: event.id,
@@ -83,15 +95,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         resourceId: event.userId,
       };
     });
-  }, [events, userColorMap]);
+  }, [events, getUserColor]);
 
   const resources = useMemo(() => {
     return users.map(user => ({
       id: user.id,
       title: user.name,
-      color: user.color || userColorMap[user.id],
+      color: getUserColor(user.id),
     }));
-  }, [users, userColorMap]);
+  }, [users, getUserColor]);
 
   const handleViewChange = (mode: CalendarViewMode) => {
     setViewMode(mode);
@@ -177,17 +189,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     // onUpdateEvent(updatedEvent);
   };
 
-  const getUserColor = (userId?: string) => {
-    if (!userId) return '#2196F3';
-    if (userColorMap[userId]) return userColorMap[userId];
-    
-    let hash = 0;
-    for (let i = 0; i < userId.length; i++) {
-      hash = userId.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const index = Math.abs(hash) % USER_COLORS.length;
-    return USER_COLORS[index];
-  };
 
   const calendarRef = useRef<CalendarKitHandle>(null);
 
