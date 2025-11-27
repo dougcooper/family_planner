@@ -5,6 +5,7 @@ import { Database } from '@nozbe/watermelondb';
 import { createEvent, buildRecurrenceRule, type RecurrenceOptions } from '../../logic/events';
 import { User } from '../../model/models';
 import log from '../../utils/logger';
+import { toLocalDateISOString } from '../../utils/date';
 
 interface CreateEventModalProps {
   visible: boolean;
@@ -273,7 +274,7 @@ export function CreateEventModal({ visible, onClose, database, familyId, initial
               <View style={styles.dateTimeRow}>
                 {React.createElement('input', {
                   type: 'date',
-                  value: startTime.toISOString().split('T')[0],
+                  value: toLocalDateISOString(startTime),
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                     const [y, m, d] = e.target.value.split('-').map(Number);
                     if (y && m && d) {
@@ -341,7 +342,8 @@ export function CreateEventModal({ visible, onClose, database, familyId, initial
               <View style={styles.dateTimeRow}>
                 {React.createElement('input', {
                   type: 'date',
-                  value: endTime.toISOString().split('T')[0],
+                  value: toLocalDateISOString(endTime),
+                  min: toLocalDateISOString(startTime),
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                     const [y, m, d] = e.target.value.split('-').map(Number);
                     if (y && m && d) {
@@ -488,7 +490,7 @@ export function CreateEventModal({ visible, onClose, database, familyId, initial
                     ) : Platform.OS === 'web' ? (
                       React.createElement('input', {
                         type: 'date',
-                        value: recurrenceEndDate.toISOString().split('T')[0],
+                        value: toLocalDateISOString(recurrenceEndDate),
                         onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                           const [y, m, d] = e.target.value.split('-').map(Number);
                           if (y && m && d) {

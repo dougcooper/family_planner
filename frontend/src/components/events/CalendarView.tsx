@@ -48,15 +48,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       // Ensure all-day events are strictly set to start/end of day
       if (event.isAllDay) {
         start.setHours(0, 0, 0, 0);
-        
-        // If end is on the same day as start, move it to the next day to ensure 24h duration
-        if (end.getFullYear() === start.getFullYear() && 
-            end.getMonth() === start.getMonth() && 
-            end.getDate() === start.getDate()) {
-          end.setDate(end.getDate() + 1);
-        }
-        
-        // Always ensure end time is midnight
         end.setHours(0, 0, 0, 0);
       }
 

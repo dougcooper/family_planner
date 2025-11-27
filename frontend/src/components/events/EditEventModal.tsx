@@ -5,6 +5,7 @@ import { Database, Q } from '@nozbe/watermelondb';
 import { Event, User } from '../../model/models';
 import { updateEvent, deleteEvent, deleteRecurringEvent, buildRecurrenceRule, type RecurrenceOptions } from '../../logic/events';
 import log from '../../utils/logger';
+import { toLocalDateISOString } from '../../utils/date';
 
 interface EditEventModalProps {
   visible: boolean;
@@ -29,6 +30,7 @@ const DAYS_OF_WEEK: { key: DayOfWeek; label: string }[] = [
 
 export function EditEventModal({ visible, onClose, database, event }: EditEventModalProps) {
   const [title, setTitle] = useState(event?.title ?? '');
+  const [isAllDay, setIsAllDay] = useState(event?.isAllDay ?? false);
   const [startTime, setStartTime] = useState(event?.startTime ?? new Date());
   const [endTime, setEndTime] = useState(event?.endTime ?? new Date());
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>(event?.userId ?? undefined);
@@ -49,6 +51,7 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
   React.useEffect(() => {
     if (visible && event) {
       setTitle(event.title);
+      setIsAllDay(event.isAllDay ?? false);
       setStartTime(event.startTime);
       setEndTime(event.endTime);
       setSelectedUserId(event.userId ?? undefined);
@@ -144,6 +147,7 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
         title,
         startTime,
         endTime,
+        isAllDay,
         userId: selectedUserId,
         recurrenceRule,
       });
@@ -345,13 +349,25 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
           </View>
 
           <View style={styles.formGroup}>
+            <TouchableOpacity 
+              style={styles.checkbox}
+              onPress={() => setIsAllDay(!isAllDay)}
+            >
+              <View style={[styles.checkboxInner, isAllDay && styles.checkboxChecked]}>
+                {isAllDay && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <Text style={styles.checkboxLabel}>All Day</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.formGroup}>
             <Text style={styles.label}>Starts</Text>
             {Platform.OS === 'ios' ? (
               <View style={styles.dateTimeRow}>
                 <DateTimePicker
                   testID="dateTimePicker"
                   value={startTime}
-                  mode="datetime"
+                  mode={isAllDay ? 'date' : 'datetime'}
                   display="compact"
                   onChange={(e, date) => {
                     if (date) {
@@ -367,7 +383,7 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
               <View style={styles.dateTimeRow}>
                 {React.createElement('input', {
                   type: 'date',
-                  value: startTime.toISOString().split('T')[0],
+                  value: toLocalDateISOString(startTime),
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                     const [y, m, d] = e.target.value.split('-').map(Number);
                     if (y && m && d) {
@@ -379,9 +395,9 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
                       }
                     }
                   },
-                  style: { padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#E5E5EA', fontSize: 17, marginRight: 10, borderStyle: 'solid', backgroundColor: '#FFFFFF' }
+                  style: { padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#E5E5EA', fontSize: 17, marginRight: isAllDay ? 0 : 10, borderStyle: 'solid', backgroundColor: '#FFFFFF' }
                 })}
-                {React.createElement('input', {
+                {!isAllDay && React.createElement('input', {
                   type: 'time',
                   value: startTime.toTimeString().slice(0, 5),
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -401,17 +417,19 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
             ) : (
               <View style={styles.androidDateTimeRow}>
                 <TouchableOpacity 
-                  style={styles.dateButton} 
+                  style={[styles.dateButton, isAllDay && styles.dateButtonFullWidth]} 
                   onPress={() => showMode('date', 'start')}
                 >
                   <Text style={styles.dateButtonText}>{formatDate(startTime)}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.timeButton} 
-                  onPress={() => showMode('time', 'start')}
-                >
-                  <Text style={styles.dateButtonText}>{formatTime(startTime)}</Text>
-                </TouchableOpacity>
+                {!isAllDay && (
+                  <TouchableOpacity 
+                    style={styles.timeButton} 
+                    onPress={() => showMode('time', 'start')}
+                  >
+                    <Text style={styles.dateButtonText}>{formatTime(startTime)}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
           </View>
@@ -423,7 +441,7 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
                 <DateTimePicker
                   testID="dateTimePicker"
                   value={endTime}
-                  mode="datetime"
+                  mode={isAllDay ? 'date' : 'datetime'}
                   display="compact"
                   onChange={(e, date) => date && setEndTime(date)}
                   minimumDate={startTime}
@@ -433,7 +451,8 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
               <View style={styles.dateTimeRow}>
                 {React.createElement('input', {
                   type: 'date',
-                  value: endTime.toISOString().split('T')[0],
+                  value: toLocalDateISOString(endTime),
+                  min: toLocalDateISOString(startTime),
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                     const [y, m, d] = e.target.value.split('-').map(Number);
                     if (y && m && d) {
@@ -444,7 +463,7 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
                   },
                   style: { padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#E5E5EA', fontSize: 17, marginRight: 10, borderStyle: 'solid', backgroundColor: '#FFFFFF' }
                 })}
-                {React.createElement('input', {
+                {!isAllDay && React.createElement('input', {
                   type: 'time',
                   value: endTime.toTimeString().slice(0, 5),
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -461,17 +480,19 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
             ) : (
               <View style={styles.androidDateTimeRow}>
                 <TouchableOpacity 
-                  style={styles.dateButton} 
+                  style={[styles.dateButton, isAllDay && styles.dateButtonFullWidth]} 
                   onPress={() => showMode('date', 'end')}
                 >
                   <Text style={styles.dateButtonText}>{formatDate(endTime)}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.timeButton} 
-                  onPress={() => showMode('time', 'end')}
-                >
-                  <Text style={styles.dateButtonText}>{formatTime(endTime)}</Text>
-                </TouchableOpacity>
+                {!isAllDay && (
+                  <TouchableOpacity 
+                    style={styles.timeButton} 
+                    onPress={() => showMode('time', 'end')}
+                  >
+                    <Text style={styles.dateButtonText}>{formatTime(endTime)}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
           </View>
@@ -578,7 +599,7 @@ export function EditEventModal({ visible, onClose, database, event }: EditEventM
                     ) : Platform.OS === 'web' ? (
                       React.createElement('input', {
                         type: 'date',
-                        value: recurrenceEndDate.toISOString().split('T')[0],
+                        value: toLocalDateISOString(recurrenceEndDate),
                         onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                           const [y, m, d] = e.target.value.split('-').map(Number);
                           if (y && m && d) {
@@ -746,6 +767,9 @@ const styles = StyleSheet.create({
     color: '#000000',
     textAlign: 'center',
   },
+  dateButtonFullWidth: {
+    marginRight: 0,
+  },
   userScroll: {
     flexDirection: 'row',
     marginBottom: 8,
@@ -834,9 +858,6 @@ const styles = StyleSheet.create({
   },
   recurrenceEndLabel: {
     marginTop: 16,
-  },
-  dateButtonFullWidth: {
-    marginRight: 0,
   },
   customDaysSection: {
     marginBottom: 16,
