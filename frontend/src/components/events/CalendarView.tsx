@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, Text, FlatList } from 'react-native';
+import { View, StyleSheet, Text, Dimensions } from 'react-native';
 import { Calendar } from 'react-native-big-calendar';
 import dayjs from 'dayjs';
 import { Event, User } from '../../model/models';
@@ -28,7 +28,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 }) => {
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const userColorMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -60,21 +59,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       };
     });
   }, [events]);
-
-  const selectedDayEvents = useMemo(() => {
-    const start = dayjs(selectedDate).startOf('day');
-    const end = dayjs(selectedDate).endOf('day');
-    return events.filter(event => {
-      const eventStart = dayjs(event.startTime);
-      const eventEnd = dayjs(event.endTime);
-      return (
-        (eventStart.isAfter(start) || eventStart.isSame(start)) &&
-        eventStart.isBefore(end)
-      ) || (
-        eventStart.isBefore(start) && eventEnd.isAfter(end) // Spans across the day
-      );
-    });
-  }, [events, selectedDate]);
 
   const handleViewChange = (mode: CalendarViewMode) => {
     setViewMode(mode);
@@ -121,15 +105,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const handleToday = () => {
     const now = new Date();
     setCurrentDate(now);
-    setSelectedDate(now);
   };
 
   const handleCellPress = (date: Date) => {
-    if (viewMode === 'month') {
-      setSelectedDate(date);
-    } else {
-      onEmptySlotPress(date);
-    }
+    onEmptySlotPress(date);
   };
 
   const getUserColor = (userId?: string) => {
@@ -165,7 +144,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       <View style={styles.calendarContainer}>
         <Calendar
           events={calendarEvents}
-          height={viewMode === 'month' ? 600 : 600} 
+          height={Dimensions.get('window').height - 100}
           mode={viewMode === 'agenda' ? 'schedule' : viewMode as 'month' | 'week' | 'day' | 'schedule' | '3days'}
           date={currentDate}
           onPressEvent={(event) => onEventPress(event.originalEvent)}
@@ -173,22 +152,27 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           swipeEnabled={true}
           ampm={true}
           showAllDayEventCell={true}
+          eventMinHeightForMonthView={18}
+          maxVisibleEventCount={4}
           eventCellStyle={(_event) => {
-            if (viewMode === 'month') {
-              return { backgroundColor: 'transparent', padding: 0, margin: 0, height: 10, width: 10 };
-            }
             return { backgroundColor: 'transparent' }; // We handle background in EventItem
           }}
           renderEvent={(event, touchableOpacityProps) => {
              if (viewMode === 'month') {
                return (
                  <View style={{ 
-                   width: 6, 
-                   height: 6, 
-                   borderRadius: 3, 
                    backgroundColor: getUserColor(event.originalEvent.userId),
-                   margin: 1 
-                 }} />
+                   borderRadius: 3,
+                   paddingHorizontal: 4,
+                   paddingVertical: 1,
+                   marginVertical: 1,
+                   width: '100%',
+                   overflow: 'hidden'
+                 }}>
+                   <Text style={{ color: 'white', fontSize: 10, fontWeight: '600' }} numberOfLines={1}>
+                     {event.title}
+                   </Text>
+                 </View>
                );
              }
              return (
@@ -202,27 +186,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
              );
           }}
         />
-        {viewMode === 'month' && (
-          <View style={styles.dayListContainer}>
-            <Text style={styles.dayListHeader}>
-              {dayjs(selectedDate).format('dddd, MMMM D')}
-            </Text>
-            <FlatList
-              data={selectedDayEvents}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <View style={styles.dayListItem}>
-                  <EventItem 
-                    event={item} 
-                    color={getUserColor(item.userId)}
-                    onPress={() => onEventPress(item)}
-                  />
-                </View>
-              )}
-              ListEmptyComponent={<Text style={styles.emptyText}>No events</Text>}
-            />
-          </View>
-        )}
       </View>
     </View>
   );
@@ -235,27 +198,6 @@ const styles = StyleSheet.create({
   },
   calendarContainer: {
     flex: 1,
-  },
-  dayListContainer: {
-    flex: 1,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    padding: 10,
-    backgroundColor: 'white',
-  },
-  dayListHeader: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  dayListItem: {
-    marginBottom: 8,
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#666',
-    marginTop: 20,
   },
   legendContainer: {
     flexDirection: 'row',

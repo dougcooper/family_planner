@@ -2,39 +2,65 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { User } from '../../model/models';
 
+const USER_COLORS = [
+  '#EF5350', '#EC407A', '#AB47BC', '#7E57C2', '#5C6BC0',
+  '#42A5F5', '#29B6F6', '#26C6DA', '#26A69A', '#66BB6A',
+  '#9CCC65', '#D4E157', '#FFEE58', '#FFCA28', '#FFA726',
+  '#FF7043', '#8D6E63', '#BDBDBD', '#78909C'
+];
+
+const getUserColor = (user: User) => {
+  if (user.color) return user.color;
+  
+  let hash = 0;
+  for (let i = 0; i < user.id.length; i++) {
+    hash = user.id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % USER_COLORS.length;
+  return USER_COLORS[index];
+};
+
 interface FamilyAssignmentSummaryProps {
   users: User[];
   counts: Record<string, number>;
   title?: string;
   onUserPress?: (user: User) => void;
   selectedUserIds?: string[];
+  vertical?: boolean;
 }
 
-export const FamilyAssignmentSummary = ({ users, counts, title = 'Assignments', onUserPress, selectedUserIds = [] }: FamilyAssignmentSummaryProps) => {
+export const FamilyAssignmentSummary = ({ users, counts, title = 'Assignments', onUserPress, selectedUserIds = [], vertical = false }: FamilyAssignmentSummaryProps) => {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, vertical && styles.containerVertical]}>
       <Text style={styles.title}>{title}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollView}>
+      <ScrollView 
+        horizontal={!vertical} 
+        showsHorizontalScrollIndicator={false} 
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
+        contentContainerStyle={vertical ? styles.verticalContent : styles.horizontalContent}
+      >
         {users.map(user => {
           const isSelected = selectedUserIds.includes(user.id);
+          const userColor = getUserColor(user);
           return (
             <TouchableOpacity 
               key={user.id} 
-              style={styles.userItem}
+              style={[styles.userItem, vertical && styles.userItemVertical]}
               onPress={() => onUserPress?.(user)}
               disabled={!onUserPress}
             >
-              <View style={[styles.avatarContainer, isSelected && styles.avatarSelected]}>
+              <View style={[styles.avatarContainer, isSelected && styles.avatarSelected, { borderColor: userColor, borderWidth: 2 }]}>
                 {user.avatarUrl ? (
                   <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
                 ) : (
                   <Text style={styles.avatarEmoji}>👤</Text>
                 )}
-                <View style={styles.badge}>
+                <View style={[styles.badge, { backgroundColor: userColor }]}>
                   <Text style={styles.badgeText}>{counts[user.id] || 0}</Text>
                 </View>
               </View>
-              <Text style={[styles.userName, isSelected && styles.userNameSelected]} numberOfLines={1}>
+              <Text style={[styles.userName, vertical && styles.userNameVertical, isSelected && styles.userNameSelected]} numberOfLines={1}>
                 {user.name}
               </Text>
             </TouchableOpacity>
@@ -52,6 +78,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
+  containerVertical: {
+    borderBottomWidth: 0,
+    backgroundColor: 'transparent',
+    paddingVertical: 0,
+  },
   title: {
     fontSize: 14,
     fontWeight: '600',
@@ -62,10 +93,24 @@ const styles = StyleSheet.create({
   scrollView: {
     paddingHorizontal: 12,
   },
+  horizontalContent: {
+    paddingRight: 20,
+  },
+  verticalContent: {
+    paddingBottom: 20,
+  },
   userItem: {
     alignItems: 'center',
     marginHorizontal: 8,
     width: 60,
+  },
+  userItemVertical: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginHorizontal: 0,
+    marginBottom: 12,
+    paddingHorizontal: 4,
   },
   avatarContainer: {
     position: 'relative',
@@ -117,6 +162,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#333',
     textAlign: 'center',
+  },
+  userNameVertical: {
+    textAlign: 'left',
+    marginLeft: 12,
+    fontSize: 14,
   },
   userNameSelected: {
     color: '#007AFF',

@@ -41,18 +41,20 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.headerTop}>
-        <View style={styles.navigation}>
-          <TouchableOpacity onPress={onPrev} style={styles.iconButton} testID="prev-button">
-            <ChevronLeft size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.dateText}>{formatDate()}</Text>
-          <TouchableOpacity onPress={onNext} style={styles.iconButton} testID="next-button">
-            <ChevronRight size={24} color="#333" />
-          </TouchableOpacity>
-        </View>
         <TouchableOpacity onPress={onToday} style={styles.todayButton}>
           <Text style={styles.todayText}>Today</Text>
         </TouchableOpacity>
+        {viewMode !== 'agenda' && (
+          <View style={styles.navigation}>
+            <TouchableOpacity onPress={onPrev} style={styles.iconButton} testID="prev-button">
+              <ChevronLeft size={24} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.dateText}>{formatDate()}</Text>
+            <TouchableOpacity onPress={onNext} style={styles.iconButton} testID="next-button">
+              <ChevronRight size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <View style={styles.viewSelector}>

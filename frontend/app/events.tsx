@@ -60,15 +60,16 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
   return (
     <DashboardLayout>
       <View style={styles.container}>
-        <Text style={styles.pageTitle}>Events</Text>
-        <FamilyAssignmentSummary
-          users={users}
-          counts={eventCounts}
-          title="Event Assignments"
-          selectedUserIds={Array.from(selectedUserIds)}
-          onUserPress={handleUserPress}
-        />
-        <View style={styles.headerContainer}>
+        <View style={styles.sidebar}>
+          <Text style={styles.pageTitle}>Events</Text>
+          <FamilyAssignmentSummary
+            users={users}
+            counts={eventCounts}
+            title="Assignments"
+            selectedUserIds={Array.from(selectedUserIds)}
+            onUserPress={handleUserPress}
+            vertical={true}
+          />
           {currentUser?.role === 'PARENT' && (
             <TouchableOpacity 
               onPress={() => {
@@ -117,41 +118,37 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    flexDirection: 'row',
+  },
+  sidebar: {
+    width: 300,
+    padding: 20,
+    backgroundColor: '#F8FAFC',
+    borderRightWidth: 1,
+    borderRightColor: '#E2E8F0',
+  },
+  calendarWrapper: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
   pageTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#1E293B',
-    marginBottom: 16,
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
-  },
-  header: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000000',
+    marginBottom: 24,
   },
   addButton: {
     backgroundColor: '#4A90E2',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
   },
   addButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
-    fontSize: 15,
-  },
-  calendarWrapper: {
-    flex: 1,
-    minHeight: 400,
+    fontSize: 16,
   },
 });
 
