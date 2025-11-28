@@ -202,6 +202,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleBackgroundPress = (props: any, _event: any) => {
+    const dateStr = props.dateTime || props.date;
+    if (dateStr) {
+      const date = new Date(dateStr);
+      onEmptySlotPress(date);
+    }
+  };
+
+
 
   const calendarRef = useRef<CalendarKitHandle>(null);
 
@@ -245,6 +255,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           allowDragToEdit
           onDragCreateEventEnd={handleDragCreateEnd}
           onPressEvent={handlePressEvent}
+          onPressBackground={handleBackgroundPress}
           renderEvent={renderKitEvent}
           numberOfDays={viewMode === 'week' ? 7 : 1}
           initialDate={currentDate.toISOString().split('T')[0]}
