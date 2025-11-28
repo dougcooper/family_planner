@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Menu } from 'lucide-react-native';
 import dayjs from 'dayjs';
 
 export type CalendarViewMode = 'month' | 'week' | 'day' | 'agenda';
@@ -12,6 +12,7 @@ interface CalendarHeaderProps {
   onPrev: () => void;
   onNext: () => void;
   onToday: () => void;
+  onMenuPress?: () => void;
 }
 
 export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
@@ -21,6 +22,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   onPrev,
   onNext,
   onToday,
+  onMenuPress,
 }) => {
   const formatDate = () => {
     const date = dayjs(currentDate);
@@ -41,9 +43,16 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.headerTop}>
-        <TouchableOpacity onPress={onToday} style={styles.todayButton}>
-          <Text style={styles.todayText}>Today</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {onMenuPress && (
+            <TouchableOpacity onPress={onMenuPress} style={[styles.iconButton, { marginRight: 10 }]}>
+              <Menu size={24} color="#333" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={onToday} style={styles.todayButton}>
+            <Text style={styles.todayText}>Today</Text>
+          </TouchableOpacity>
+        </View>
         {viewMode !== 'agenda' && (
           <View style={styles.navigation}>
             <TouchableOpacity onPress={onPrev} style={styles.iconButton} testID="prev-button">

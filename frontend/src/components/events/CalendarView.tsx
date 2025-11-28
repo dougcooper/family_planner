@@ -13,6 +13,7 @@ interface CalendarViewProps {
   onEventPress: (event: Event) => void;
   onEmptySlotPress: (date: Date) => void;
   onEventUpdate?: (event: Event, start: Date, end: Date) => void;
+  onMenuPress?: () => void;
 }
 
 const USER_COLORS = [
@@ -28,9 +29,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onEventPress,
   onEmptySlotPress,
   onEventUpdate,
+  onMenuPress,
 }) => {
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [containerHeight, setContainerHeight] = useState(0);
 
   const userColorMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -267,7 +270,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     return (
       <Calendar
         events={calendarEvents}
-        height={Dimensions.get('window').height - 100}
+        height={containerHeight > 0 ? containerHeight : Dimensions.get('window').height - 100}
         mode={viewMode === 'agenda' ? 'schedule' : viewMode as 'month' | 'week' | 'day' | 'schedule' | '3days'}
         date={currentDate}
         onPressEvent={(event) => onEventPress(event.originalEvent)}
@@ -321,6 +324,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         onPrev={handlePrev}
         onNext={handleNext}
         onToday={handleToday}
+        onMenuPress={onMenuPress}
       />
       <View style={styles.legendContainer}>
         {users.map(user => (
@@ -330,7 +334,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </View>
         ))}
       </View>
-      <View style={styles.calendarContainer}>
+      <View style={styles.calendarContainer} onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}>
         {renderCalendar()}
       </View>
     </View>
