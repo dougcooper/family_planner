@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { X } from 'lucide-react-native';
+import { X, Plus } from 'lucide-react-native';
 import { database } from '../src/model/database';
 import { Event, User } from '../src/model/models';
 import { DashboardLayout } from '../src/components/dashboard/DashboardLayout';
@@ -100,7 +100,7 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
               onUserPress={handleUserPress}
               vertical={true}
             />
-            {currentUser?.role === 'PARENT' && (
+            {currentUser?.role === 'PARENT' && !isMobile && (
               <TouchableOpacity 
                 onPress={() => {
                   setInitialDate(undefined);
@@ -121,10 +121,22 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
             onEventPress={setSelectedEvent}
             onEmptySlotPress={handleEmptySlotPress}
             onEventUpdate={handleEventUpdate}
-            onMenuPress={() => setIsSidebarOpen(!isSidebarOpen)}
+            onMenuPress={isMobile ? () => setIsSidebarOpen(!isSidebarOpen) : undefined}
           />
         </View>
         
+        {isMobile && currentUser?.role === 'PARENT' && (
+          <TouchableOpacity
+            style={styles.fab}
+            onPress={() => {
+              setInitialDate(undefined);
+              setIsCreateModalVisible(true);
+            }}
+          >
+            <Plus size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
+
         {currentUser && (
           <>
             <CreateEventModal
@@ -206,6 +218,26 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#4A90E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.30,
+    shadowRadius: 4.65,
+    elevation: 8,
+    zIndex: 100,
   },
 });
 

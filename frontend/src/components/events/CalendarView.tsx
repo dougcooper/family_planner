@@ -31,7 +31,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onEventUpdate,
   onMenuPress,
 }) => {
-  const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
+  const [viewMode, setViewMode] = useState<CalendarViewMode>('agenda');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [containerHeight, setContainerHeight] = useState(0);
 
