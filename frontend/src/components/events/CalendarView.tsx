@@ -35,15 +35,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [containerHeight, setContainerHeight] = useState(0);
 
-  const userColorMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    users.forEach(u => {
-      if (u.color) {
-        map[u.id] = u.color;
-      }
-    });
-    return map;
-  }, [users]);
+
 
   const calendarEvents = useMemo(() => {
     return events.map(event => {
@@ -68,7 +60,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const getUserColor = useCallback((userId?: string) => {
     if (!userId) return '#2196F3';
-    if (userColorMap[userId]) return userColorMap[userId];
+    const user = users.find(u => u.id === userId);
+    if (user?.color) return user.color;
     
     let hash = 0;
     for (let i = 0; i < userId.length; i++) {
@@ -76,7 +69,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     }
     const index = Math.abs(hash) % USER_COLORS.length;
     return USER_COLORS[index];
-  }, [userColorMap]);
+  }, [users]);
 
   const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, { start: any, end: any }>>({});
   const [prevEvents, setPrevEvents] = useState(events);
