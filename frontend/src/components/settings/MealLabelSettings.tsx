@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, Alert, Platform } from 'react-native';
 import { Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { MealLabel } from '../../model/models';
@@ -34,11 +34,29 @@ function MealLabelSettingsComponent({ database, familyId, mealLabels }: MealLabe
       setIsAdding(false);
     } catch (error) {
       log.error('Error adding meal label:', error);
-      Alert.alert('Error', 'Failed to add meal label');
+      if (Platform.OS === 'web') {
+        window.alert('Failed to add meal label');
+      } else {
+        Alert.alert('Error', 'Failed to add meal label');
+      }
     }
   };
 
   const handleDeleteLabel = async (label: MealLabel) => {
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Are you sure you want to delete "${label.name}"? This will delete all meal plans associated with this label.`)) {
+        try {
+          await database.write(async () => {
+            await label.markAsDeleted();
+          });
+        } catch (error) {
+          log.error('Error deleting label:', error);
+          window.alert('Failed to delete label');
+        }
+      }
+      return;
+    }
+
     Alert.alert(
       'Delete Label',
       `Are you sure you want to delete "${label.name}"? This will delete all meal plans associated with this label.`,
