@@ -57,6 +57,19 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
     setIsCreateModalVisible(true);
   };
 
+  const handleEventUpdate = async (event: Event, start: Date, end: Date) => {
+    try {
+      await database.write(async () => {
+        await event.update(e => {
+          e.startTime = start;
+          e.endTime = end;
+        });
+      });
+    } catch (error) {
+      console.error('Failed to update event:', error);
+    }
+  };
+
   return (
     <DashboardLayout>
       <View style={styles.container}>
@@ -88,6 +101,7 @@ const EventsScreen = ({ events, users }: EventsScreenProps) => {
             users={users}
             onEventPress={setSelectedEvent}
             onEmptySlotPress={handleEmptySlotPress}
+            onEventUpdate={handleEventUpdate}
           />
         </View>
         

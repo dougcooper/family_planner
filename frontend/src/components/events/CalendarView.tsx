@@ -12,6 +12,7 @@ interface CalendarViewProps {
   users: User[];
   onEventPress: (event: Event) => void;
   onEmptySlotPress: (date: Date) => void;
+  onEventUpdate?: (event: Event, start: Date, end: Date) => void;
 }
 
 const USER_COLORS = [
@@ -26,6 +27,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   users,
   onEventPress,
   onEmptySlotPress,
+  onEventUpdate,
 }) => {
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -73,17 +75,32 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     return USER_COLORS[index];
   }, [userColorMap]);
 
+  const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, { start: any, end: any }>>({});
+  const [prevEvents, setPrevEvents] = useState(events);
+
+  if (events !== prevEvents) {
+    setPrevEvents(events);
+    setOptimisticUpdates({});
+  }
+
   const kitEvents = useMemo(() => {
     return events.map(event => {
       const isAllDay = event.isAllDay;
       const resourceId = event.userId;
       
-      const start = isAllDay 
-        ? { date: dayjs(event.startTime).format('YYYY-MM-DD'), resourceId }
-        : { dateTime: event.startTime.toISOString(), resourceId };
-      const end = isAllDay
-        ? { date: dayjs(event.endTime).format('YYYY-MM-DD'), resourceId }
-        : { dateTime: event.endTime.toISOString(), resourceId };
+      let start, end;
+      
+      if (optimisticUpdates[event.id]) {
+        start = optimisticUpdates[event.id].start;
+        end = optimisticUpdates[event.id].end;
+      } else {
+        start = isAllDay 
+          ? { date: dayjs(event.startTime).format('YYYY-MM-DD'), resourceId }
+          : { dateTime: event.startTime.toISOString(), resourceId };
+        end = isAllDay
+          ? { date: dayjs(event.endTime).format('YYYY-MM-DD'), resourceId }
+          : { dateTime: event.endTime.toISOString(), resourceId };
+      }
 
       const color = getUserColor(event.userId);
 
@@ -97,7 +114,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         resourceId,
       };
     });
-  }, [events, getUserColor]);
+  }, [events, getUserColor, optimisticUpdates]);
 
 
 
@@ -167,20 +184,22 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     }
   };
 
-  const handleDragEventEnd = (_event: OnEventResponse) => {
-    // TODO: Implement event update logic
-    // console.log('Event dragged:', event);
-    
-    // Construct updated event object
-    // const updatedEvent = {
-    //   id: event.id,
-    //   startTime: new Date(event.start.dateTime || event.start.date),
-    //   endTime: new Date(event.end.dateTime || event.end.date),
-    //   resourceId: event.resourceId,
-    // };
-    
-    // We would call a prop here to update the event
-    // onUpdateEvent(updatedEvent);
+  const handleDragEventEnd = (event: OnEventResponse) => {
+    if (!onEventUpdate) return;
+
+    const original = events.find(e => e.id === event.id);
+    if (original) {
+      const start = new Date(event.start.dateTime || event.start.date || '');
+      const end = new Date(event.end.dateTime || event.end.date || '');
+      
+      // Optimistic update
+      setOptimisticUpdates(prev => ({
+        ...prev,
+        [event.id]: { start: event.start, end: event.end }
+      }));
+
+      onEventUpdate(original, start, end);
+    }
   };
 
 
